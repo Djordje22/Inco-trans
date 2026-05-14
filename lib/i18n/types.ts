@@ -146,8 +146,8 @@ export type Dict = {
       phone: { title: string };
     };
     progress: {
-      service: string;
       journey: string;
+      vehicle: string;
       contact: string;
       review: string;
     };
@@ -155,6 +155,15 @@ export type Dict = {
       service: {
         heading: string;
         subheading: string;
+      };
+      airportDirection: {
+        heading: string;
+        subheading: string;
+        fromTitle: string;
+        fromDesc: string;
+        toTitle: string;
+        toDesc: string;
+        airportName: string;
       };
       journey: {
         heading: string;
@@ -165,7 +174,19 @@ export type Dict = {
         passengers: string;
         flightNumber: string;
         flightHint: string;
-        vehiclePreference: string;
+        stopLabel: string; // e.g. "Stop {n}" — {n} is replaced at render
+        stopPlaceholder: string;
+        addStop: string;
+        removeStop: string;
+        reorderStop: string;
+        waitingTitle: string;
+        waitingDesc: string;
+        waitingDecreaseAria: string;
+        waitingIncreaseAria: string;
+      };
+      vehicle: {
+        heading: string;
+        subheading: string;
       };
       review: {
         heading: string;
@@ -198,6 +219,16 @@ export type Dict = {
       back: string;
       continue: string;
       submitRequest: string;
+    };
+    dateTimePicker: {
+      placeholder: string;
+      timeHeading: string;
+      cancel: string;
+      confirm: string;
+      previousMonth: string;
+      nextMonth: string;
+      monthSelect: string;
+      yearSelect: string;
     };
     success: {
       title: string;

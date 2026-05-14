@@ -216,8 +216,8 @@ export const en: Dict = {
       }
     },
     progress: {
-      service: "Service",
       journey: "Trip",
+      vehicle: "Vehicle",
       contact: "Contact",
       review: "Review"
     },
@@ -225,6 +225,15 @@ export const en: Dict = {
       service: {
         heading: "Service type",
         subheading: "Pick what you need"
+      },
+      airportDirection: {
+        heading: "Airport direction",
+        subheading: "Are you arriving or departing?",
+        fromTitle: "From airport",
+        fromDesc: "Pickup at the airport",
+        toTitle: "To airport",
+        toDesc: "Drop-off at the airport",
+        airportName: "Belgrade Nikola Tesla Airport (BEG)"
       },
       journey: {
         heading: "Trip details",
@@ -235,7 +244,20 @@ export const en: Dict = {
         passengers: "Passengers",
         flightNumber: "Flight number (if applicable)",
         flightHint: "We track the arrival and wait if the flight is delayed.",
-        vehiclePreference: "Preferred vehicle"
+        stopLabel: "Stop {n}",
+        stopPlaceholder: "Add an intermediate stop",
+        addStop: "Add stop",
+        removeStop: "Remove stop",
+        reorderStop: "Drag to reorder",
+        waitingTitle: "Waiting hours",
+        waitingDesc:
+          "Add hours if you need the driver to wait at your destination.",
+        waitingDecreaseAria: "Decrease waiting hours",
+        waitingIncreaseAria: "Increase waiting hours"
+      },
+      vehicle: {
+        heading: "Choose your vehicle",
+        subheading: "Select from our luxury fleet"
       },
       review: {
         heading: "Review your request",
@@ -269,6 +291,16 @@ export const en: Dict = {
       back: "Back",
       continue: "Continue",
       submitRequest: "Send request"
+    },
+    dateTimePicker: {
+      placeholder: "Select date and time",
+      timeHeading: "Time",
+      cancel: "Cancel",
+      confirm: "Confirm",
+      previousMonth: "Previous month",
+      nextMonth: "Next month",
+      monthSelect: "Month",
+      yearSelect: "Year"
     },
     success: {
       title: "Thank you!",

@@ -11,6 +11,7 @@ import {
   type FormEvent,
   type ReactNode
 } from "react";
+import Image from "next/image";
 import {
   X,
   Check,
@@ -21,12 +22,36 @@ import {
   Phone,
   ClipboardList,
   UserRound,
-  MapPin
+  MapPin,
+  PlaneLanding,
+  PlaneTakeoff,
+  Plus,
+  Minus,
+  GripVertical,
+  Hourglass
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { t } from "@/lib/i18n";
 import { vehicles } from "@/lib/fleet-data";
 import { siteConfig, type Locale } from "@/lib/site-config";
 import WhatsAppMark from "./icons/WhatsAppMark";
+import DateTimePicker from "./DateTimePicker";
 
 // ---------- Context ----------
 
@@ -163,7 +188,10 @@ function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
       <div
-        className="relative w-full sm:max-w-md glass-strong rounded-2xl overflow-hidden animate-fade-up"
+        className={
+          "relative w-full glass-strong rounded-2xl overflow-hidden animate-fade-up " +
+          (flow === "transfer" ? "sm:max-w-xl" : "sm:max-w-md")
+        }
         style={{ maxHeight: "92vh" }}
       >
         <header className="flex items-center gap-3 px-5 py-4 border-b border-white/8">
@@ -333,72 +361,77 @@ function ServiceCard({
 // ---------- Progress indicator ----------
 
 function StepProgress({ steps, current }: { steps: string[]; current: number }) {
+  const progress = ((current - 1) / (steps.length - 1)) * 100;
+
   return (
-    <ol className="flex items-center justify-between gap-2">
-      {steps.map((label, i) => {
-        const stepNum = i + 1;
-        const isCurrent = stepNum === current;
-        const isDone = stepNum < current;
-        return (
-          <li key={label} className="flex flex-col items-center flex-1 min-w-0">
-            <div className="flex items-center w-full">
-              {i !== 0 ? (
-                <span
-                  className={
-                    "h-px flex-1 " +
-                    (isDone || isCurrent ? "bg-gold-400/70" : "bg-white/12")
-                  }
-                />
-              ) : (
-                <span className="flex-1" />
-              )}
+    <div className="pb-4">
+      <ol className="relative grid grid-cols-4">
+        <span
+          aria-hidden="true"
+          className="absolute left-[12.5%] right-[12.5%] top-3.5 h-px bg-white/15"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute left-[12.5%] top-3.5 h-px bg-gold-400/75"
+          style={{ width: `${progress * 0.75}%` }}
+        />
+        {steps.map((label, i) => {
+          const stepNum = i + 1;
+          const isCurrent = stepNum === current;
+          const isDone = stepNum < current;
+          return (
+            <li key={label} className="relative z-10 flex flex-col items-center">
               <span
                 aria-current={isCurrent ? "step" : undefined}
                 className={
-                  "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold border " +
+                  "inline-flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold border " +
                   (isCurrent
                     ? "bg-white text-ink-900 border-white"
                     : isDone
                       ? "bg-gold-400 text-ink-900 border-gold-400"
-                      : "bg-transparent text-white/55 border-white/20")
+                      : "bg-ink-900 text-white/55 border-white/20")
                 }
               >
                 {isDone ? <CheckIcon /> : stepNum}
               </span>
-              {i !== steps.length - 1 ? (
-                <span
-                  className={
-                    "h-px flex-1 " +
-                    (isDone ? "bg-gold-400/70" : "bg-white/12")
-                  }
-                />
-              ) : (
-                <span className="flex-1" />
-              )}
-            </div>
-            <span
-              className={
-                "mt-1.5 text-[10px] uppercase tracking-widest truncate max-w-full " +
-                (isCurrent ? "text-white/85" : "text-white/45")
-              }
-            >
-              {label}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+              <span
+                className={
+                  "mt-2 text-center text-[10px] uppercase tracking-widest whitespace-nowrap " +
+                  (isCurrent ? "text-white/85" : "text-white/45")
+                }
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 
 // ---------- Transfer flow (4 steps) ----------
 
 type ServiceType = "airport" | "chauffeur" | "business" | "other";
+type AirportDirection = "from" | "to" | "";
+
+type Stop = { id: string; value: string };
+
+const MIN_WAITING_HOURS = 1;
+const MAX_WAITING_HOURS = 24;
+
+const makeStopId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : "stop-" + Math.random().toString(36).slice(2, 9);
 
 type TransferData = {
   service: ServiceType | "";
+  airportDirection: AirportDirection;
   pickup: string;
   destination: string;
+  stops: Stop[];
+  waitingHours: number; // 0 = none, otherwise 1..MAX_WAITING_HOURS
   dateTime: string;
   passengers: number;
   flight: string;
@@ -412,8 +445,11 @@ type TransferData = {
 
 const EMPTY: TransferData = {
   service: "",
+  airportDirection: "",
   pickup: "",
   destination: "",
+  stops: [],
+  waitingHours: 0,
   dateTime: "",
   passengers: 1,
   flight: "",
@@ -435,29 +471,76 @@ function TransferFlow({
   onDone: () => void;
 }) {
   const dict = t(locale).modal;
+  const airportName = dict.rent.airportDirection.airportName;
   const [data, setData] = useState<TransferData>(EMPTY);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [preStep, setPreStep] = useState<"service" | "direction" | null>(
+    "service"
+  );
 
   const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
+  const isAirport = data.service === "airport";
+  const onServiceScreen = preStep === "service";
+  const onDirectionScreen = preStep === "direction";
+
   const serviceValid = data.service !== "";
+  const directionValid = data.airportDirection !== "";
   const journeyValid =
     data.pickup.trim() !== "" &&
     data.destination.trim() !== "" &&
     data.dateTime.trim() !== "";
+  const vehicleValid = data.vehicle.trim() !== "";
   const contactValid =
-    data.fullName.trim().length > 1 &&
-    data.phone.trim().length >= 5;
+    data.fullName.trim().length > 1 && data.phone.trim().length >= 5;
+
+  const applyAirportDirection = () => {
+    if (data.airportDirection === "from") {
+      setData((d) => ({
+        ...d,
+        pickup: airportName,
+        destination: d.destination === airportName ? "" : d.destination
+      }));
+      return;
+    }
+    setData((d) => ({
+      ...d,
+      destination: airportName,
+      pickup: d.pickup === airportName ? "" : d.pickup
+    }));
+  };
 
   const onPrev = () => {
-    if (step === 1) onBack();
-    else setStep((s) => (s - 1) as 1 | 2 | 3);
+    if (onServiceScreen) {
+      onBack();
+      return;
+    }
+    if (onDirectionScreen) {
+      setPreStep("service");
+      return;
+    }
+    if (step === 1) {
+      setPreStep(isAirport ? "direction" : "service");
+      return;
+    }
+    setStep((s) => (s - 1) as 1 | 2 | 3);
   };
 
   const onNext = () => {
-    if (step === 1 && !serviceValid) return;
-    if (step === 2 && !journeyValid) return;
+    if (onServiceScreen) {
+      if (!serviceValid) return;
+      setPreStep(isAirport ? "direction" : null);
+      return;
+    }
+    if (onDirectionScreen) {
+      if (!directionValid) return;
+      applyAirportDirection();
+      setPreStep(null);
+      return;
+    }
+    if (step === 1 && !journeyValid) return;
+    if (step === 2 && !vehicleValid) return;
     if (step === 3 && !contactValid) return;
     setStep((s) => (s + 1) as 2 | 3 | 4);
   };
@@ -467,40 +550,62 @@ function TransferFlow({
     onDone();
   };
 
+  // Lock the prefilled endpoint so users can't edit it on the journey form.
+  const lockPickup = isAirport && data.airportDirection === "from";
+  const lockDestination = isAirport && data.airportDirection === "to";
+
   return (
     <div>
-      <StepProgress
-        steps={[
-          dict.progress.service,
-          dict.progress.journey,
-          dict.progress.contact,
-          dict.progress.review
-        ]}
-        current={step}
-      />
+      {preStep === null ? (
+        <StepProgress
+          steps={[
+            dict.progress.journey,
+            dict.progress.vehicle,
+            dict.progress.contact,
+            dict.progress.review
+          ]}
+          current={step}
+        />
+      ) : null}
 
-      <div className="mt-6">
-        {step === 1 ? (
+      <div className={preStep === null ? "mt-6" : ""}>
+        {onServiceScreen ? (
           <ServiceStep locale={locale} data={data} set={set} />
         ) : null}
-        {step === 2 ? (
-          <JourneyStep locale={locale} data={data} set={set} />
+        {onDirectionScreen ? (
+          <AirportDirectionStep locale={locale} data={data} set={set} />
         ) : null}
-        {step === 3 ? (
+        {preStep === null && step === 1 ? (
+          <JourneyStep
+            locale={locale}
+            data={data}
+            set={set}
+            lockPickup={lockPickup}
+            lockDestination={lockDestination}
+          />
+        ) : null}
+        {preStep === null && step === 2 ? (
+          <VehicleStep locale={locale} data={data} set={set} />
+        ) : null}
+        {preStep === null && step === 3 ? (
           <ContactFields locale={locale} data={data} set={set} />
         ) : null}
-        {step === 4 ? <ReviewStep locale={locale} data={data} /> : null}
+        {preStep === null && step === 4 ? (
+          <ReviewStep locale={locale} data={data} />
+        ) : null}
       </div>
 
       <FormFooter
         locale={locale}
         onBack={onPrev}
-        onNext={step < 4 ? onNext : undefined}
-        onSubmit={step === 4 ? onSubmit : undefined}
+        onNext={preStep !== null || step < 4 ? onNext : undefined}
+        onSubmit={preStep === null && step === 4 ? onSubmit : undefined}
         nextDisabled={
-          (step === 1 && !serviceValid) ||
-          (step === 2 && !journeyValid) ||
-          (step === 3 && !contactValid)
+          (onServiceScreen && !serviceValid) ||
+          (onDirectionScreen && !directionValid) ||
+          (preStep === null && step === 1 && !journeyValid) ||
+          (preStep === null && step === 2 && !vehicleValid) ||
+          (preStep === null && step === 3 && !contactValid)
         }
       />
     </div>
@@ -595,7 +700,7 @@ function ServiceStep({
   );
 }
 
-function JourneyStep({
+function AirportDirectionStep({
   locale,
   data,
   set
@@ -604,9 +709,111 @@ function JourneyStep({
   data: TransferData;
   set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
 }) {
+  const dict = t(locale).modal.rent.airportDirection;
+  const options: {
+    value: AirportDirection & ("from" | "to");
+    title: string;
+    desc: string;
+    Icon: typeof PlaneLanding;
+  }[] = [
+    {
+      value: "from",
+      title: dict.fromTitle,
+      desc: dict.fromDesc,
+      Icon: PlaneLanding
+    },
+    { value: "to", title: dict.toTitle, desc: dict.toDesc, Icon: PlaneTakeoff }
+  ];
+
+  return (
+    <div>
+      <StepHeading title={dict.heading} subtitle={dict.subheading} />
+      <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:auto-rows-fr">
+        {options.map((opt) => {
+          const active = data.airportDirection === opt.value;
+          const Icon = opt.Icon;
+          return (
+            <li key={opt.value} className="h-full">
+              <button
+                type="button"
+                onClick={() => set("airportDirection", opt.value)}
+                aria-pressed={active}
+                className={
+                  "h-full w-full text-left rounded-xl border px-4 py-4 transition-colors flex items-start gap-3 " +
+                  (active
+                    ? "border-gold-400 bg-gold-400/10"
+                    : "border-white/10 bg-white/5 hover:bg-white/10")
+                }
+              >
+                <span
+                  className={
+                    "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 " +
+                    (active
+                      ? "bg-gold-400/20 ring-gold-400/50 text-gold-200"
+                      : "bg-white/5 ring-white/10 text-white/85")
+                  }
+                >
+                  <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-white">
+                    {opt.title}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-white/60">
+                    {opt.desc}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={
+                    "mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border " +
+                    (active
+                      ? "border-gold-400 bg-gold-400"
+                      : "border-white/30 bg-transparent")
+                  }
+                >
+                  {active ? (
+                    <span className="h-1.5 w-1.5 rounded-full bg-ink-900" />
+                  ) : null}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function JourneyStep({
+  locale,
+  data,
+  set,
+  lockPickup = false,
+  lockDestination = false
+}: {
+  locale: Locale;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+  lockPickup?: boolean;
+  lockDestination?: boolean;
+}) {
   const dict = t(locale).modal.rent.journey;
   const tf = t(locale).transportForm;
-  const showFlight = data.service === "airport";
+  const isAirport = data.service === "airport";
+  const showFlight = isAirport;
+  const dateTimeField = (
+    <Field label={dict.pickupDateTime} required>
+      <DateTimePicker
+        id="qf-dt"
+        locale={locale}
+        value={data.dateTime}
+        onChange={(value) => set("dateTime", value)}
+        ariaLabel={dict.pickupDateTime}
+      />
+    </Field>
+  );
+
   return (
     <div>
       <StepHeading
@@ -615,34 +822,40 @@ function JourneyStep({
         subtitle={dict.subheading}
       />
       <div className="mt-5 space-y-4">
+        {isAirport ? dateTimeField : null}
         <Field label={dict.pickup} required iconLabel>
           <input
             type="text"
-            className="glass-input"
+            className="glass-input disabled:opacity-70 disabled:cursor-not-allowed"
             placeholder={tf.pickupPlaceholder}
             value={data.pickup}
             onChange={(e) => set("pickup", e.target.value)}
+            disabled={lockPickup}
+            readOnly={lockPickup}
+            aria-readonly={lockPickup}
             autoComplete="off"
           />
         </Field>
         <Field label={dict.destination} required iconLabel>
           <input
             type="text"
-            className="glass-input"
+            className="glass-input disabled:opacity-70 disabled:cursor-not-allowed"
             placeholder={tf.destinationPlaceholder}
             value={data.destination}
             onChange={(e) => set("destination", e.target.value)}
+            disabled={lockDestination}
+            readOnly={lockDestination}
+            aria-readonly={lockDestination}
             autoComplete="off"
           />
         </Field>
-        <Field label={dict.pickupDateTime} required>
-          <input
-            type="datetime-local"
-            className="glass-input"
-            value={data.dateTime}
-            onChange={(e) => set("dateTime", e.target.value)}
-          />
-        </Field>
+        {isAirport ? (
+          <>
+            <StopsList locale={locale} data={data} set={set} />
+            <WaitingHoursCard locale={locale} data={data} set={set} />
+          </>
+        ) : null}
+        {!isAirport ? dateTimeField : null}
         <Field label={dict.passengers} required>
           <input
             type="number"
@@ -665,21 +878,107 @@ function JourneyStep({
             />
           </Field>
         ) : null}
-        <Field label={dict.vehiclePreference}>
-          <select
-            className="glass-input appearance-none"
-            value={data.vehicle}
-            onChange={(e) => set("vehicle", e.target.value)}
-          >
-            <option value="">{tf.vehicleAny}</option>
-            {vehicles.map((v) => (
-              <option key={v.slug} value={v.slug}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </Field>
       </div>
+    </div>
+  );
+}
+
+function VehicleStep({
+  locale,
+  data,
+  set
+}: {
+  locale: Locale;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+}) {
+  const dict = t(locale).modal.rent.vehicle;
+  const fleetDict = t(locale).fleetCard;
+
+  return (
+    <div>
+      <StepHeading
+        icon={<CarIcon />}
+        title={dict.heading}
+        subtitle={dict.subheading}
+      />
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        {vehicles.map((vehicle) => {
+          const active = data.vehicle === vehicle.slug;
+          const altText =
+            locale === "sr"
+              ? `${vehicle.name} iz Inco Trans flote`
+              : locale === "ru"
+                ? `${vehicle.name} из автопарка Inco Trans`
+                : `${vehicle.name} from the Inco Trans fleet`;
+
+          return (
+            <li key={vehicle.slug}>
+              <button
+                type="button"
+                onClick={() => set("vehicle", vehicle.slug)}
+                aria-pressed={active}
+                className={
+                  "group h-full w-full overflow-hidden rounded-xl border bg-ink-900 text-left transition-colors " +
+                  (active
+                    ? "border-gold-400 shadow-gold"
+                    : "border-white/12 hover:border-white/25 hover:bg-ink-800")
+                }
+              >
+                <div className="relative aspect-[16/10] bg-ink-800">
+                  <Image
+                    src={vehicle.image}
+                    alt={altText}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 260px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink-900 to-transparent"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={
+                      "absolute right-3 top-3 inline-flex h-5 w-5 items-center justify-center rounded-full border " +
+                      (active
+                        ? "border-gold-400 bg-gold-400"
+                        : "border-white/35 bg-ink-950/70")
+                    }
+                  >
+                    {active ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-ink-900" />
+                    ) : null}
+                  </span>
+                </div>
+
+                <div className="p-4">
+                  <h4 className="font-display text-xl text-white">
+                    {vehicle.name}
+                  </h4>
+                  <p className="mt-1 min-h-[2.5rem] text-xs leading-relaxed text-white/60">
+                    {vehicle.tagline[locale]}
+                  </p>
+                  <dl className="mt-4 flex flex-wrap gap-2 text-xs text-white/75">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-3 py-1.5">
+                      <dt>{fleetDict.passengers}</dt>
+                      <dd className="font-semibold text-white">
+                        {vehicle.passengers}
+                      </dd>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-3 py-1.5">
+                      <dt>{fleetDict.luggage}</dt>
+                      <dd className="font-semibold text-white">
+                        {vehicle.luggage}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -711,9 +1010,24 @@ function ReviewStep({
     ? vehicles.find((v) => v.slug === data.vehicle)?.name ?? tf.vehicleAny
     : tf.vehicleAny;
 
+  const journeyDict = t(locale).modal.rent.journey;
+  const stopValues = data.stops
+    .map((s) => s.value.trim())
+    .filter((v) => v.length > 0);
+  const stopsSummary = stopValues.join(" · ");
+
   const items: { label: string; value: string }[] = [
     { label: dict.serviceLabel, value: serviceLabel },
     { label: dict.pickupLabel, value: data.pickup || "—" },
+    ...(stopValues.length > 0
+      ? [
+          {
+            label: journeyDict.stopLabel
+              .replace("{n}", `1–${stopValues.length}`),
+            value: stopsSummary
+          }
+        ]
+      : []),
     { label: dict.destinationLabel, value: data.destination || "—" },
     {
       label: dict.whenLabel,
@@ -722,6 +1036,14 @@ function ReviewStep({
     { label: dict.passengersLabel, value: String(data.passengers) },
     ...(data.service === "airport"
       ? [{ label: dict.flightLabel, value: data.flight || "—" }]
+      : []),
+    ...(data.service === "airport" && data.waitingHours > 0
+      ? [
+          {
+            label: journeyDict.waitingTitle,
+            value: `${data.waitingHours} ${hourWord(locale, data.waitingHours)}`
+          }
+        ]
       : []),
     { label: dict.vehicleLabel, value: vehicleLabel }
   ];
@@ -990,6 +1312,279 @@ function SuccessPanel({
   );
 }
 
+// ---------- Stops + waiting hours (airport-only blocks) ----------
+
+function SortableStopRow({
+  stop,
+  index,
+  locale,
+  onChange,
+  onRemove
+}: {
+  stop: Stop;
+  index: number;
+  locale: Locale;
+  onChange: (id: string, value: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const dict = t(locale).modal.rent.journey;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: stop.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.85 : 1,
+    zIndex: isDragging ? 30 : undefined
+  };
+
+  const label = dict.stopLabel.replace("{n}", String(index + 1));
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={
+        "rounded-xl border px-3 py-2.5 " +
+        (isDragging
+          ? "border-gold-400/40 bg-ink-800 shadow-glass"
+          : "border-white/10 bg-white/5")
+      }
+    >
+      <div className="mb-1.5 flex items-center gap-1 text-[11px] uppercase tracking-widest text-white/60">
+        <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+        {label}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-label={dict.reorderStop}
+          {...attributes}
+          {...listeners}
+          className="touch-none inline-flex h-8 w-6 items-center justify-center rounded text-white/45 hover:text-white/85 cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <input
+          type="text"
+          value={stop.value}
+          onChange={(e) => onChange(stop.id, e.target.value)}
+          className="glass-input flex-1"
+          placeholder={dict.stopPlaceholder}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          onClick={() => onRemove(stop.id)}
+          aria-label={dict.removeStop}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 hover:bg-white/10 hover:text-white"
+        >
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function StopsList({
+  locale,
+  data,
+  set
+}: {
+  locale: Locale;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+}) {
+  const dict = t(locale).modal.rent.journey;
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const onChange = (id: string, value: string) => {
+    set(
+      "stops",
+      data.stops.map((s) => (s.id === id ? { ...s, value } : s))
+    );
+  };
+
+  const onRemove = (id: string) => {
+    set(
+      "stops",
+      data.stops.filter((s) => s.id !== id)
+    );
+  };
+
+  const onAdd = () => {
+    set("stops", [...data.stops, { id: makeStopId(), value: "" }]);
+  };
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = data.stops.findIndex((s) => s.id === active.id);
+    const newIndex = data.stops.findIndex((s) => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    set("stops", arrayMove(data.stops, oldIndex, newIndex));
+  };
+
+  return (
+    <div>
+      {data.stops.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
+          <SortableContext
+            items={data.stops.map((s) => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <ul className="space-y-3">
+              {data.stops.map((stop, i) => (
+                <SortableStopRow
+                  key={stop.id}
+                  stop={stop}
+                  index={i}
+                  locale={locale}
+                  onChange={onChange}
+                  onRemove={onRemove}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onAdd}
+        className={
+          "w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-white/80 hover:bg-white/[0.06] hover:border-white/25 transition-colors " +
+          (data.stops.length > 0 ? "mt-3" : "")
+        }
+      >
+        <Plus className="h-4 w-4" aria-hidden="true" />
+        {dict.addStop}
+      </button>
+    </div>
+  );
+}
+
+function hourWord(locale: Locale, n: number): string {
+  if (locale === "en") return n === 1 ? "hour" : "hours";
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (locale === "sr") {
+    if (mod100 >= 11 && mod100 <= 14) return "sati";
+    if (mod10 === 1) return "sat";
+    if (mod10 >= 2 && mod10 <= 4) return "sata";
+    return "sati";
+  }
+  // ru
+  if (mod100 >= 11 && mod100 <= 14) return "часов";
+  if (mod10 === 1) return "час";
+  if (mod10 >= 2 && mod10 <= 4) return "часа";
+  return "часов";
+}
+
+function waitingBanner(locale: Locale, n: number): string {
+  const h = hourWord(locale, n);
+  if (locale === "sr") {
+    return `+${n} ${h} čekanja biće dodato vašoj rezervaciji`;
+  }
+  if (locale === "ru") {
+    return `+${n} ${h} ожидания будет добавлено к вашему бронированию`;
+  }
+  return `+${n} ${h} of waiting time will be added to your booking`;
+}
+
+function WaitingHoursCard({
+  locale,
+  data,
+  set
+}: {
+  locale: Locale;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+}) {
+  const dict = t(locale).modal.rent.journey;
+  const hours = data.waitingHours;
+  const showBanner = hours > 0;
+
+  const setClamped = (next: number) => {
+    if (next <= 0) {
+      set("waitingHours", 0);
+      return;
+    }
+    const clamped = Math.max(
+      MIN_WAITING_HOURS,
+      Math.min(MAX_WAITING_HOURS, Math.round(next))
+    );
+    set("waitingHours", clamped);
+  };
+
+  const decrement = () =>
+    setClamped(hours === 0 ? 0 : hours - 1);
+  const increment = () =>
+    setClamped(hours === 0 ? MIN_WAITING_HOURS : hours + 1);
+
+  const display = hours === 0 ? "0h" : `${hours}h`;
+
+  return (
+    <div>
+      <div className="glass rounded-xl p-4 flex items-start gap-3">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-gold-300">
+          <Hourglass className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h4 className="font-semibold text-sm text-white">
+            {dict.waitingTitle}
+          </h4>
+          <p className="mt-0.5 text-xs text-white/55">{dict.waitingDesc}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={decrement}
+            aria-label={dict.waitingDecreaseAria}
+            disabled={hours === 0}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Minus className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <span
+            aria-live="polite"
+            className="min-w-[2.5rem] text-center text-sm font-semibold text-white tabular-nums"
+          >
+            {display}
+          </span>
+          <button
+            type="button"
+            onClick={increment}
+            aria-label={dict.waitingIncreaseAria}
+            disabled={hours >= MAX_WAITING_HOURS}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      {showBanner ? (
+        <p className="mt-2 text-xs text-gold-300">
+          {waitingBanner(locale, hours)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 // ---------- Shared form bits ----------
 
 function StepHeading({
@@ -997,16 +1592,23 @@ function StepHeading({
   title,
   subtitle
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
   title: string;
   subtitle: string;
 }) {
   return (
     <div className="text-center">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/85">
-        {icon}
-      </span>
-      <h3 className="mt-3 font-display text-xl sm:text-2xl text-white">
+      {icon ? (
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/85">
+          {icon}
+        </span>
+      ) : null}
+      <h3
+        className={
+          (icon ? "mt-3 " : "") +
+          "font-display text-xl sm:text-2xl text-white"
+        }
+      >
         {title}
       </h3>
       <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/55">
@@ -1132,19 +1734,33 @@ function FormFooter({
 
 // ---------- Helpers ----------
 
+function bcp47(locale: Locale): string {
+  return locale === "sr" ? "sr-Latn" : locale === "ru" ? "ru-RU" : "en-US";
+}
+
+function dateFromKey(key: string): Date {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(year, month - 1, day || 1);
+}
+
+function parseDateTimeValue(value: string): { date: string; time: string } | null {
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(value);
+  if (!match) return null;
+  return { date: match[1], time: match[2] };
+}
+
 function formatDateTime(iso: string, locale: Locale): string {
   try {
-    const d = new Date(iso);
+    const parsed = parseDateTimeValue(iso);
+    if (!parsed) return iso;
+    const d = dateFromKey(parsed.date);
     if (isNaN(d.getTime())) return iso;
-    const bcp47 =
-      locale === "sr" ? "sr-Latn" : locale === "ru" ? "ru-RU" : "en-GB";
-    return d.toLocaleString(bcp47, {
+    const formattedDate = d.toLocaleDateString(bcp47(locale), {
       day: "2-digit",
       month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
+      year: "numeric"
     });
+    return `${formattedDate} ${parsed.time}`;
   } catch {
     return iso;
   }

@@ -215,8 +215,8 @@ export const sr: Dict = {
       }
     },
     progress: {
-      service: "Usluga",
       journey: "Vožnja",
+      vehicle: "Vozilo",
       contact: "Kontakt",
       review: "Pregled"
     },
@@ -224,6 +224,15 @@ export const sr: Dict = {
       service: {
         heading: "Vrsta usluge",
         subheading: "Izaberite šta vam treba"
+      },
+      airportDirection: {
+        heading: "Smer transfera",
+        subheading: "Putujete ka ili sa aerodroma?",
+        fromTitle: "Sa aerodroma",
+        fromDesc: "Doček i preuzimanje na aerodromu",
+        toTitle: "Ka aerodromu",
+        toDesc: "Prevoz do aerodroma",
+        airportName: "Aerodrom Nikola Tesla Beograd (BEG)"
       },
       journey: {
         heading: "Detalji vožnje",
@@ -234,7 +243,20 @@ export const sr: Dict = {
         passengers: "Broj putnika",
         flightNumber: "Broj leta (ako je primenljivo)",
         flightHint: "Pratimo dolazak i čekamo u slučaju kašnjenja.",
-        vehiclePreference: "Preferirano vozilo"
+        stopLabel: "Stajalište {n}",
+        stopPlaceholder: "Dodaj međustanicu",
+        addStop: "Dodaj stajalište",
+        removeStop: "Ukloni stajalište",
+        reorderStop: "Prevuci za promenu redosleda",
+        waitingTitle: "Sati čekanja",
+        waitingDesc:
+          "Dodajte sate ako vam je potrebno da vozač sačeka na odredištu.",
+        waitingDecreaseAria: "Smanji sate čekanja",
+        waitingIncreaseAria: "Povećaj sate čekanja"
+      },
+      vehicle: {
+        heading: "Izaberite vozilo",
+        subheading: "Odaberite iz naše luksuzne flote"
       },
       review: {
         heading: "Pregled zahteva",
@@ -268,6 +290,16 @@ export const sr: Dict = {
       back: "Nazad",
       continue: "Dalje",
       submitRequest: "Pošalji zahtev"
+    },
+    dateTimePicker: {
+      placeholder: "Izaberite datum i vreme",
+      timeHeading: "Vreme",
+      cancel: "Otkaži",
+      confirm: "Potvrdi",
+      previousMonth: "Prethodni mesec",
+      nextMonth: "Sledeći mesec",
+      monthSelect: "Mesec",
+      yearSelect: "Godina"
     },
     success: {
       title: "Hvala vam!",

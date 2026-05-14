@@ -217,8 +217,8 @@ export const ru: Dict = {
       }
     },
     progress: {
-      service: "Услуга",
       journey: "Поездка",
+      vehicle: "Авто",
       contact: "Контакты",
       review: "Проверка"
     },
@@ -226,6 +226,15 @@ export const ru: Dict = {
       service: {
         heading: "Вид услуги",
         subheading: "Выберите, что нужно"
+      },
+      airportDirection: {
+        heading: "Направление трансфера",
+        subheading: "Прилёт или вылет?",
+        fromTitle: "Из аэропорта",
+        fromDesc: "Встреча и подача в аэропорту",
+        toTitle: "В аэропорт",
+        toDesc: "Доставка в аэропорт",
+        airportName: "Аэропорт Никола Тесла Белград (BEG)"
       },
       journey: {
         heading: "Детали поездки",
@@ -236,7 +245,20 @@ export const ru: Dict = {
         passengers: "Пассажиров",
         flightNumber: "Номер рейса (если применимо)",
         flightHint: "Мы отслеживаем прилёт и ждём в случае задержки.",
-        vehiclePreference: "Предпочитаемый автомобиль"
+        stopLabel: "Остановка {n}",
+        stopPlaceholder: "Добавьте промежуточную остановку",
+        addStop: "Добавить остановку",
+        removeStop: "Удалить остановку",
+        reorderStop: "Перетащите для изменения порядка",
+        waitingTitle: "Часы ожидания",
+        waitingDesc:
+          "Добавьте часы, если нужно, чтобы водитель ждал в точке назначения.",
+        waitingDecreaseAria: "Уменьшить часы ожидания",
+        waitingIncreaseAria: "Увеличить часы ожидания"
+      },
+      vehicle: {
+        heading: "Выберите автомобиль",
+        subheading: "Автомобиль из нашего премиального парка"
       },
       review: {
         heading: "Проверка запроса",
@@ -270,6 +292,16 @@ export const ru: Dict = {
       back: "Назад",
       continue: "Далее",
       submitRequest: "Отправить запрос"
+    },
+    dateTimePicker: {
+      placeholder: "Выберите дату и время",
+      timeHeading: "Время",
+      cancel: "Отмена",
+      confirm: "Подтвердить",
+      previousMonth: "Предыдущий месяц",
+      nextMonth: "Следующий месяц",
+      monthSelect: "Месяц",
+      yearSelect: "Год"
     },
     success: {
       title: "Спасибо!",
