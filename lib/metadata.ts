@@ -12,6 +12,18 @@ function joinUrl(base: string, path: string): string {
   return path === "/" ? base : `${base}${path}`;
 }
 
+const OG_LOCALES: Record<Locale, string> = {
+  sr: "sr_RS",
+  en: "en_US",
+  ru: "ru_RU"
+};
+
+const HREFLANG: Record<Locale, string> = {
+  sr: "sr-Latn",
+  en: "en",
+  ru: "ru"
+};
+
 export function buildMetadata({
   locale,
   routeKey,
@@ -19,16 +31,16 @@ export function buildMetadata({
   description
 }: Args): Metadata {
   const path: string = routeMap[routeKey][locale];
-  const srPath: string = routeMap[routeKey].sr;
-  const enPath: string = routeMap[routeKey].en;
   const url = joinUrl(siteConfig.url, path);
-  const ogLocale = locale === "sr" ? "sr_RS" : "en_US";
 
-  const alternates: Record<string, string> = {
-    "sr-Latn": joinUrl(siteConfig.url, srPath),
-    en: joinUrl(siteConfig.url, enPath),
-    "x-default": joinUrl(siteConfig.url, srPath)
-  };
+  const alternates: Record<string, string> = {};
+  for (const loc of siteConfig.locales) {
+    alternates[HREFLANG[loc]] = joinUrl(
+      siteConfig.url,
+      routeMap[routeKey][loc]
+    );
+  }
+  alternates["x-default"] = joinUrl(siteConfig.url, routeMap[routeKey].sr);
 
   return {
     metadataBase: new URL(siteConfig.url),
@@ -45,8 +57,10 @@ export function buildMetadata({
       siteName: siteConfig.name,
       title,
       description,
-      locale: ogLocale,
-      alternateLocale: locale === "sr" ? "en_US" : "sr_RS",
+      locale: OG_LOCALES[locale],
+      alternateLocale: siteConfig.locales
+        .filter((l) => l !== locale)
+        .map((l) => OG_LOCALES[l]),
       images: [
         {
           url: "/brand/inco_logo_icon_1024.png",

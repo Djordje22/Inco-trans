@@ -1,137 +1,97 @@
 import type { Locale } from "./site-config";
 
-export type VehicleCategory = "sedan" | "suv" | "sport" | "van";
-
 export type Vehicle = {
   slug: string;
   name: string;
-  category: VehicleCategory;
+  // Short positioning line under the model name.
+  tagline: { sr: string; en: string; ru: string };
   image: string;
   passengers: number;
   luggage: number;
-  transmission: { sr: string; en: string };
-  fuel: { sr: string; en: string };
-  // Daily price placeholder. Use null to render "na upit" / "on request".
-  pricePerDayEur: number | null;
+  transmission: { sr: string; en: string; ru: string };
+  fuel: { sr: string; en: string; ru: string };
+  // Comfort bullet list shown on the vehicle card / fleet page.
+  comfort: { sr: string[]; en: string[]; ru: string[] };
 };
 
-export const categoryLabels: Record<
-  VehicleCategory,
-  { sr: string; en: string }
-> = {
-  sedan: { sr: "Limuzine", en: "Sedans" },
-  suv: { sr: "SUV vozila", en: "SUVs" },
-  sport: { sr: "Sportski / luxury", en: "Sport / luxury" },
-  van: { sr: "Vanovi", en: "Vans" }
-};
-
-// License-safe Unsplash demo images. Replace before going live.
+// Two-vehicle fleet — do not add more without updating AGENT.md.
 export const vehicles: Vehicle[] = [
   {
-    slug: "executive-sedan",
-    name: "Executive sedan",
-    category: "sedan",
+    slug: "mercedes-e-class",
+    name: "Mercedes E Class",
+    tagline: {
+      sr: "Poslovna limuzina za šofer servis i transfere",
+      en: "Executive sedan for chauffeur service and transfers",
+      ru: "Бизнес-седан для шофёр-сервиса и трансферов"
+    },
     image:
-      "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80",
-    passengers: 4,
+      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1600&q=80",
+    passengers: 3,
     luggage: 3,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Dizel", en: "Diesel" },
-    pricePerDayEur: null
+    transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },
+    fuel: { sr: "Dizel", en: "Diesel", ru: "Дизель" },
+    comfort: {
+      sr: [
+        "Profesionalni šofer",
+        "Kožna sedišta i klima",
+        "Voda i Wi-Fi na zahtev",
+        "Diskretan i tih enterijer"
+      ],
+      en: [
+        "Professional chauffeur",
+        "Leather seats and climate control",
+        "Bottled water and Wi-Fi on request",
+        "Discreet, quiet cabin"
+      ],
+      ru: [
+        "Профессиональный шофёр",
+        "Кожаный салон и климат-контроль",
+        "Вода и Wi-Fi по запросу",
+        "Тихий, комфортный салон"
+      ]
+    }
   },
   {
-    slug: "business-sedan",
-    name: "Business sedan",
-    category: "sedan",
+    slug: "audi-q5",
+    name: "Audi Q5",
+    tagline: {
+      sr: "Premium SUV za aerodromske transfere i grupe sa prtljagom",
+      en: "Premium SUV for airport transfers and luggage-heavy trips",
+      ru: "Премиум-внедорожник для трансферов из аэропорта и поездок с багажом"
+    },
     image:
-      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1600&q=80",
     passengers: 4,
-    luggage: 3,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Benzin", en: "Petrol" },
-    pricePerDayEur: null
-  },
-  {
-    slug: "premium-suv",
-    name: "Premium SUV",
-    category: "suv",
-    image:
-      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1200&q=80",
-    passengers: 5,
     luggage: 4,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Dizel", en: "Diesel" },
-    pricePerDayEur: null
-  },
-  {
-    slug: "family-suv",
-    name: "Family SUV",
-    category: "suv",
-    image:
-      "https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=1200&q=80",
-    passengers: 7,
-    luggage: 5,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Dizel", en: "Diesel" },
-    pricePerDayEur: null
-  },
-  {
-    slug: "luxury-coupe",
-    name: "Luxury coupe",
-    category: "sport",
-    image:
-      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80",
-    passengers: 2,
-    luggage: 2,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Benzin", en: "Petrol" },
-    pricePerDayEur: null
-  },
-  {
-    slug: "sport-convertible",
-    name: "Sport convertible",
-    category: "sport",
-    image:
-      "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80",
-    passengers: 2,
-    luggage: 1,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Benzin", en: "Petrol" },
-    pricePerDayEur: null
-  },
-  {
-    slug: "group-van",
-    name: "Group van",
-    category: "van",
-    image:
-      "https://images.unsplash.com/photo-1609630875171-b1321377ee65?auto=format&fit=crop&w=1200&q=80",
-    passengers: 8,
-    luggage: 8,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Dizel", en: "Diesel" },
-    pricePerDayEur: null
-  },
-  {
-    slug: "comfort-van",
-    name: "Comfort van",
-    category: "van",
-    image:
-      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1200&q=80",
-    passengers: 6,
-    luggage: 6,
-    transmission: { sr: "Automatik", en: "Automatic" },
-    fuel: { sr: "Dizel", en: "Diesel" },
-    pricePerDayEur: null
+    transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },
+    fuel: { sr: "Dizel", en: "Diesel", ru: "Дизель" },
+    comfort: {
+      sr: [
+        "Profesionalni šofer",
+        "Prostran prtljažnik za aerodromske transfere",
+        "Kožna sedišta i klima",
+        "Voda i Wi-Fi na zahtev"
+      ],
+      en: [
+        "Professional chauffeur",
+        "Spacious boot for airport transfers",
+        "Leather seats and climate control",
+        "Bottled water and Wi-Fi on request"
+      ],
+      ru: [
+        "Профессиональный шофёр",
+        "Просторный багажник для аэропорта",
+        "Кожаный салон и климат-контроль",
+        "Вода и Wi-Fi по запросу"
+      ]
+    }
   }
 ];
 
-export function formatPrice(
-  vehicle: Vehicle,
-  locale: Locale,
-  placeholder: string
-): string {
-  if (vehicle.pricePerDayEur == null) return placeholder;
+export function pricePlaceholder(locale: Locale): string {
   return locale === "sr"
-    ? `${vehicle.pricePerDayEur} € / dan`
-    : `€${vehicle.pricePerDayEur} / day`;
+    ? "Cena na upit"
+    : locale === "ru"
+      ? "Цена по запросу"
+      : "Price on request";
 }

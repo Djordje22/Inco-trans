@@ -11,16 +11,26 @@ import {
   type FormEvent,
   type ReactNode
 } from "react";
-import { t } from "@/lib/i18n";
 import {
-  categoryLabels,
-  type VehicleCategory
-} from "@/lib/fleet-data";
+  X,
+  Check,
+  ChevronLeft as LucideChevronLeft,
+  ChevronRight as LucideChevronRight,
+  Car,
+  Handshake,
+  Phone,
+  ClipboardList,
+  UserRound,
+  MapPin
+} from "lucide-react";
+import { t } from "@/lib/i18n";
+import { vehicles } from "@/lib/fleet-data";
 import { siteConfig, type Locale } from "@/lib/site-config";
+import WhatsAppMark from "./icons/WhatsAppMark";
 
 // ---------- Context ----------
 
-type FlowKind = "choose" | "rent" | "handle" | "phone" | "success";
+type FlowKind = "choose" | "transfer" | "handle" | "phone" | "success";
 
 type Ctx = {
   open: boolean;
@@ -53,9 +63,7 @@ export function ReservationTrigger({
   variant
 }: TriggerProps) {
   const { openModal } = useReservation();
-  const cls =
-    className ??
-    (variant === "ghost" ? "btn-ghost" : "btn-gold");
+  const cls = className ?? (variant === "ghost" ? "btn-ghost" : "btn-gold");
   return (
     <button type="button" onClick={openModal} className={cls}>
       {children}
@@ -155,7 +163,7 @@ function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
         className="absolute inset-0 bg-black/75 backdrop-blur-sm"
       />
       <div
-        className="relative w-full sm:max-w-md glass-strong rounded-2xl sm:rounded-2xl overflow-hidden animate-fade-up"
+        className="relative w-full sm:max-w-md glass-strong rounded-2xl overflow-hidden animate-fade-up"
         style={{ maxHeight: "92vh" }}
       >
         <header className="flex items-center gap-3 px-5 py-4 border-b border-white/8">
@@ -184,8 +192,8 @@ function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
           {flow === "choose" ? (
             <ChooseStep locale={locale} onPick={setFlow} />
           ) : null}
-          {flow === "rent" ? (
-            <RentFlow
+          {flow === "transfer" ? (
+            <TransferFlow
               locale={locale}
               onBack={() => setFlow("choose")}
               onDone={() => setFlow("success")}
@@ -233,12 +241,35 @@ function ChooseStep({
       </div>
 
       <ul className="mt-7 space-y-3">
+        {/* WhatsApp first — primary CTA */}
+        <li>
+          <a
+            href={siteConfig.contact.whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group w-full flex items-center gap-3 rounded-xl border border-gold-400/40 bg-gold-400/10 px-3 py-3 hover:bg-gold-400/15 transition-colors"
+          >
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold-400/20 ring-1 ring-gold-400/40 text-gold-200">
+              <WhatsappIcon />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-semibold text-white text-sm sm:text-[15px]">
+                {dict.step1.whatsapp.title}
+              </span>
+              <span className="mt-0.5 block text-xs text-gold-200/85 truncate">
+                {siteConfig.contact.whatsapp}
+              </span>
+            </span>
+            <ChevronRight className="text-gold-200/70" />
+          </a>
+        </li>
+
         <ServiceCard
-          icon={<KeyIcon />}
-          title={dict.step1.rent.title}
-          desc={dict.step1.rent.desc}
+          icon={<CarIcon />}
+          title={dict.step1.transfer.title}
+          desc={dict.step1.transfer.desc}
           chip={dict.step1.learnMore}
-          onClick={() => onPick("rent")}
+          onClick={() => onPick("transfer")}
         />
         <ServiceCard
           icon={<HandshakeIcon />}
@@ -299,15 +330,9 @@ function ServiceCard({
   );
 }
 
-// ---------- Step progress indicator ----------
+// ---------- Progress indicator ----------
 
-function StepProgress({
-  steps,
-  current
-}: {
-  steps: string[];
-  current: number;
-}) {
+function StepProgress({ steps, current }: { steps: string[]; current: number }) {
   return (
     <ol className="flex items-center justify-between gap-2">
       {steps.map((label, i) => {
@@ -315,10 +340,7 @@ function StepProgress({
         const isCurrent = stepNum === current;
         const isDone = stepNum < current;
         return (
-          <li
-            key={label}
-            className="flex flex-col items-center flex-1 min-w-0"
-          >
+          <li key={label} className="flex flex-col items-center flex-1 min-w-0">
             <div className="flex items-center w-full">
               {i !== 0 ? (
                 <span
@@ -369,35 +391,41 @@ function StepProgress({
   );
 }
 
-// ---------- Rent a Car flow ----------
+// ---------- Transfer flow (4 steps) ----------
 
-type RentData = {
+type ServiceType = "airport" | "chauffeur" | "business" | "other";
+
+type TransferData = {
+  service: ServiceType | "";
   pickup: string;
-  return: string;
-  location: string;
-  crossBorder: boolean;
-  vehicle: VehicleCategory | "";
-  pastClient: boolean;
+  destination: string;
+  dateTime: string;
+  passengers: number;
+  flight: string;
+  vehicle: string;
   fullName: string;
   email: string;
   phone: string;
-  company: string;
+  whatsappSame: boolean;
+  message: string;
 };
 
-const EMPTY_RENT: RentData = {
+const EMPTY: TransferData = {
+  service: "",
   pickup: "",
-  return: "",
-  location: "",
-  crossBorder: false,
+  destination: "",
+  dateTime: "",
+  passengers: 1,
+  flight: "",
   vehicle: "",
-  pastClient: false,
   fullName: "",
   email: "",
   phone: "",
-  company: ""
+  whatsappSame: true,
+  message: ""
 };
 
-function RentFlow({
+function TransferFlow({
   locale,
   onBack,
   onDone
@@ -407,20 +435,19 @@ function RentFlow({
   onDone: () => void;
 }) {
   const dict = t(locale).modal;
-  const [data, setData] = useState<RentData>(EMPTY_RENT);
+  const [data, setData] = useState<TransferData>(EMPTY);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
-  const set = <K extends keyof RentData>(k: K, v: RentData[K]) =>
+  const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
+  const serviceValid = data.service !== "";
   const journeyValid =
     data.pickup.trim() !== "" &&
-    data.return.trim() !== "" &&
-    data.location.trim() !== "";
-  const vehicleValid = data.vehicle !== "";
+    data.destination.trim() !== "" &&
+    data.dateTime.trim() !== "";
   const contactValid =
     data.fullName.trim().length > 1 &&
-    data.email.includes("@") &&
     data.phone.trim().length >= 5;
 
   const onPrev = () => {
@@ -429,8 +456,8 @@ function RentFlow({
   };
 
   const onNext = () => {
-    if (step === 1 && !journeyValid) return;
-    if (step === 2 && !vehicleValid) return;
+    if (step === 1 && !serviceValid) return;
+    if (step === 2 && !journeyValid) return;
     if (step === 3 && !contactValid) return;
     setStep((s) => (s + 1) as 2 | 3 | 4);
   };
@@ -444,8 +471,8 @@ function RentFlow({
     <div>
       <StepProgress
         steps={[
+          dict.progress.service,
           dict.progress.journey,
-          dict.progress.vehicle,
           dict.progress.contact,
           dict.progress.review
         ]}
@@ -454,15 +481,15 @@ function RentFlow({
 
       <div className="mt-6">
         {step === 1 ? (
-          <RentStepJourney locale={locale} data={data} set={set} />
+          <ServiceStep locale={locale} data={data} set={set} />
         ) : null}
         {step === 2 ? (
-          <RentStepVehicle locale={locale} data={data} set={set} />
+          <JourneyStep locale={locale} data={data} set={set} />
         ) : null}
         {step === 3 ? (
           <ContactFields locale={locale} data={data} set={set} />
         ) : null}
-        {step === 4 ? <RentStepReview locale={locale} data={data} /> : null}
+        {step === 4 ? <ReviewStep locale={locale} data={data} /> : null}
       </div>
 
       <FormFooter
@@ -471,8 +498,8 @@ function RentFlow({
         onNext={step < 4 ? onNext : undefined}
         onSubmit={step === 4 ? onSubmit : undefined}
         nextDisabled={
-          (step === 1 && !journeyValid) ||
-          (step === 2 && !vehicleValid) ||
+          (step === 1 && !serviceValid) ||
+          (step === 2 && !journeyValid) ||
           (step === 3 && !contactValid)
         }
       />
@@ -480,98 +507,84 @@ function RentFlow({
   );
 }
 
-function RentStepJourney({
+function ServiceStep({
   locale,
   data,
   set
 }: {
   locale: Locale;
-  data: RentData;
-  set: <K extends keyof RentData>(k: K, v: RentData[K]) => void;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
 }) {
-  const dict = t(locale).modal.rent.journey;
-  return (
-    <div>
-      <StepHeading
-        icon={<CalendarIcon />}
-        title={dict.heading}
-        subtitle={dict.subheading}
-      />
-      <div className="mt-5 space-y-4">
-        <Field label={dict.pickup} required>
-          <input
-            type="datetime-local"
-            className="glass-input"
-            value={data.pickup}
-            onChange={(e) => set("pickup", e.target.value)}
-          />
-        </Field>
-        <Field label={dict.return} required>
-          <input
-            type="datetime-local"
-            className="glass-input"
-            value={data.return}
-            onChange={(e) => set("return", e.target.value)}
-          />
-        </Field>
-        <Field label={dict.location} required iconLabel>
-          <input
-            type="text"
-            className="glass-input"
-            placeholder={dict.locationPlaceholder}
-            value={data.location}
-            onChange={(e) => set("location", e.target.value)}
-          />
-        </Field>
-        <Toggle
-          label={dict.crossBorder}
-          checked={data.crossBorder}
-          onChange={(v) => set("crossBorder", v)}
-        />
-      </div>
-    </div>
-  );
-}
+  const dict = t(locale).modal.rent.service;
+  const tf = t(locale).transportForm;
+  const options: { value: ServiceType; label: string; desc: string }[] = [
+    {
+      value: "airport",
+      label: tf.serviceOptionAirport,
+      desc: locale === "sr"
+        ? "Aerodrom Nikola Tesla — adresa, hotel ili grad."
+        : locale === "ru"
+          ? "Аэропорт Никола Тесла — адрес, отель или город."
+          : "Nikola Tesla Airport — address, hotel or city."
+    },
+    {
+      value: "chauffeur",
+      label: tf.serviceOptionChauffeur,
+      desc: locale === "sr"
+        ? "Vozač na sat ili po zahtevu, više stajališta."
+        : locale === "ru"
+          ? "Водитель почасово или по запросу, несколько остановок."
+          : "Driver by the hour or on demand, multiple stops."
+    },
+    {
+      value: "business",
+      label: tf.serviceOptionBusiness,
+      desc: locale === "sr"
+        ? "Korporativni i VIP transfer, kartica ili faktura."
+        : locale === "ru"
+          ? "Корпоративный и VIP-трансфер, карта или счёт."
+          : "Corporate and VIP transfer, card or invoice."
+    },
+    {
+      value: "other",
+      label: tf.serviceOptionOther,
+      desc: locale === "sr"
+        ? "Drugačiji zahtev — opišite u napomeni."
+        : locale === "ru"
+          ? "Иной запрос — опишите в комментарии."
+          : "Different request — describe in notes."
+    }
+  ];
 
-function RentStepVehicle({
-  locale,
-  data,
-  set
-}: {
-  locale: Locale;
-  data: RentData;
-  set: <K extends keyof RentData>(k: K, v: RentData[K]) => void;
-}) {
-  const dict = t(locale).modal.rent.vehicle;
-  const cats: VehicleCategory[] = ["sedan", "suv", "sport", "van"];
   return (
     <div>
       <StepHeading
-        icon={<CarIcon />}
+        icon={<HandshakeIcon />}
         title={dict.heading}
         subtitle={dict.subheading}
       />
-      <ul className="mt-5 grid grid-cols-2 gap-3">
-        {cats.map((c) => {
-          const active = data.vehicle === c;
+      <ul className="mt-5 space-y-2.5">
+        {options.map((opt) => {
+          const active = data.service === opt.value;
           return (
-            <li key={c}>
+            <li key={opt.value}>
               <button
                 type="button"
-                onClick={() => set("vehicle", c)}
+                onClick={() => set("service", opt.value)}
                 aria-pressed={active}
                 className={
-                  "w-full text-left rounded-xl border px-3 py-3 transition-colors " +
+                  "w-full text-left rounded-xl border px-4 py-3 transition-colors " +
                   (active
                     ? "border-gold-400 bg-gold-400/10"
                     : "border-white/10 bg-white/5 hover:bg-white/10")
                 }
               >
                 <span className="block text-sm font-semibold text-white">
-                  {categoryLabels[c][locale]}
+                  {opt.label}
                 </span>
-                <span className="mt-0.5 block text-[11px] uppercase tracking-widest text-white/55">
-                  {c}
+                <span className="mt-0.5 block text-xs text-white/60">
+                  {opt.desc}
                 </span>
               </button>
             </li>
@@ -582,32 +595,135 @@ function RentStepVehicle({
   );
 }
 
-function RentStepReview({
+function JourneyStep({
+  locale,
+  data,
+  set
+}: {
+  locale: Locale;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+}) {
+  const dict = t(locale).modal.rent.journey;
+  const tf = t(locale).transportForm;
+  const showFlight = data.service === "airport";
+  return (
+    <div>
+      <StepHeading
+        icon={<PinIcon className="h-5 w-5" />}
+        title={dict.heading}
+        subtitle={dict.subheading}
+      />
+      <div className="mt-5 space-y-4">
+        <Field label={dict.pickup} required iconLabel>
+          <input
+            type="text"
+            className="glass-input"
+            placeholder={tf.pickupPlaceholder}
+            value={data.pickup}
+            onChange={(e) => set("pickup", e.target.value)}
+            autoComplete="off"
+          />
+        </Field>
+        <Field label={dict.destination} required iconLabel>
+          <input
+            type="text"
+            className="glass-input"
+            placeholder={tf.destinationPlaceholder}
+            value={data.destination}
+            onChange={(e) => set("destination", e.target.value)}
+            autoComplete="off"
+          />
+        </Field>
+        <Field label={dict.pickupDateTime} required>
+          <input
+            type="datetime-local"
+            className="glass-input"
+            value={data.dateTime}
+            onChange={(e) => set("dateTime", e.target.value)}
+          />
+        </Field>
+        <Field label={dict.passengers} required>
+          <input
+            type="number"
+            min={1}
+            max={8}
+            className="glass-input"
+            value={data.passengers}
+            onChange={(e) => set("passengers", Number(e.target.value) || 1)}
+          />
+        </Field>
+        {showFlight ? (
+          <Field label={dict.flightNumber} hint={dict.flightHint}>
+            <input
+              type="text"
+              className="glass-input"
+              placeholder="JU 401"
+              value={data.flight}
+              onChange={(e) => set("flight", e.target.value)}
+              autoComplete="off"
+            />
+          </Field>
+        ) : null}
+        <Field label={dict.vehiclePreference}>
+          <select
+            className="glass-input appearance-none"
+            value={data.vehicle}
+            onChange={(e) => set("vehicle", e.target.value)}
+          >
+            <option value="">{tf.vehicleAny}</option>
+            {vehicles.map((v) => (
+              <option key={v.slug} value={v.slug}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function ReviewStep({
   locale,
   data
 }: {
   locale: Locale;
-  data: RentData;
+  data: TransferData;
 }) {
   const dict = t(locale).modal.rent.review;
-  const items: { label: string; value: string }[] = [
-    {
-      label: dict.pickupLabel,
-      value: data.pickup ? formatDateTime(data.pickup, locale) : "—"
-    },
-    {
-      label: dict.returnLabel,
-      value: data.return ? formatDateTime(data.return, locale) : "—"
-    },
-    { label: dict.locationLabel, value: data.location || "—" },
-    {
-      label: dict.vehicleLabel,
-      value: data.vehicle ? categoryLabels[data.vehicle][locale] : "—"
-    },
-    {
-      label: locale === "sr" ? "Granica" : "Border",
-      value: data.crossBorder ? dict.crossBorderYes : dict.crossBorderNo
+  const tf = t(locale).transportForm;
+  const serviceLabel = (() => {
+    switch (data.service) {
+      case "airport":
+        return tf.serviceOptionAirport;
+      case "chauffeur":
+        return tf.serviceOptionChauffeur;
+      case "business":
+        return tf.serviceOptionBusiness;
+      case "other":
+        return tf.serviceOptionOther;
+      default:
+        return "—";
     }
+  })();
+  const vehicleLabel = data.vehicle
+    ? vehicles.find((v) => v.slug === data.vehicle)?.name ?? tf.vehicleAny
+    : tf.vehicleAny;
+
+  const items: { label: string; value: string }[] = [
+    { label: dict.serviceLabel, value: serviceLabel },
+    { label: dict.pickupLabel, value: data.pickup || "—" },
+    { label: dict.destinationLabel, value: data.destination || "—" },
+    {
+      label: dict.whenLabel,
+      value: data.dateTime ? formatDateTime(data.dateTime, locale) : "—"
+    },
+    { label: dict.passengersLabel, value: String(data.passengers) },
+    ...(data.service === "airport"
+      ? [{ label: dict.flightLabel, value: data.flight || "—" }]
+      : []),
+    { label: dict.vehicleLabel, value: vehicleLabel }
   ];
 
   return (
@@ -629,7 +745,7 @@ function RentStepReview({
         ))}
       </dl>
       <p className="mt-4 rounded-lg border border-gold-400/25 bg-gold-400/8 px-3 py-2 text-xs text-gold-200">
-        {dict.cashNote}
+        {dict.paymentNote}
       </p>
     </div>
   );
@@ -647,14 +763,12 @@ function HandleFlow({
   onDone: () => void;
 }) {
   const dict = t(locale).modal;
-  const [data, setData] = useState<RentData>(EMPTY_RENT);
-  const set = <K extends keyof RentData>(k: K, v: RentData[K]) =>
+  const [data, setData] = useState<TransferData>(EMPTY);
+  const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
   const valid =
-    data.fullName.trim().length > 1 &&
-    data.email.includes("@") &&
-    data.phone.trim().length >= 5;
+    data.fullName.trim().length > 1 && data.phone.trim().length >= 5;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -670,7 +784,7 @@ function HandleFlow({
         subtitle={dict.contact.subheading}
       />
       <div className="mt-5">
-        <ContactFields locale={locale} data={data} set={set} compact />
+        <ContactFields locale={locale} data={data} set={set} />
       </div>
       <FormFooter
         locale={locale}
@@ -688,22 +802,15 @@ function HandleFlow({
 function ContactFields({
   locale,
   data,
-  set,
-  compact = false
+  set
 }: {
   locale: Locale;
-  data: RentData;
-  set: <K extends keyof RentData>(k: K, v: RentData[K]) => void;
-  compact?: boolean;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
 }) {
   const dict = t(locale).modal.contact;
   return (
     <div className="space-y-4">
-      <Toggle
-        label={dict.pastClient}
-        checked={data.pastClient}
-        onChange={(v) => set("pastClient", v)}
-      />
       <Field label={dict.fullName} required>
         <input
           type="text"
@@ -712,16 +819,6 @@ function ContactFields({
           placeholder={dict.fullNamePlaceholder}
           value={data.fullName}
           onChange={(e) => set("fullName", e.target.value)}
-        />
-      </Field>
-      <Field label={dict.email} required>
-        <input
-          type="email"
-          autoComplete="email"
-          className="glass-input"
-          placeholder={dict.emailPlaceholder}
-          value={data.email}
-          onChange={(e) => set("email", e.target.value)}
         />
       </Field>
       <Field label={dict.phone} required>
@@ -739,22 +836,35 @@ function ContactFields({
           />
         </div>
       </Field>
-      {!compact ? null : null /* keep symmetric structure */}
-      <Field label={dict.company} hint={dict.companyHint}>
+      <Toggle
+        label={dict.whatsappSame}
+        checked={data.whatsappSame}
+        onChange={(v) => set("whatsappSame", v)}
+      />
+      <Field label={dict.email}>
         <input
-          type="text"
-          autoComplete="organization"
+          type="email"
+          autoComplete="email"
           className="glass-input"
-          placeholder={dict.companyPlaceholder}
-          value={data.company}
-          onChange={(e) => set("company", e.target.value)}
+          placeholder={dict.emailPlaceholder}
+          value={data.email}
+          onChange={(e) => set("email", e.target.value)}
+        />
+      </Field>
+      <Field label={dict.message}>
+        <textarea
+          rows={3}
+          className="glass-input resize-none"
+          placeholder={dict.messagePlaceholder}
+          value={data.message}
+          onChange={(e) => set("message", e.target.value)}
         />
       </Field>
     </div>
   );
 }
 
-// ---------- Book by Phone panel ----------
+// ---------- Book by Phone / WhatsApp panel ----------
 
 function PhonePanel({
   locale,
@@ -778,38 +888,39 @@ function PhonePanel({
       />
 
       <div className="mt-6 space-y-3">
-        <a
-          href={phoneHref}
-          className="flex items-center gap-3 rounded-xl border border-gold-400/40 bg-gold-400/10 px-4 py-3.5 hover:bg-gold-400/15"
-        >
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gold-400/20 text-gold-200">
-            <PhoneIcon />
-          </span>
-          <span className="flex-1">
-            <span className="block text-[11px] uppercase tracking-widest text-gold-200/80">
-              {dict.phonePanel.callCta}
-            </span>
-            <span className="block font-semibold text-white">{phone}</span>
-          </span>
-          <ChevronRight className="text-white/55" />
-        </a>
-
+        {/* WhatsApp first */}
         <a
           href={wa}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 hover:bg-white/10"
+          className="flex items-center gap-3 rounded-xl border border-gold-400/40 bg-gold-400/10 px-4 py-3.5 hover:bg-gold-400/15"
         >
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-white/85">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gold-400/20 text-gold-200">
             <WhatsappIcon />
           </span>
           <span className="flex-1">
-            <span className="block text-[11px] uppercase tracking-widest text-white/55">
+            <span className="block text-[11px] uppercase tracking-widest text-gold-200/80">
               {dict.phonePanel.whatsappCta}
             </span>
             <span className="block font-semibold text-white">
               {siteConfig.contact.whatsapp}
             </span>
+          </span>
+          <ChevronRight className="text-white/55" />
+        </a>
+
+        <a
+          href={phoneHref}
+          className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 hover:bg-white/10"
+        >
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-white/85">
+            <PhoneIcon />
+          </span>
+          <span className="flex-1">
+            <span className="block text-[11px] uppercase tracking-widest text-white/55">
+              {dict.phonePanel.callCta}
+            </span>
+            <span className="block font-semibold text-white">{phone}</span>
           </span>
           <ChevronRight className="text-white/55" />
         </a>
@@ -857,13 +968,24 @@ function SuccessPanel({
       <p className="mt-2 text-sm text-white/65 max-w-sm mx-auto">
         {dict.success.body}
       </p>
-      <button
-        type="button"
-        onClick={onClose}
-        className="btn-gold mt-6 w-full justify-center"
-      >
-        {dict.success.done}
-      </button>
+      <div className="mt-6 space-y-2">
+        <a
+          href={siteConfig.contact.whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-gold w-full justify-center"
+        >
+          <WhatsappIcon />
+          {dict.phonePanel.whatsappCta}
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          className="btn-ghost w-full justify-center"
+        >
+          {dict.success.done}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1014,7 +1136,9 @@ function formatDateTime(iso: string, locale: Locale): string {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso;
-    return d.toLocaleString(locale === "sr" ? "sr-Latn" : "en-GB", {
+    const bcp47 =
+      locale === "sr" ? "sr-Latn" : locale === "ru" ? "ru-RU" : "en-GB";
+    return d.toLocaleString(bcp47, {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -1026,139 +1150,69 @@ function formatDateTime(iso: string, locale: Locale): string {
   }
 }
 
-// ---------- Icons (inline svg, no extra deps) ----------
+// ---------- Icons (Lucide-backed wrappers + WhatsApp brand mark) ----------
 
-function Svg({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className ?? "h-5 w-5"}
-      aria-hidden="true"
-    >
-      {children}
-    </svg>
-  );
-}
+const STROKE = 1.7;
 
 function CloseIcon() {
-  return (
-    <Svg className="h-4 w-4">
-      <line x1="6" y1="6" x2="18" y2="18" />
-      <line x1="6" y1="18" x2="18" y2="6" />
-    </Svg>
-  );
+  return <X className="h-4 w-4" strokeWidth={STROKE} aria-hidden="true" />;
 }
 function ChevronRight({ className }: { className?: string }) {
   return (
-    <Svg className={(className ?? "") + " h-4 w-4"}>
-      <polyline points="9 6 15 12 9 18" />
-    </Svg>
+    <LucideChevronRight
+      className={(className ?? "") + " h-4 w-4"}
+      strokeWidth={STROKE}
+      aria-hidden="true"
+    />
   );
 }
 function ChevronLeft() {
   return (
-    <Svg className="h-4 w-4">
-      <polyline points="15 6 9 12 15 18" />
-    </Svg>
+    <LucideChevronLeft className="h-4 w-4" strokeWidth={STROKE} aria-hidden="true" />
   );
 }
 function CheckIcon() {
   return (
-    <Svg className="h-3.5 w-3.5">
-      <polyline points="20 6 9 17 4 12" />
-    </Svg>
+    <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
   );
 }
 function CheckBigIcon() {
-  return (
-    <Svg className="h-7 w-7">
-      <polyline points="20 6 9 17 4 12" />
-    </Svg>
-  );
+  return <Check className="h-7 w-7" strokeWidth={2.5} aria-hidden="true" />;
 }
-function KeyIcon() {
-  return (
-    <Svg>
-      <circle cx="8" cy="15" r="3" />
-      <path d="M10.5 12.5 21 2" />
-      <path d="m17 6 3 3" />
-      <path d="m14 9 3 3" />
-    </Svg>
-  );
+function CarIcon() {
+  return <Car className="h-5 w-5" strokeWidth={STROKE} aria-hidden="true" />;
 }
 function HandshakeIcon() {
   return (
-    <Svg>
-      <path d="m11 17 2 2a2 2 0 1 0 3-3" />
-      <path d="m14 14 3 3a2 2 0 1 0 3-3l-5-5-2 2a2 2 0 1 1-3-3l4-4a3 3 0 0 1 4 0l5 5" />
-      <path d="M2 13l5 5a3 3 0 0 0 4 0l3-3" />
-      <path d="M9 8 4 13" />
-    </Svg>
+    <Handshake className="h-5 w-5" strokeWidth={STROKE} aria-hidden="true" />
   );
 }
 function PhoneIcon() {
-  return (
-    <Svg>
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.86 19.86 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92Z" />
-    </Svg>
-  );
+  return <Phone className="h-5 w-5" strokeWidth={STROKE} aria-hidden="true" />;
 }
 function WhatsappIcon() {
-  return (
-    <Svg>
-      <path d="M3 21l2-6a8 8 0 1 1 4 4l-6 2Z" />
-      <path d="M9 10c.5 1.5 1.5 2.5 3 3 .8.3 1.5.2 2-.2l1-.7c.3-.2.7-.2 1 0l1.5 1c.3.2.4.5.3.8-.4 1-1.5 1.6-2.5 1.6-2.5 0-5-2-6-4-.4-1-.2-2.2.6-2.6l.7-.4c.3-.2.6-.1.8.1L11 9c.2.3.2.7 0 1l-.7 1c-.4.4-.5.5-1.3 0" />
-    </Svg>
-  );
-}
-function CalendarIcon() {
-  return (
-    <Svg>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </Svg>
-  );
-}
-function CarIcon() {
-  return (
-    <Svg>
-      <path d="M3 13l2-5a3 3 0 0 1 3-2h8a3 3 0 0 1 3 2l2 5v4h-2a2 2 0 1 1-4 0H9a2 2 0 1 1-4 0H3v-4Z" />
-      <circle cx="7.5" cy="15.5" r="0.5" />
-      <circle cx="16.5" cy="15.5" r="0.5" />
-    </Svg>
-  );
+  return <WhatsAppMark className="h-5 w-5" />;
 }
 function ClipboardIcon() {
   return (
-    <Svg>
-      <rect x="6" y="4" width="12" height="18" rx="2" />
-      <rect x="9" y="2" width="6" height="4" rx="1" />
-      <line x1="9" y1="12" x2="15" y2="12" />
-      <line x1="9" y1="16" x2="13" y2="16" />
-    </Svg>
+    <ClipboardList
+      className="h-5 w-5"
+      strokeWidth={STROKE}
+      aria-hidden="true"
+    />
   );
 }
 function UserIcon() {
   return (
-    <Svg>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21a8 8 0 0 1 16 0" />
-    </Svg>
+    <UserRound className="h-5 w-5" strokeWidth={STROKE} aria-hidden="true" />
   );
 }
 function PinIcon({ className }: { className?: string }) {
   return (
-    <Svg className={className ?? "h-4 w-4"}>
-      <path d="M12 21s-7-7-7-12a7 7 0 1 1 14 0c0 5-7 12-7 12Z" />
-      <circle cx="12" cy="9" r="2.5" />
-    </Svg>
+    <MapPin
+      className={className ?? "h-4 w-4"}
+      strokeWidth={STROKE}
+      aria-hidden="true"
+    />
   );
 }

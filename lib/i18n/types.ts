@@ -1,0 +1,232 @@
+export type ServiceKey = "airport" | "chauffeur" | "business";
+
+export type Dict = {
+  nav: {
+    home: string;
+    fleet: string;
+    quote: string;
+    about: string;
+    contact: string;
+    requestQuote: string;
+    whatsapp: string;
+    services: string;
+    airportTransfer: string;
+    chauffeurService: string;
+    businessTransfer: string;
+  };
+  hero: {
+    eyebrow: string;
+    title1: string;
+    title2: string;
+    subtitle: string;
+    ctaPrimary: string;
+    ctaSecondary: string;
+    whatsappCta: string;
+  };
+  badges: {
+    hours247: string;
+    cashAndCard: string;
+    whatsapp: string;
+  };
+  services: {
+    title: string;
+    subtitle: string;
+    learnMore: string;
+    items: Record<
+      ServiceKey,
+      { title: string; desc: string; cta?: string }
+    >;
+  };
+  fleetPreview: {
+    title: string;
+    subtitle: string;
+    viewAll: string;
+  };
+  fleetCard: {
+    passengers: string;
+    luggage: string;
+    transmission: string;
+    fuel: string;
+    pricePlaceholder: string;
+    reserve: string;
+    whatsappBook: string;
+  };
+  fleetPage: {
+    title: string;
+    subtitle: string;
+  };
+  why: {
+    title: string;
+    items: { title: string; desc: string }[];
+  };
+  how: {
+    title: string;
+    steps: { title: string; desc: string }[];
+  };
+  about: {
+    title: string;
+    body: string[];
+    valuesTitle: string;
+    values: string[];
+  };
+  contact: {
+    title: string;
+    subtitle: string;
+    formTitle: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    message: string;
+    submit: string;
+    submitNote: string;
+    addressLabel: string;
+    hoursLabel: string;
+    whatsappLabel: string;
+    mapPlaceholder: string;
+  };
+  footer: {
+    rights: string;
+    quickLinks: string;
+    servicesHeading: string;
+    contact: string;
+    payments: string;
+    paymentsValue: string;
+    hoursValue: string;
+    disclaimer: string;
+  };
+  quotePage: {
+    title: string;
+    subtitle: string;
+    detailsTitle: string;
+    notes: string[];
+  };
+  transportForm: {
+    title: string;
+    eyebrow: string;
+    serviceType: string;
+    serviceOptionAirport: string;
+    serviceOptionChauffeur: string;
+    serviceOptionBusiness: string;
+    serviceOptionOther: string;
+    pickup: string;
+    pickupPlaceholder: string;
+    destination: string;
+    destinationPlaceholder: string;
+    pickupDateTime: string;
+    passengers: string;
+    luggage: string;
+    flightNumber: string;
+    flightHint: string;
+    vehiclePreference: string;
+    vehicleAny: string;
+    fullName: string;
+    phone: string;
+    whatsappSame: string;
+    email: string;
+    message: string;
+    submit: string;
+    submitNote: string;
+    twentyFourSeven: string;
+    cardAndCash: string;
+  };
+  cta: {
+    readyTitle: string;
+    readyBody: string;
+  };
+  modal: {
+    title: string;
+    close: string;
+    step1: {
+      heading: string;
+      subheading: string;
+      learnMore: string;
+      transfer: { title: string; desc: string };
+      handle: { title: string; desc: string };
+      whatsapp: { title: string };
+      phone: { title: string };
+    };
+    progress: {
+      service: string;
+      journey: string;
+      contact: string;
+      review: string;
+    };
+    rent: {
+      service: {
+        heading: string;
+        subheading: string;
+      };
+      journey: {
+        heading: string;
+        subheading: string;
+        pickup: string;
+        destination: string;
+        pickupDateTime: string;
+        passengers: string;
+        flightNumber: string;
+        flightHint: string;
+        vehiclePreference: string;
+      };
+      review: {
+        heading: string;
+        subheading: string;
+        serviceLabel: string;
+        pickupLabel: string;
+        destinationLabel: string;
+        whenLabel: string;
+        passengersLabel: string;
+        flightLabel: string;
+        vehicleLabel: string;
+        paymentNote: string;
+      };
+    };
+    contact: {
+      heading: string;
+      subheading: string;
+      fullName: string;
+      fullNamePlaceholder: string;
+      email: string;
+      emailPlaceholder: string;
+      phone: string;
+      phonePlaceholder: string;
+      whatsappSame: string;
+      message: string;
+      messagePlaceholder: string;
+      submitInquiry: string;
+    };
+    buttons: {
+      back: string;
+      continue: string;
+      submitRequest: string;
+    };
+    success: {
+      title: string;
+      body: string;
+      done: string;
+    };
+    phonePanel: {
+      heading: string;
+      subheading: string;
+      whatsappCta: string;
+      callCta: string;
+      hours: string;
+    };
+  };
+  servicePages: Record<
+    ServiceKey,
+    {
+      eyebrow: string;
+      title: string;
+      subtitle: string;
+      heroBody: string;
+      includedTitle: string;
+      included: string[];
+      detailTitle: string;
+      detailBody: string[];
+      keywordsTitle: string;
+      keywords: string[];
+      ctaText: string;
+      crossLinkTitle: string;
+    }
+  >;
+};

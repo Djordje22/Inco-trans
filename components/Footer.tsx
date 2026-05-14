@@ -8,11 +8,25 @@ export default function Footer({ locale }: Props) {
   const dict = t(locale);
   const year = new Date().getFullYear();
 
-  const navLinks = [
+  const quickLinks = [
     { href: routeMap.fleet[locale], label: dict.nav.fleet },
-    { href: routeMap.quote[locale], label: dict.nav.quote },
     { href: routeMap.about[locale], label: dict.nav.about },
     { href: routeMap.contact[locale], label: dict.nav.contact }
+  ];
+
+  const serviceLinks = [
+    {
+      href: routeMap.airportTransfer[locale],
+      label: dict.nav.airportTransfer
+    },
+    {
+      href: routeMap.chauffeurService[locale],
+      label: dict.nav.chauffeurService
+    },
+    {
+      href: routeMap.businessTransfer[locale],
+      label: dict.nav.businessTransfer
+    }
   ];
 
   return (
@@ -23,19 +37,29 @@ export default function Footer({ locale }: Props) {
             {siteConfig.name}
           </div>
           <p className="mt-2 text-sm text-white/55 max-w-xs">
+            {siteConfig.tagline[locale]}
+          </p>
+          <p className="mt-3 text-xs text-white/45 max-w-xs">
             {dict.hero.subtitle}
           </p>
         </div>
 
         <div>
-          <h3 className="eyebrow">{dict.footer.quickLinks}</h3>
+          <h3 className="eyebrow">{dict.footer.servicesHeading}</h3>
           <ul className="mt-3 space-y-2 text-sm">
-            {navLinks.map((l) => (
+            {serviceLinks.map((l) => (
               <li key={l.href}>
-                <Link
-                  href={l.href}
-                  className="text-white/70 hover:text-white"
-                >
+                <Link href={l.href} className="text-white/70 hover:text-white">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <h3 className="eyebrow mt-6">{dict.footer.quickLinks}</h3>
+          <ul className="mt-3 space-y-2 text-sm">
+            {quickLinks.map((l) => (
+              <li key={l.href}>
+                <Link href={l.href} className="text-white/70 hover:text-white">
                   {l.label}
                 </Link>
               </li>
@@ -46,8 +70,32 @@ export default function Footer({ locale }: Props) {
         <div>
           <h3 className="eyebrow">{dict.footer.contact}</h3>
           <ul className="mt-3 space-y-2 text-sm text-white/70">
-            <li>{siteConfig.contact.phone}</li>
-            <li>{siteConfig.contact.email}</li>
+            <li>
+              <a
+                href={siteConfig.contact.whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white"
+              >
+                {dict.contact.whatsappLabel}: {siteConfig.contact.whatsapp}
+              </a>
+            </li>
+            <li>
+              <a
+                href={siteConfig.contact.phoneHref}
+                className="hover:text-white"
+              >
+                {siteConfig.contact.phone}
+              </a>
+            </li>
+            <li>
+              <a
+                href={siteConfig.contact.emailHref}
+                className="hover:text-white"
+              >
+                {siteConfig.contact.email}
+              </a>
+            </li>
             <li>{siteConfig.contact.address}</li>
           </ul>
         </div>
@@ -56,6 +104,10 @@ export default function Footer({ locale }: Props) {
           <h3 className="eyebrow">{dict.footer.payments}</h3>
           <p className="mt-3 text-sm text-white/70">
             {dict.footer.paymentsValue}
+          </p>
+          <h3 className="eyebrow mt-6">{dict.contact.hoursLabel}</h3>
+          <p className="mt-3 text-sm text-white/70">
+            {dict.footer.hoursValue}
           </p>
         </div>
       </div>

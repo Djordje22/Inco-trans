@@ -2,6 +2,7 @@ import PageShell from "@/components/PageShell";
 import PageHero from "@/components/PageHero";
 import ContactForm from "@/components/ContactForm";
 import JsonLd from "@/components/JsonLd";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { buildMetadata } from "@/lib/metadata";
 import { t } from "@/lib/i18n";
 import { siteConfig } from "@/lib/site-config";
@@ -34,12 +35,14 @@ export default function KontaktPage() {
               <h2 className="eyebrow">{dict.footer.contact}</h2>
               <ul className="mt-3 space-y-3 text-sm">
                 <li>
-                  <span className="text-white/55 mr-2">Tel:</span>
-                  <span className="text-white/90">{siteConfig.contact.phone}</span>
+                  <span className="text-white/55 mr-2">
+                    {dict.contact.whatsappLabel}:
+                  </span>
+                  <span className="text-white/90">{siteConfig.contact.whatsapp}</span>
                 </li>
                 <li>
-                  <span className="text-white/55 mr-2">WhatsApp:</span>
-                  <span className="text-white/90">{siteConfig.contact.whatsapp}</span>
+                  <span className="text-white/55 mr-2">Tel:</span>
+                  <span className="text-white/90">{siteConfig.contact.phone}</span>
                 </li>
                 <li>
                   <span className="text-white/55 mr-2">Email:</span>
@@ -60,6 +63,9 @@ export default function KontaktPage() {
                   </span>
                 </li>
               </ul>
+              <div className="mt-5">
+                <WhatsAppButton label={dict.hero.whatsappCta} />
+              </div>
             </div>
 
             <div className="glass rounded-2xl overflow-hidden">

@@ -1,6 +1,6 @@
 import PageShell from "@/components/PageShell";
 import Hero from "@/components/Hero";
-import Categories from "@/components/Categories";
+import Services from "@/components/Services";
 import FleetPreview from "@/components/FleetPreview";
 import WhyUs from "@/components/WhyUs";
 import HowItWorks from "@/components/HowItWorks";
@@ -22,7 +22,7 @@ export default function EnHomePage() {
     <PageShell locale="en" routeKey="home">
       <JsonLd locale="en" />
       <Hero locale="en" />
-      <Categories locale="en" />
+      <Services locale="en" />
       <FleetPreview locale="en" />
       <WhyUs locale="en" />
       <HowItWorks locale="en" />

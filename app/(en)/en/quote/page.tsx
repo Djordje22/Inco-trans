@@ -2,6 +2,7 @@ import PageShell from "@/components/PageShell";
 import PageHero from "@/components/PageHero";
 import QuoteForm from "@/components/QuoteForm";
 import JsonLd from "@/components/JsonLd";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { buildMetadata } from "@/lib/metadata";
 import { t } from "@/lib/i18n";
 import { siteConfig } from "@/lib/site-config";
@@ -31,12 +32,15 @@ export default function QuotePage() {
 
           <aside className="glass rounded-2xl p-6 sm:p-8">
             <h2 className="font-display text-xl text-white">
-              Booking details
+              {dict.quotePage.detailsTitle}
             </h2>
             <ul className="mt-4 space-y-3 text-sm text-white/75">
-              <li>{dict.quoteCard.cashOnly}</li>
-              <li>Availability is confirmed in response to your request.</li>
-              <li>Pick-up in Belgrade.</li>
+              {dict.quotePage.notes.map((n) => (
+                <li key={n} className="flex items-start gap-2">
+                  <span aria-hidden="true" className="mt-1 text-gold-400">◆</span>
+                  <span>{n}</span>
+                </li>
+              ))}
             </ul>
             <div className="hairline my-6" />
             <div className="text-sm text-white/65 space-y-2">
@@ -45,13 +49,16 @@ export default function QuotePage() {
                 {siteConfig.contact.phone}
               </p>
               <p>
-                <span className="text-white/80 font-medium">Email: </span>
-                {siteConfig.contact.email}
-              </p>
-              <p>
                 <span className="text-white/80 font-medium">WhatsApp: </span>
                 {siteConfig.contact.whatsapp}
               </p>
+              <p>
+                <span className="text-white/80 font-medium">Email: </span>
+                {siteConfig.contact.email}
+              </p>
+            </div>
+            <div className="mt-6">
+              <WhatsAppButton label={dict.hero.whatsappCta} />
             </div>
           </aside>
         </div>

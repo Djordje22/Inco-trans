@@ -1,6 +1,6 @@
 import PageShell from "@/components/PageShell";
 import Hero from "@/components/Hero";
-import Categories from "@/components/Categories";
+import Services from "@/components/Services";
 import FleetPreview from "@/components/FleetPreview";
 import WhyUs from "@/components/WhyUs";
 import HowItWorks from "@/components/HowItWorks";
@@ -22,7 +22,7 @@ export default function SrHomePage() {
     <PageShell locale="sr" routeKey="home">
       <JsonLd locale="sr" />
       <Hero locale="sr" />
-      <Categories locale="sr" />
+      <Services locale="sr" />
       <FleetPreview locale="sr" />
       <WhyUs locale="sr" />
       <HowItWorks locale="sr" />

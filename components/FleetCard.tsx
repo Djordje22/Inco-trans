@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { formatPrice, type Vehicle } from "@/lib/fleet-data";
-import { type Locale } from "@/lib/site-config";
+import { type Vehicle, pricePlaceholder } from "@/lib/fleet-data";
+import { siteConfig, type Locale } from "@/lib/site-config";
 import { t } from "@/lib/i18n";
 import { ReservationTrigger } from "./ReservationModal";
 
@@ -11,11 +11,12 @@ type Props = {
 
 export default function FleetCard({ vehicle, locale }: Props) {
   const dict = t(locale);
-  const price = formatPrice(vehicle, locale, dict.fleetCard.pricePlaceholder);
   const altText =
     locale === "sr"
-      ? `${vehicle.name} — primer vozila iz Inco Trans flote`
-      : `${vehicle.name} — example vehicle from the Inco Trans fleet`;
+      ? `${vehicle.name} — vozilo iz Inco Trans flote sa profesionalnim šoferom`
+      : locale === "ru"
+        ? `${vehicle.name} — автомобиль Inco Trans с профессиональным шофёром`
+        : `${vehicle.name} — Inco Trans vehicle with professional chauffeur`;
 
   return (
     <article className="glass rounded-2xl overflow-hidden flex flex-col">
@@ -24,18 +25,16 @@ export default function FleetCard({ vehicle, locale }: Props) {
           src={vehicle.image}
           alt={altText}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 768px) 100vw, 50vw"
           className="object-cover"
         />
-        <span className="absolute left-3 top-3 inline-flex items-center rounded-full border border-white/10 bg-ink-900/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/80 backdrop-blur">
-          {vehicle.category}
-        </span>
       </div>
 
-      <div className="p-5 flex flex-1 flex-col">
-        <h3 className="font-display text-lg text-white">{vehicle.name}</h3>
+      <div className="p-6 flex flex-1 flex-col">
+        <h3 className="font-display text-xl text-white">{vehicle.name}</h3>
+        <p className="mt-1 text-sm text-white/65">{vehicle.tagline[locale]}</p>
 
-        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-white/65">
+        <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-white/65">
           <div className="flex items-center justify-between">
             <dt>{dict.fleetCard.passengers}</dt>
             <dd className="text-white/90 font-medium">{vehicle.passengers}</dd>
@@ -56,16 +55,34 @@ export default function FleetCard({ vehicle, locale }: Props) {
           </div>
         </dl>
 
-        <div className="mt-5 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-white/45">
-              {dict.fleetCard.perDay}
-            </p>
-            <p className="text-base font-semibold text-gold-300">{price}</p>
+        <ul className="mt-5 space-y-1.5 text-sm text-white/75">
+          {vehicle.comfort[locale].map((c) => (
+            <li key={c} className="flex items-start gap-2">
+              <span aria-hidden="true" className="mt-1 text-gold-400 text-[10px]">
+                ◆
+              </span>
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/8 pt-4">
+          <span className="text-sm font-semibold text-gold-300">
+            {pricePlaceholder(locale)}
+          </span>
+          <div className="flex items-center gap-2">
+            <a
+              href={siteConfig.contact.whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost !py-2 !px-3 text-xs"
+            >
+              {dict.fleetCard.whatsappBook}
+            </a>
+            <ReservationTrigger className="btn-gold !py-2 !px-3 text-xs">
+              {dict.fleetCard.reserve}
+            </ReservationTrigger>
           </div>
-          <ReservationTrigger className="btn-ghost !py-2 !px-3 text-xs">
-            {dict.fleetCard.reserve}
-          </ReservationTrigger>
         </div>
       </div>
     </article>

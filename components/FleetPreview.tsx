@@ -7,7 +7,6 @@ import SectionHeader from "./SectionHeader";
 
 export default function FleetPreview({ locale }: { locale: Locale }) {
   const dict = t(locale);
-  const featured = vehicles.slice(0, 4);
 
   return (
     <section
@@ -30,8 +29,8 @@ export default function FleetPreview({ locale }: { locale: Locale }) {
         </Link>
       </div>
 
-      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {featured.map((v) => (
+      <div className="mt-10 grid gap-6 md:grid-cols-2">
+        {vehicles.map((v) => (
           <FleetCard key={v.slug} vehicle={v} locale={locale} />
         ))}
       </div>
