@@ -89,6 +89,16 @@ export const routeMap = {
     sr: "/poslovni-transfer",
     en: "/en/business-transfer",
     ru: "/ru/business-transfer"
+  },
+  terms: {
+    sr: "/uslovi-koriscenja",
+    en: "/en/terms",
+    ru: "/ru/terms"
+  },
+  privacy: {
+    sr: "/politika-privatnosti",
+    en: "/en/privacy",
+    ru: "/ru/privacy"
   }
 } as const;
 

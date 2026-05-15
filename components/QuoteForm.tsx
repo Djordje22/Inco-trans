@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  clampBookingCount,
+  MAX_LUGGAGE,
+  MAX_PASSENGERS,
+  MIN_LUGGAGE,
+  MIN_PASSENGERS
+} from "@/lib/booking-constraints";
 import { t } from "@/lib/i18n";
 import { vehicles } from "@/lib/fleet-data";
 import type { Locale } from "@/lib/site-config";
@@ -21,6 +28,17 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitted(true);
+  };
+
+  const enforceCount = (
+    e: ChangeEvent<HTMLInputElement>,
+    min: number,
+    max: number
+  ) => {
+    if (e.currentTarget.value === "") return;
+    e.currentTarget.value = String(
+      clampBookingCount(Number(e.currentTarget.value), min, max)
+    );
   };
 
   const isCard = variant === "card";
@@ -121,7 +139,7 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
             autoComplete="off"
           />
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <label
             htmlFor="qf-datetime"
             className="mb-1.5 block text-xs font-medium text-white/70"
@@ -135,22 +153,45 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
             className="glass-input"
           />
         </div>
-        <div>
-          <label
-            htmlFor="qf-passengers"
-            className="mb-1.5 block text-xs font-medium text-white/70"
-          >
-            {tf.passengers}
-          </label>
-          <input
-            id="qf-passengers"
-            name="passengers"
-            type="number"
-            min={1}
-            max={8}
-            className="glass-input"
-            defaultValue={1}
-          />
+        <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+          <div>
+            <label
+              htmlFor="qf-passengers"
+              className="mb-1.5 block text-xs font-medium text-white/70"
+            >
+              {tf.passengers}
+            </label>
+            <input
+              id="qf-passengers"
+              name="passengers"
+              type="number"
+              min={MIN_PASSENGERS}
+              max={MAX_PASSENGERS}
+              className="glass-input"
+              defaultValue={MIN_PASSENGERS}
+              onChange={(e) => enforceCount(e, MIN_PASSENGERS, MAX_PASSENGERS)}
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="qf-luggage"
+              className="mb-1.5 block text-xs font-medium text-white/70"
+            >
+              {tf.luggage}
+            </label>
+            <input
+              id="qf-luggage"
+              name="luggage"
+              type="number"
+              min={MIN_LUGGAGE}
+              max={MAX_LUGGAGE}
+              className="glass-input"
+              defaultValue={MIN_LUGGAGE}
+              onChange={(e) => enforceCount(e, MIN_LUGGAGE, MAX_LUGGAGE)}
+              required
+            />
+          </div>
         </div>
         {service === "airport" ? (
           <div className="sm:col-span-2">
@@ -182,9 +223,8 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
             id="qf-vehicle"
             name="vehicle"
             className="glass-input appearance-none"
-            defaultValue=""
+            defaultValue="mercedes-e-class"
           >
-            <option value="">{tf.vehicleAny}</option>
             {vehicles.map((v) => (
               <option key={v.slug} value={v.slug}>
                 {v.name}

@@ -26,7 +26,7 @@ export const vehicles: Vehicle[] = [
     },
     image:
       "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1600&q=80",
-    passengers: 3,
+    passengers: 4,
     luggage: 3,
     transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },
     fuel: { sr: "Dizel", en: "Diesel", ru: "Дизель" },

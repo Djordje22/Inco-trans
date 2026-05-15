@@ -12,14 +12,20 @@ import {
   type ReactNode
 } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   X,
   Check,
   ChevronLeft as LucideChevronLeft,
   ChevronRight as LucideChevronRight,
+  ChevronDown,
   Car,
   Handshake,
   Phone,
+  Mail,
+  CreditCard,
+  Banknote,
+  HelpCircle,
   ClipboardList,
   UserRound,
   MapPin,
@@ -48,6 +54,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { t } from "@/lib/i18n";
+import {
+  clampBookingCount,
+  MAX_LUGGAGE,
+  MAX_PASSENGERS,
+  MIN_LUGGAGE,
+  MIN_PASSENGERS
+} from "@/lib/booking-constraints";
 import { vehicles } from "@/lib/fleet-data";
 import { siteConfig, type Locale } from "@/lib/site-config";
 import WhatsAppMark from "./icons/WhatsAppMark";
@@ -414,6 +427,8 @@ function StepProgress({ steps, current }: { steps: string[]; current: number }) 
 
 type ServiceType = "airport" | "chauffeur" | "business" | "other";
 type AirportDirection = "from" | "to" | "";
+type PreferredCommunication = "phone_sms" | "viber_whatsapp" | "email";
+type PaymentMethod = "card" | "cash";
 
 type Stop = { id: string; value: string };
 
@@ -434,12 +449,17 @@ type TransferData = {
   waitingHours: number; // 0 = none, otherwise 1..MAX_WAITING_HOURS
   dateTime: string;
   passengers: number;
+  luggage: number;
   flight: string;
   vehicle: string;
   fullName: string;
   email: string;
+  phoneCountryCode: string;
   phone: string;
-  whatsappSame: boolean;
+  companyName: string;
+  preferredCommunication: PreferredCommunication | "";
+  paymentMethod: PaymentMethod;
+  termsAccepted: boolean;
   message: string;
 };
 
@@ -452,14 +472,42 @@ const EMPTY: TransferData = {
   waitingHours: 0,
   dateTime: "",
   passengers: 1,
+  luggage: 0,
   flight: "",
   vehicle: "",
   fullName: "",
   email: "",
+  phoneCountryCode: "+381",
   phone: "",
-  whatsappSame: true,
+  companyName: "",
+  preferredCommunication: "",
+  paymentMethod: "cash",
+  termsAccepted: false,
   message: ""
 };
+
+const PHONE_COUNTRY_CODES = [
+  { code: "+381", flag: "🇷🇸" },
+  { code: "+382", flag: "🇲🇪" },
+  { code: "+387", flag: "🇧🇦" },
+  { code: "+385", flag: "🇭🇷" },
+  { code: "+386", flag: "🇸🇮" },
+  { code: "+389", flag: "🇲🇰" },
+  { code: "+49", flag: "🇩🇪" },
+  { code: "+43", flag: "🇦🇹" },
+  { code: "+41", flag: "🇨🇭" },
+  { code: "+44", flag: "🇬🇧" },
+  { code: "+1", flag: "🇺🇸" }
+];
+
+const isEmailValid = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+const isContactValid = (data: TransferData) =>
+  data.fullName.trim().length > 1 &&
+  isEmailValid(data.email) &&
+  data.phone.trim().length >= 5 &&
+  data.preferredCommunication !== "";
 
 function TransferFlow({
   locale,
@@ -492,8 +540,7 @@ function TransferFlow({
     data.destination.trim() !== "" &&
     data.dateTime.trim() !== "";
   const vehicleValid = data.vehicle.trim() !== "";
-  const contactValid =
-    data.fullName.trim().length > 1 && data.phone.trim().length >= 5;
+  const contactValid = isContactValid(data);
 
   const applyAirportDirection = () => {
     if (data.airportDirection === "from") {
@@ -547,6 +594,7 @@ function TransferFlow({
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!data.termsAccepted) return;
     onDone();
   };
 
@@ -591,7 +639,7 @@ function TransferFlow({
           <ContactFields locale={locale} data={data} set={set} />
         ) : null}
         {preStep === null && step === 4 ? (
-          <ReviewStep locale={locale} data={data} />
+          <ReviewStep locale={locale} data={data} set={set} />
         ) : null}
       </div>
 
@@ -605,7 +653,8 @@ function TransferFlow({
           (onDirectionScreen && !directionValid) ||
           (preStep === null && step === 1 && !journeyValid) ||
           (preStep === null && step === 2 && !vehicleValid) ||
-          (preStep === null && step === 3 && !contactValid)
+          (preStep === null && step === 3 && !contactValid) ||
+          (preStep === null && step === 4 && !data.termsAccepted)
         }
       />
     </div>
@@ -856,16 +905,48 @@ function JourneyStep({
           </>
         ) : null}
         {!isAirport ? dateTimeField : null}
-        <Field label={dict.passengers} required>
-          <input
-            type="number"
-            min={1}
-            max={8}
-            className="glass-input"
-            value={data.passengers}
-            onChange={(e) => set("passengers", Number(e.target.value) || 1)}
-          />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={dict.passengers} required>
+            <input
+              type="number"
+              min={MIN_PASSENGERS}
+              max={MAX_PASSENGERS}
+              className="glass-input"
+              value={data.passengers}
+              onChange={(e) =>
+                set(
+                  "passengers",
+                  clampBookingCount(
+                    Number(e.target.value),
+                    MIN_PASSENGERS,
+                    MAX_PASSENGERS
+                  )
+                )
+              }
+              required
+            />
+          </Field>
+          <Field label={dict.luggage} required>
+            <input
+              type="number"
+              min={MIN_LUGGAGE}
+              max={MAX_LUGGAGE}
+              className="glass-input"
+              value={data.luggage}
+              onChange={(e) =>
+                set(
+                  "luggage",
+                  clampBookingCount(
+                    Number(e.target.value),
+                    MIN_LUGGAGE,
+                    MAX_LUGGAGE
+                  )
+                )
+              }
+              required
+            />
+          </Field>
+        </div>
         {showFlight ? (
           <Field label={dict.flightNumber} hint={dict.flightHint}>
             <input
@@ -931,7 +1012,7 @@ function VehicleStep({
                     alt={altText}
                     fill
                     sizes="(max-width: 640px) 100vw, 260px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    className="object-cover"
                   />
                   <span
                     aria-hidden="true"
@@ -985,13 +1066,16 @@ function VehicleStep({
 
 function ReviewStep({
   locale,
-  data
+  data,
+  set
 }: {
   locale: Locale;
   data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
 }) {
   const dict = t(locale).modal.rent.review;
   const tf = t(locale).transportForm;
+  const contactDict = t(locale).modal.contact;
   const serviceLabel = (() => {
     switch (data.service) {
       case "airport":
@@ -1006,27 +1090,57 @@ function ReviewStep({
         return "—";
     }
   })();
+  const serviceWithDirection =
+    data.service === "airport"
+      ? `${serviceLabel} (${
+          data.airportDirection === "from"
+            ? dict.airportArrival
+            : dict.airportDeparture
+        })`
+      : serviceLabel;
   const vehicleLabel = data.vehicle
     ? vehicles.find((v) => v.slug === data.vehicle)?.name ?? tf.vehicleAny
     : tf.vehicleAny;
 
-  const journeyDict = t(locale).modal.rent.journey;
   const stopValues = data.stops
     .map((s) => s.value.trim())
     .filter((v) => v.length > 0);
   const stopsSummary = stopValues.join(" · ");
 
-  const items: { label: string; value: string }[] = [
-    { label: dict.serviceLabel, value: serviceLabel },
+  const preferredCommunicationLabel = (() => {
+    switch (data.preferredCommunication) {
+      case "phone_sms":
+        return contactDict.preferredPhoneSms;
+      case "viber_whatsapp":
+        return contactDict.preferredViberWhatsapp;
+      case "email":
+        return contactDict.preferredEmail;
+      default:
+        return "—";
+    }
+  })();
+
+  const includedDistanceKm = 50;
+  const demoDistanceKm = 77.7;
+  const distanceOverageRate = 0.6;
+  const hasDistanceOverage = demoDistanceKm > includedDistanceKm;
+  const basePrice = 35;
+  const waitingHourlyRate = 30;
+  const waitingPrice = data.waitingHours > 0
+    ? data.waitingHours * waitingHourlyRate
+    : 0;
+  const overagePrice = hasDistanceOverage
+    ? demoDistanceKm * distanceOverageRate
+    : 0;
+  const totalPrice = basePrice + waitingPrice + overagePrice;
+
+  const serviceItems = [
+    { label: dict.selectedServiceLabel, value: serviceWithDirection }
+  ];
+  const tripItems = [
     { label: dict.pickupLabel, value: data.pickup || "—" },
     ...(stopValues.length > 0
-      ? [
-          {
-            label: journeyDict.stopLabel
-              .replace("{n}", `1–${stopValues.length}`),
-            value: stopsSummary
-          }
-        ]
+      ? [{ label: dict.stopsLabel, value: stopsSummary }]
       : []),
     { label: dict.destinationLabel, value: data.destination || "—" },
     {
@@ -1034,19 +1148,46 @@ function ReviewStep({
       value: data.dateTime ? formatDateTime(data.dateTime, locale) : "—"
     },
     { label: dict.passengersLabel, value: String(data.passengers) },
+    { label: dict.luggageLabel, value: String(data.luggage) },
     ...(data.service === "airport"
       ? [{ label: dict.flightLabel, value: data.flight || "—" }]
       : []),
     ...(data.service === "airport" && data.waitingHours > 0
       ? [
           {
-            label: journeyDict.waitingTitle,
+            label: dict.waitingLabel,
             value: `${data.waitingHours} ${hourWord(locale, data.waitingHours)}`
           }
         ]
       : []),
-    { label: dict.vehicleLabel, value: vehicleLabel }
   ];
+  const vehicleItems = [{ label: dict.vehicleLabel, value: vehicleLabel }];
+  const contactItems = [
+    { label: dict.fullNameLabel, value: data.fullName || "—" },
+    { label: dict.emailLabel, value: data.email || "—" },
+    {
+      label: dict.phoneLabel,
+      value:
+        data.phoneCountryCode || data.phone
+          ? `${data.phoneCountryCode} ${data.phone}`.trim()
+          : "—"
+    },
+    {
+      label: dict.preferredCommunicationLabel,
+      value: preferredCommunicationLabel
+    },
+    { label: dict.companyNameLabel, value: data.companyName || "—" },
+    { label: dict.messageLabel, value: data.message || "—" }
+  ];
+  const overageLabel = dict.distanceOverageLabel
+    .replace("{total}", formatDistance(demoDistanceKm, locale))
+    .replace("{included}", formatDistance(includedDistanceKm, locale));
+  const waitingPriceLabel = dict.waitingPriceLabel.replace(
+    "{hours}",
+    formatDistance(data.waitingHours, locale)
+  );
+  const termsHref = legalHref(locale, "terms");
+  const privacyHref = legalHref(locale, "privacy");
 
   return (
     <div>
@@ -1055,21 +1196,200 @@ function ReviewStep({
         title={dict.heading}
         subtitle={dict.subheading}
       />
-      <dl className="mt-5 glass rounded-xl divide-y divide-white/8 overflow-hidden">
-        {items.map((it) => (
-          <div
-            key={it.label}
-            className="flex items-start justify-between gap-3 px-4 py-3 text-sm"
+      <div className="mt-5 space-y-3">
+        <details className="group mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+          <summary className="flex cursor-pointer list-none select-none items-center gap-2 text-sm font-semibold text-white [&::-webkit-details-marker]:hidden">
+            <HelpCircle className="h-4 w-4 text-white/55" aria-hidden="true" />
+            <span className="min-w-0 flex-1">{dict.processTitle}</span>
+            <ChevronDown
+              className="h-4 w-4 text-white/50 transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <ol className="mt-3 space-y-2 text-xs leading-relaxed text-white/65">
+            {dict.processSteps.map((step, index) => (
+              <li key={step} className="flex gap-2">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold-400/15 text-[10px] font-semibold text-gold-200">
+                  {index + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </details>
+
+        <ReviewCard title={dict.serviceCardTitle} items={serviceItems} />
+        <ReviewCard title={dict.tripCardTitle} items={tripItems} />
+        <ReviewCard title={dict.vehicleCardTitle} items={vehicleItems} />
+        <ReviewCard title={dict.contactCardTitle} items={contactItems} />
+
+        <PaymentCard
+          dict={dict}
+          selected={data.paymentMethod}
+          onSelect={(method) => set("paymentMethod", method)}
+        />
+
+        <section className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+          <h4 className="text-sm font-semibold text-white">
+            {dict.estimateCardTitle}
+          </h4>
+          <dl className="mt-3 space-y-2 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <dt className="text-white/55">{dict.basePriceLabel}</dt>
+              <dd className="text-right font-medium text-white">
+                {formatPrice(basePrice, locale)}
+              </dd>
+            </div>
+            {data.waitingHours > 0 ? (
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-white/55">{waitingPriceLabel}</dt>
+                <dd className="text-right font-medium text-white">
+                  {formatPrice(waitingPrice, locale)}
+                </dd>
+              </div>
+            ) : null}
+            {hasDistanceOverage ? (
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-white/55">{overageLabel}</dt>
+                <dd className="text-right font-medium text-white">
+                  {formatPrice(overagePrice, locale)}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          <div className="my-3 h-px bg-white/10" />
+          <div className="flex items-start justify-between gap-3">
+            <span className="text-base font-semibold text-white">
+              {dict.totalEstimateLabel}
+            </span>
+            <span className="text-right text-2xl font-semibold text-gold-200">
+              {formatPrice(totalPrice, locale)}
+            </span>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-white/55">
+            {dict.estimateDisclaimer}
+          </p>
+        </section>
+
+        <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
+          <input
+            type="checkbox"
+            checked={data.termsAccepted}
+            onChange={(e) => set("termsAccepted", e.target.checked)}
+            className="peer sr-only"
+            required
+          />
+          <span
+            aria-hidden="true"
+            className="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/35 peer-checked:border-gold-400 peer-checked:bg-gold-400 peer-checked:[&>span]:opacity-100"
           >
-            <dt className="text-white/55">{it.label}</dt>
-            <dd className="text-white text-right">{it.value}</dd>
+            <span className="h-1.5 w-1.5 rounded-full bg-ink-900 opacity-0" />
+          </span>
+          <span>
+            {dict.termsPrefix}{" "}
+            <Link href={termsHref} className="text-gold-200 underline-offset-4 hover:underline">
+              {dict.termsLink}
+            </Link>{" "}
+            {dict.termsMiddle}{" "}
+            <Link href={privacyHref} className="text-gold-200 underline-offset-4 hover:underline">
+              {dict.privacyLink}
+            </Link>
+            .
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function ReviewCard({
+  title,
+  items
+}: {
+  title: string;
+  items: { label: string; value: string }[];
+}) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <h4 className="text-sm font-semibold text-white">{title}</h4>
+      <dl className="mt-3 space-y-2 text-sm">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-start justify-between gap-3">
+            <dt className="text-white/55">{item.label}</dt>
+            <dd className="max-w-[60%] text-right font-medium text-white">
+              {item.value}
+            </dd>
           </div>
         ))}
       </dl>
-      <p className="mt-4 rounded-lg border border-gold-400/25 bg-gold-400/8 px-3 py-2 text-xs text-gold-200">
-        {dict.paymentNote}
-      </p>
-    </div>
+    </section>
+  );
+}
+
+type ReviewDictionary = ReturnType<typeof t>["modal"]["rent"]["review"];
+
+function PaymentCard({
+  dict,
+  selected,
+  onSelect
+}: {
+  dict: ReviewDictionary;
+  selected: PaymentMethod;
+  onSelect: (method: PaymentMethod) => void;
+}) {
+  const methods: {
+    value: PaymentMethod;
+    title: string;
+    desc: string;
+    icon: ReactNode;
+  }[] = [
+    {
+      value: "cash",
+      title: dict.paymentCash,
+      desc: dict.paymentCashDesc,
+      icon: <Banknote className="h-4 w-4" aria-hidden="true" />
+    },
+    {
+      value: "card",
+      title: dict.paymentCard,
+      desc: dict.paymentCardDesc,
+      icon: <CreditCard className="h-4 w-4" aria-hidden="true" />
+    }
+  ];
+
+  return (
+    <section className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <h4 className="text-[11px] uppercase tracking-[0.22em] text-white/55">
+        {dict.paymentCardTitle}
+      </h4>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {methods.map((method) => {
+          const active = selected === method.value;
+          return (
+            <button
+              key={method.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onSelect(method.value)}
+              className={
+                "rounded-xl border px-3.5 py-3 text-left transition-colors " +
+                (active
+                  ? "border-white/85 bg-white/8 text-white"
+                  : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/8")
+              }
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <span className="text-white/70">{method.icon}</span>
+                {method.title}
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-white/45">
+                {method.desc}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -1089,8 +1409,7 @@ function HandleFlow({
   const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
-  const valid =
-    data.fullName.trim().length > 1 && data.phone.trim().length >= 5;
+  const valid = isContactValid(data);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -1131,6 +1450,28 @@ function ContactFields({
   set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
 }) {
   const dict = t(locale).modal.contact;
+  const communicationOptions: {
+    value: PreferredCommunication;
+    label: string;
+    icon: ReactNode;
+  }[] = [
+    {
+      value: "phone_sms",
+      label: dict.preferredPhoneSms,
+      icon: <Phone className="h-4 w-4" aria-hidden="true" />
+    },
+    {
+      value: "viber_whatsapp",
+      label: dict.preferredViberWhatsapp,
+      icon: <WhatsAppMark className="h-4 w-4" />
+    },
+    {
+      value: "email",
+      label: dict.preferredEmail,
+      icon: <Mail className="h-4 w-4" aria-hidden="true" />
+    }
+  ];
+
   return (
     <div className="space-y-4">
       <Field label={dict.fullName} required>
@@ -1141,29 +1482,10 @@ function ContactFields({
           placeholder={dict.fullNamePlaceholder}
           value={data.fullName}
           onChange={(e) => set("fullName", e.target.value)}
+          required
         />
       </Field>
-      <Field label={dict.phone} required>
-        <div className="flex items-stretch gap-2">
-          <span className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-2.5 text-sm text-white/80">
-            +381
-          </span>
-          <input
-            type="tel"
-            autoComplete="tel"
-            className="glass-input flex-1"
-            placeholder={dict.phonePlaceholder}
-            value={data.phone}
-            onChange={(e) => set("phone", e.target.value)}
-          />
-        </div>
-      </Field>
-      <Toggle
-        label={dict.whatsappSame}
-        checked={data.whatsappSame}
-        onChange={(v) => set("whatsappSame", v)}
-      />
-      <Field label={dict.email}>
+      <Field label={dict.email} required>
         <input
           type="email"
           autoComplete="email"
@@ -1171,6 +1493,79 @@ function ContactFields({
           placeholder={dict.emailPlaceholder}
           value={data.email}
           onChange={(e) => set("email", e.target.value)}
+          required
+        />
+      </Field>
+      <Field label={dict.phone} required>
+        <div className="flex items-stretch gap-2">
+          <select
+            aria-label={dict.countryCode}
+            className="glass-input w-32 shrink-0 appearance-auto px-2.5"
+            value={data.phoneCountryCode}
+            onChange={(e) => set("phoneCountryCode", e.target.value)}
+          >
+            {PHONE_COUNTRY_CODES.map((item) => (
+              <option key={item.code} value={item.code}>
+                {item.flag} {item.code}
+              </option>
+            ))}
+          </select>
+          <input
+            type="tel"
+            autoComplete="tel"
+            className="glass-input flex-1"
+            placeholder={dict.phonePlaceholder}
+            value={data.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            required
+          />
+        </div>
+      </Field>
+      <fieldset>
+        <legend className="mb-1.5 flex items-center gap-1 text-[11px] uppercase tracking-widest text-white/60">
+          {dict.preferredCommunication}
+          <span aria-hidden="true" className="text-gold-300">
+            *
+          </span>
+        </legend>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {communicationOptions.map((option) => {
+            const active = data.preferredCommunication === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => set("preferredCommunication", option.value)}
+                className={
+                  "flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors " +
+                  (active
+                    ? "border-gold-400 bg-gold-400/10 text-white"
+                    : "border-white/10 bg-white/5 text-white/75 hover:bg-white/10")
+                }
+              >
+                <span
+                  className={
+                    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md " +
+                    (active ? "bg-gold-400/20 text-gold-200" : "bg-white/8 text-white/75")
+                  }
+                >
+                  {option.icon}
+                </span>
+                <span className="font-medium leading-tight">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+      <Field label={dict.companyName}>
+        <input
+          type="text"
+          autoComplete="organization"
+          className="glass-input"
+          placeholder={dict.companyNamePlaceholder}
+          value={data.companyName}
+          onChange={(e) => set("companyName", e.target.value)}
         />
       </Field>
       <Field label={dict.message}>
@@ -1650,39 +2045,6 @@ function Field({
   );
 }
 
-function Toggle({
-  label,
-  checked,
-  onChange
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5">
-      <span className="text-sm text-white/85">{label}</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={
-          "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
-          (checked ? "bg-gold-400" : "bg-white/15")
-        }
-      >
-        <span
-          className={
-            "absolute top-0.5 inline-block h-5 w-5 rounded-full bg-white shadow transition-transform " +
-            (checked ? "translate-x-5" : "translate-x-0.5")
-          }
-        />
-      </button>
-    </label>
-  );
-}
-
 function FormFooter({
   locale,
   onBack,
@@ -1764,6 +2126,31 @@ function formatDateTime(iso: string, locale: Locale): string {
   } catch {
     return iso;
   }
+}
+
+function formatPrice(value: number, locale: Locale): string {
+  const rounded = Math.round(value * 100) / 100;
+  const hasDecimals = !Number.isInteger(rounded);
+  const amount = new Intl.NumberFormat(bcp47(locale), {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: hasDecimals ? 2 : 0
+  }).format(rounded);
+
+  return `€${amount}`;
+}
+
+function formatDistance(value: number, locale: Locale): string {
+  return new Intl.NumberFormat(bcp47(locale), {
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
+function legalHref(locale: Locale, page: "terms" | "privacy"): string {
+  if (page === "terms") {
+    return locale === "sr" ? "/uslovi-koriscenja" : `/${locale}/terms`;
+  }
+  return locale === "sr" ? "/politika-privatnosti" : `/${locale}/privacy`;
 }
 
 // ---------- Icons (Lucide-backed wrappers + WhatsApp brand mark) ----------
