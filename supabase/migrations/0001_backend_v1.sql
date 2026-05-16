@@ -69,6 +69,11 @@ create table public.booking_requests (
   company_name text,
   preferred_communication public.preferred_communication,
   payment_method public.payment_method not null default 'cash',
+  pickup_place jsonb,
+  destination_place jsonb,
+  route_distance_meters integer,
+  route_duration_seconds integer,
+  price_estimate jsonb,
   message text,
   terms_accepted boolean not null default false,
   created_at timestamptz not null default now(),
@@ -80,6 +85,7 @@ create table public.booking_stops (
   booking_request_id uuid not null references public.booking_requests(id) on delete cascade,
   position integer not null check (position > 0),
   value text not null,
+  place jsonb,
   created_at timestamptz not null default now(),
   unique (booking_request_id, position)
 );

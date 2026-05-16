@@ -62,6 +62,7 @@ import {
 } from "@/lib/booking-constraints";
 import { vehicles } from "@/lib/fleet-data";
 import { siteConfig, type Locale } from "@/lib/site-config";
+import type { RoutePriceEstimate } from "@/lib/pricing";
 import WhatsAppMark from "./icons/WhatsAppMark";
 import DateTimePicker from "./DateTimePicker";
 
@@ -429,8 +430,25 @@ type ServiceType = "airport" | "chauffeur" | "business" | "other";
 type AirportDirection = "from" | "to" | "";
 type PreferredCommunication = "phone_sms" | "viber_whatsapp" | "email";
 type PaymentMethod = "card" | "cash";
+type RouteEstimateStatus = "idle" | "loading" | "available" | "unavailable";
 
-type Stop = { id: string; value: string };
+type AddressPlace = {
+  placeId?: string;
+  label: string;
+  formattedAddress?: string;
+  latitude: number;
+  longitude: number;
+  countryCode?: string;
+};
+
+type Stop = { id: string; value: string; place?: AddressPlace };
+
+type PlaceSuggestion = {
+  placeId: string;
+  text: string;
+  mainText: string;
+  secondaryText?: string;
+};
 
 const MIN_WAITING_HOURS = 1;
 const MAX_WAITING_HOURS = 24;
@@ -440,12 +458,29 @@ const makeStopId = () =>
     ? crypto.randomUUID()
     : "stop-" + Math.random().toString(36).slice(2, 9);
 
+const BELGRADE_AIRPORT_COORDS = {
+  latitude: 44.8184,
+  longitude: 20.3091
+};
+
+const airportPlace = (label: string): AddressPlace => ({
+  placeId: "belgrade-nikola-tesla-airport",
+  label,
+  formattedAddress: label,
+  ...BELGRADE_AIRPORT_COORDS,
+  countryCode: "rs"
+});
+
 type TransferData = {
   service: ServiceType | "";
   airportDirection: AirportDirection;
   pickup: string;
   destination: string;
   stops: Stop[];
+  pickupPlace?: AddressPlace;
+  destinationPlace?: AddressPlace;
+  routeEstimate?: RoutePriceEstimate;
+  routeEstimateStatus: RouteEstimateStatus;
   waitingHours: number; // 0 = none, otherwise 1..MAX_WAITING_HOURS
   dateTime: string;
   passengers: number;
@@ -469,6 +504,10 @@ const EMPTY: TransferData = {
   pickup: "",
   destination: "",
   stops: [],
+  pickupPlace: undefined,
+  destinationPlace: undefined,
+  routeEstimate: undefined,
+  routeEstimateStatus: "idle",
   waitingHours: 0,
   dateTime: "",
   passengers: 1,
@@ -548,6 +587,7 @@ function TransferFlow({
       setData((d) => ({
         ...d,
         pickup: airportName,
+        pickupPlace: airportPlace(airportName),
         destination: d.destination === airportName ? "" : d.destination
       }));
       return;
@@ -555,6 +595,7 @@ function TransferFlow({
     setData((d) => ({
       ...d,
       destination: airportName,
+      destinationPlace: airportPlace(airportName),
       pickup: d.pickup === airportName ? "" : d.pickup
     }));
   };
@@ -608,6 +649,9 @@ function TransferFlow({
         pickup: data.pickup,
         destination: data.destination,
         stops: data.stops.map((stop) => stop.value),
+        pickupPlace: data.pickupPlace,
+        destinationPlace: data.destinationPlace,
+        stopPlaces: data.stops.map((stop) => stop.place).filter(Boolean),
         waitingHours: data.waitingHours,
         dateTime: data.dateTime,
         passengers: data.passengers,
@@ -622,7 +666,8 @@ function TransferFlow({
         preferredCommunication: data.preferredCommunication,
         paymentMethod: data.paymentMethod,
         message: data.message,
-        termsAccepted: data.termsAccepted
+        termsAccepted: data.termsAccepted,
+        priceEstimate: data.routeEstimate
       })
     });
 
@@ -691,6 +736,7 @@ function TransferFlow({
           (preStep === null && step === 2 && !vehicleValid) ||
           (preStep === null && step === 3 && !contactValid) ||
           (preStep === null && step === 4 && !data.termsAccepted) ||
+          (preStep === null && step === 4 && data.routeEstimateStatus === "loading") ||
           submitState === "submitting"
         }
       />
@@ -918,29 +964,35 @@ function JourneyStep({
       <div className="mt-5 space-y-4">
         {isAirport ? dateTimeField : null}
         <Field label={dict.pickup} required iconLabel>
-          <input
-            type="text"
-            className="glass-input disabled:opacity-70 disabled:cursor-not-allowed"
+          <AddressAutocomplete
+            locale={locale}
             placeholder={tf.pickupPlaceholder}
             value={data.pickup}
-            onChange={(e) => set("pickup", e.target.value)}
+            selectedPlace={data.pickupPlace}
+            onChange={(value, place) => {
+              set("pickup", value);
+              set("pickupPlace", place);
+              set("routeEstimate", undefined);
+              set("routeEstimateStatus", "idle");
+            }}
             disabled={lockPickup}
             readOnly={lockPickup}
-            aria-readonly={lockPickup}
-            autoComplete="off"
           />
         </Field>
         <Field label={dict.destination} required iconLabel>
-          <input
-            type="text"
-            className="glass-input disabled:opacity-70 disabled:cursor-not-allowed"
+          <AddressAutocomplete
+            locale={locale}
             placeholder={tf.destinationPlaceholder}
             value={data.destination}
-            onChange={(e) => set("destination", e.target.value)}
+            selectedPlace={data.destinationPlace}
+            onChange={(value, place) => {
+              set("destination", value);
+              set("destinationPlace", place);
+              set("routeEstimate", undefined);
+              set("routeEstimateStatus", "idle");
+            }}
             disabled={lockDestination}
             readOnly={lockDestination}
-            aria-readonly={lockDestination}
-            autoComplete="off"
           />
         </Field>
         {isAirport ? (
@@ -1146,6 +1198,72 @@ function ReviewStep({
   const vehicleLabel = data.vehicle
     ? vehicles.find((v) => v.slug === data.vehicle)?.name ?? tf.vehicleAny
     : tf.vehicleAny;
+  const routePointKey = [
+    data.pickupPlace
+      ? `${data.pickupPlace.latitude},${data.pickupPlace.longitude}`
+      : "",
+    ...data.stops.map((stop) =>
+      stop.place ? `${stop.place.latitude},${stop.place.longitude}` : ""
+    ),
+    data.destinationPlace
+      ? `${data.destinationPlace.latitude},${data.destinationPlace.longitude}`
+      : "",
+    data.waitingHours
+  ].join("|");
+
+  useEffect(() => {
+    const stopPlaces = data.stops
+      .map((stop) => stop.place)
+      .filter((place): place is AddressPlace => Boolean(place));
+    const hasUnresolvedStop = data.stops.some(
+      (stop) => stop.value.trim().length > 0 && !stop.place
+    );
+    const points = [data.pickupPlace, ...stopPlaces, data.destinationPlace];
+
+    if (
+      points.length < 2 ||
+      !data.pickupPlace ||
+      !data.destinationPlace ||
+      hasUnresolvedStop
+    ) {
+      set("routeEstimate", undefined);
+      set("routeEstimateStatus", "unavailable");
+      return;
+    }
+
+    let cancelled = false;
+    set("routeEstimateStatus", "loading");
+
+    void fetch("/api/routes/estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        points,
+        waitingHours: data.waitingHours
+      })
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (cancelled) return;
+        if (result?.available && result?.estimate) {
+          set("routeEstimate", result.estimate);
+          set("routeEstimateStatus", "available");
+          return;
+        }
+        set("routeEstimate", undefined);
+        set("routeEstimateStatus", "unavailable");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        set("routeEstimate", undefined);
+        set("routeEstimateStatus", "unavailable");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routePointKey]);
 
   const stopValues = data.stops
     .map((s) => s.value.trim())
@@ -1165,19 +1283,10 @@ function ReviewStep({
     }
   })();
 
-  const includedDistanceKm = 50;
-  const demoDistanceKm = 77.7;
-  const distanceOverageRate = 0.6;
-  const hasDistanceOverage = demoDistanceKm > includedDistanceKm;
-  const basePrice = 35;
-  const waitingHourlyRate = 30;
-  const waitingPrice = data.waitingHours > 0
-    ? data.waitingHours * waitingHourlyRate
-    : 0;
-  const overagePrice = hasDistanceOverage
-    ? demoDistanceKm * distanceOverageRate
-    : 0;
-  const totalPrice = basePrice + waitingPrice + overagePrice;
+  const estimate = data.routeEstimate;
+  const hasPriceEstimate =
+    data.routeEstimateStatus === "available" && Boolean(estimate);
+  const hasDistanceOverage = (estimate?.distanceOverageKm ?? 0) > 0;
 
   const serviceItems = [
     { label: dict.selectedServiceLabel, value: serviceWithDirection }
@@ -1225,8 +1334,8 @@ function ReviewStep({
     { label: dict.messageLabel, value: data.message || "—" }
   ];
   const overageLabel = dict.distanceOverageLabel
-    .replace("{total}", formatDistance(demoDistanceKm, locale))
-    .replace("{included}", formatDistance(includedDistanceKm, locale));
+    .replace("{total}", formatDistance(estimate?.distanceKm ?? 0, locale))
+    .replace("{included}", formatDistance(estimate?.includedDistanceKm ?? 50, locale));
   const waitingPriceLabel = dict.waitingPriceLabel.replace(
     "{hours}",
     formatDistance(data.waitingHours, locale)
@@ -1274,47 +1383,49 @@ function ReviewStep({
           onSelect={(method) => set("paymentMethod", method)}
         />
 
-        <section className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
-          <h4 className="text-sm font-semibold text-white">
-            {dict.estimateCardTitle}
-          </h4>
-          <dl className="mt-3 space-y-2 text-sm">
+        {hasPriceEstimate && estimate ? (
+          <section className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+            <h4 className="text-sm font-semibold text-white">
+              {dict.estimateCardTitle}
+            </h4>
+            <dl className="mt-3 space-y-2 text-sm">
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-white/55">{dict.basePriceLabel}</dt>
+                <dd className="text-right font-medium text-white">
+                  {formatPrice(estimate.basePrice, locale)}
+                </dd>
+              </div>
+              {estimate.waitingPrice > 0 ? (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-white/55">{waitingPriceLabel}</dt>
+                  <dd className="text-right font-medium text-white">
+                    {formatPrice(estimate.waitingPrice, locale)}
+                  </dd>
+                </div>
+              ) : null}
+              {hasDistanceOverage ? (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-white/55">{overageLabel}</dt>
+                  <dd className="text-right font-medium text-white">
+                    {formatPrice(estimate.overagePrice, locale)}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+            <div className="my-3 h-px bg-white/10" />
             <div className="flex items-start justify-between gap-3">
-              <dt className="text-white/55">{dict.basePriceLabel}</dt>
-              <dd className="text-right font-medium text-white">
-                {formatPrice(basePrice, locale)}
-              </dd>
+              <span className="text-base font-semibold text-white">
+                {dict.totalEstimateLabel}
+              </span>
+              <span className="text-right text-2xl font-semibold text-gold-200">
+                {formatPrice(estimate.totalPrice, locale)}
+              </span>
             </div>
-            {data.waitingHours > 0 ? (
-              <div className="flex items-start justify-between gap-3">
-                <dt className="text-white/55">{waitingPriceLabel}</dt>
-                <dd className="text-right font-medium text-white">
-                  {formatPrice(waitingPrice, locale)}
-                </dd>
-              </div>
-            ) : null}
-            {hasDistanceOverage ? (
-              <div className="flex items-start justify-between gap-3">
-                <dt className="text-white/55">{overageLabel}</dt>
-                <dd className="text-right font-medium text-white">
-                  {formatPrice(overagePrice, locale)}
-                </dd>
-              </div>
-            ) : null}
-          </dl>
-          <div className="my-3 h-px bg-white/10" />
-          <div className="flex items-start justify-between gap-3">
-            <span className="text-base font-semibold text-white">
-              {dict.totalEstimateLabel}
-            </span>
-            <span className="text-right text-2xl font-semibold text-gold-200">
-              {formatPrice(totalPrice, locale)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs leading-relaxed text-white/55">
-            {dict.estimateDisclaimer}
-          </p>
-        </section>
+            <p className="mt-2 text-xs leading-relaxed text-white/55">
+              {dict.estimateDisclaimer}
+            </p>
+          </section>
+        ) : null}
 
         <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
           <input
@@ -1791,6 +1902,156 @@ function SuccessPanel({
 
 // ---------- Stops + waiting hours (airport-only blocks) ----------
 
+const newAddressSessionToken = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
+
+function AddressAutocomplete({
+  locale,
+  value,
+  selectedPlace,
+  onChange,
+  placeholder,
+  disabled = false,
+  readOnly = false,
+  className = ""
+}: {
+  locale: Locale;
+  value: string;
+  selectedPlace?: AddressPlace;
+  onChange: (value: string, place?: AddressPlace) => void;
+  placeholder: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  className?: string;
+}) {
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sessionToken, setSessionToken] = useState(newAddressSessionToken);
+  const requestRef = useRef(0);
+
+  useEffect(() => {
+    if (disabled || readOnly || value.trim().length < 3) {
+      setSuggestions([]);
+      setOpen(false);
+      return;
+    }
+
+    if (selectedPlace && selectedPlace.label === value) {
+      setSuggestions([]);
+      setOpen(false);
+      return;
+    }
+
+    const requestId = ++requestRef.current;
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/places/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: value, locale, sessionToken })
+        });
+        const data = await response.json().catch(() => null);
+        if (requestRef.current !== requestId) return;
+        const nextSuggestions = Array.isArray(data?.suggestions)
+          ? data.suggestions
+          : [];
+        setSuggestions(nextSuggestions);
+        setOpen(nextSuggestions.length > 0);
+      } catch {
+        if (requestRef.current === requestId) {
+          setSuggestions([]);
+          setOpen(false);
+        }
+      } finally {
+        if (requestRef.current === requestId) setLoading(false);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [disabled, locale, readOnly, selectedPlace, sessionToken, value]);
+
+  const selectSuggestion = async (suggestion: PlaceSuggestion) => {
+    setOpen(false);
+    setSuggestions([]);
+    setLoading(true);
+    try {
+      const response = await fetch("/api/places/retrieve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          placeId: suggestion.placeId,
+          locale,
+          sessionToken
+        })
+      });
+      const data = await response.json().catch(() => null);
+      if (data?.place) {
+        onChange(data.place.formattedAddress || data.place.label, data.place);
+      } else {
+        onChange(suggestion.text, undefined);
+      }
+    } catch {
+      onChange(suggestion.text, undefined);
+    } finally {
+      setLoading(false);
+      setSessionToken(newAddressSessionToken());
+    }
+  };
+
+  return (
+    <div className={"relative " + className}>
+      <input
+        type="text"
+        className="glass-input disabled:opacity-70 disabled:cursor-not-allowed"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value, undefined)}
+        onFocus={() => setOpen(suggestions.length > 0)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        disabled={disabled}
+        readOnly={readOnly}
+        aria-readonly={readOnly}
+        autoComplete="off"
+      />
+      {open ? (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-white/10 bg-ink-900 shadow-glass">
+          <ul className="max-h-64 overflow-auto py-1">
+            {suggestions.map((suggestion) => (
+              <li key={suggestion.placeId}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void selectSuggestion(suggestion)}
+                  className="w-full px-3 py-2.5 text-left hover:bg-white/[0.08]"
+                >
+                  <span className="block text-sm font-medium text-white">
+                    {suggestion.mainText}
+                  </span>
+                  {suggestion.secondaryText ? (
+                    <span className="mt-0.5 block text-xs text-white/55">
+                      {suggestion.secondaryText}
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="border-t border-white/10 px-3 py-1.5 text-[10px] uppercase tracking-widest text-white/35">
+            Powered by Google
+          </div>
+        </div>
+      ) : null}
+      {loading ? (
+        <span className="pointer-events-none absolute right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-gold-300" />
+      ) : null}
+    </div>
+  );
+}
+
 function SortableStopRow({
   stop,
   index,
@@ -1801,7 +2062,7 @@ function SortableStopRow({
   stop: Stop;
   index: number;
   locale: Locale;
-  onChange: (id: string, value: string) => void;
+  onChange: (id: string, value: string, place?: AddressPlace) => void;
   onRemove: (id: string) => void;
 }) {
   const dict = t(locale).modal.rent.journey;
@@ -1848,13 +2109,13 @@ function SortableStopRow({
         >
           <GripVertical className="h-4 w-4" aria-hidden="true" />
         </button>
-        <input
-          type="text"
+        <AddressAutocomplete
+          locale={locale}
           value={stop.value}
-          onChange={(e) => onChange(stop.id, e.target.value)}
-          className="glass-input flex-1"
+          selectedPlace={stop.place}
+          onChange={(value, place) => onChange(stop.id, value, place)}
           placeholder={dict.stopPlaceholder}
-          autoComplete="off"
+          className="flex-1"
         />
         <button
           type="button"
@@ -1884,11 +2145,13 @@ function StopsList({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const onChange = (id: string, value: string) => {
+  const onChange = (id: string, value: string, place?: AddressPlace) => {
     set(
       "stops",
-      data.stops.map((s) => (s.id === id ? { ...s, value } : s))
+      data.stops.map((s) => (s.id === id ? { ...s, value, place } : s))
     );
+    set("routeEstimate", undefined);
+    set("routeEstimateStatus", "idle");
   };
 
   const onRemove = (id: string) => {
@@ -1896,10 +2159,14 @@ function StopsList({
       "stops",
       data.stops.filter((s) => s.id !== id)
     );
+    set("routeEstimate", undefined);
+    set("routeEstimateStatus", "idle");
   };
 
   const onAdd = () => {
     set("stops", [...data.stops, { id: makeStopId(), value: "" }]);
+    set("routeEstimate", undefined);
+    set("routeEstimateStatus", "idle");
   };
 
   const onDragEnd = (event: DragEndEvent) => {
@@ -1909,6 +2176,8 @@ function StopsList({
     const newIndex = data.stops.findIndex((s) => s.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
     set("stops", arrayMove(data.stops, oldIndex, newIndex));
+    set("routeEstimate", undefined);
+    set("routeEstimateStatus", "idle");
   };
 
   return (

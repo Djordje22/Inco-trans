@@ -103,6 +103,21 @@ RESERVATION_ADMIN_EMAIL=admin_notification_email
 
 Until these are configured, bookings still save to Supabase, but `emailSent` and `adminEmailSent` can be `false` in the API response. If `RESERVATION_ADMIN_EMAIL` is not set, admin notifications fall back to `RESERVATION_EMAIL_REPLY_TO`.
 
+## Google Address Autocomplete + Route Estimates
+
+The reservation modal can use Google Maps Platform for address suggestions and route-based estimates. Add this environment variable locally and in production:
+
+```bash
+GOOGLE_MAPS_API_KEY=your_google_maps_server_key
+```
+
+Enable these Google Maps Platform APIs for that key:
+
+- Places API
+- Routes API
+
+If the key is missing, billing/quota is exhausted, or Google returns an error, users can still enter addresses manually and submit the booking. In that fallback state the review step hides the automatic price estimate, and the team confirms the final price manually.
+
 ## Current Blocker
 
 Local startup requires Docker Desktop to be running. Cloud setup requires access to the client's Supabase account/project keys.

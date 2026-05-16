@@ -1,10 +1,20 @@
 import type { Locale } from "@/lib/site-config";
+import type { RoutePriceEstimate } from "@/lib/pricing";
 
 export type BookingService = "airport" | "chauffeur" | "business" | "other";
 export type AirportDirection = "from" | "to" | "";
 export type PreferredCommunication = "phone_sms" | "viber_whatsapp" | "email" | "";
 export type PaymentMethod = "card" | "cash";
 export type RequestSource = "quote_form" | "reservation_modal" | "handle_everything";
+
+export type BookingPlace = {
+  placeId?: string;
+  label: string;
+  formattedAddress?: string;
+  latitude?: number;
+  longitude?: number;
+  countryCode?: string;
+};
 
 export type BookingRequestPayload = {
   locale: Locale;
@@ -14,6 +24,9 @@ export type BookingRequestPayload = {
   pickup: string;
   destination: string;
   stops?: string[];
+  pickupPlace?: BookingPlace;
+  destinationPlace?: BookingPlace;
+  stopPlaces?: BookingPlace[];
   waitingHours?: number;
   dateTime: string;
   passengers: number;
@@ -29,6 +42,7 @@ export type BookingRequestPayload = {
   paymentMethod?: PaymentMethod;
   message?: string;
   termsAccepted?: boolean;
+  priceEstimate?: RoutePriceEstimate;
 };
 
 export type ContactMessagePayload = {
@@ -76,6 +90,81 @@ const asStringArray = (value: unknown) =>
   Array.isArray(value)
     ? value.map((item) => asString(item)).filter((item) => item.length > 0)
     : [];
+
+const asNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+const asOptionalPlace = (value: unknown): BookingPlace | undefined => {
+  const data = asRecord(value);
+  if (!data) return undefined;
+
+  const label = asString(data.label);
+  if (!label) return undefined;
+
+  return {
+    placeId: asOptionalString(data.placeId),
+    label,
+    formattedAddress: asOptionalString(data.formattedAddress),
+    latitude: asNumber(data.latitude),
+    longitude: asNumber(data.longitude),
+    countryCode: asOptionalString(data.countryCode)
+  };
+};
+
+const asPlaceArray = (value: unknown) =>
+  Array.isArray(value)
+    ? value.map(asOptionalPlace).filter((place): place is BookingPlace => Boolean(place))
+    : [];
+
+const asOptionalPriceEstimate = (value: unknown): RoutePriceEstimate | undefined => {
+  const data = asRecord(value);
+  if (!data) return undefined;
+
+  const distanceMeters = asNumber(data.distanceMeters);
+  const distanceKm = asNumber(data.distanceKm);
+  const includedDistanceKm = asNumber(data.includedDistanceKm);
+  const distanceOverageKm = asNumber(data.distanceOverageKm);
+  const distanceOverageRate = asNumber(data.distanceOverageRate);
+  const basePrice = asNumber(data.basePrice);
+  const waitingHours = asNumber(data.waitingHours);
+  const waitingHourlyRate = asNumber(data.waitingHourlyRate);
+  const waitingPrice = asNumber(data.waitingPrice);
+  const overagePrice = asNumber(data.overagePrice);
+  const totalPrice = asNumber(data.totalPrice);
+
+  if (
+    distanceMeters === undefined ||
+    distanceKm === undefined ||
+    includedDistanceKm === undefined ||
+    distanceOverageKm === undefined ||
+    distanceOverageRate === undefined ||
+    basePrice === undefined ||
+    waitingHours === undefined ||
+    waitingHourlyRate === undefined ||
+    waitingPrice === undefined ||
+    overagePrice === undefined ||
+    totalPrice === undefined
+  ) {
+    return undefined;
+  }
+
+  return {
+    distanceMeters,
+    durationSeconds: asNumber(data.durationSeconds),
+    distanceKm,
+    includedDistanceKm,
+    distanceOverageKm,
+    distanceOverageRate,
+    basePrice,
+    waitingHours,
+    waitingHourlyRate,
+    waitingPrice,
+    overagePrice,
+    totalPrice,
+    currency: "EUR",
+    source: "google_routes"
+  };
+};
 
 const isEmailLike = (value: string) =>
   value.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -139,6 +228,9 @@ export function validateBookingRequestPayload(
       pickup,
       destination,
       stops: asStringArray(data.stops),
+      pickupPlace: asOptionalPlace(data.pickupPlace),
+      destinationPlace: asOptionalPlace(data.destinationPlace),
+      stopPlaces: asPlaceArray(data.stopPlaces),
       waitingHours,
       dateTime,
       passengers,
@@ -153,7 +245,8 @@ export function validateBookingRequestPayload(
       preferredCommunication: preferredCommunication as PreferredCommunication,
       paymentMethod: paymentMethod as PaymentMethod,
       message: asOptionalString(data.message),
-      termsAccepted: Boolean(data.termsAccepted)
+      termsAccepted: Boolean(data.termsAccepted),
+      priceEstimate: asOptionalPriceEstimate(data.priceEstimate)
     }
   };
 }

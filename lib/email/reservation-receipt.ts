@@ -74,6 +74,18 @@ const formatDateTime = (value: string, locale: Locale) => {
   }).format(date);
 };
 
+const formatPrice = (value: number, locale: Locale) =>
+  new Intl.NumberFormat(locale === "sr" ? "sr-RS" : locale === "ru" ? "ru-RU" : "en-GB", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: Number.isInteger(value) ? 0 : 2
+  }).format(value);
+
+const formatDistance = (value: number, locale: Locale) =>
+  new Intl.NumberFormat(locale === "sr" ? "sr-RS" : locale === "ru" ? "ru-RU" : "en-GB", {
+    maximumFractionDigits: 1
+  }).format(value);
+
 const vehicleName = (slug?: string) => {
   if (!slug) return "Any vehicle";
   return vehicles.find((vehicle) => vehicle.slug === slug)?.name ?? slug;
@@ -98,6 +110,12 @@ const copyForLocale = (locale: Locale) => {
       flight: "Let",
       vehicle: "Vozilo",
       payment: "Plaćanje",
+      price: "Okvirna cena",
+      basePrice: "Osnovna cena",
+      waitingPrice: "Čekanje",
+      distanceOverage: "Dodatna kilometraža",
+      totalPrice: "Ukupno okvirno",
+      distance: "Kilometraža",
       notes: "Napomena",
       next:
         "Javićemo se što je pre moguće sa potvrdom dostupnosti i cenom. Za hitne izmene pošaljite nam WhatsApp poruku.",
@@ -123,6 +141,12 @@ const copyForLocale = (locale: Locale) => {
       flight: "Рейс",
       vehicle: "Автомобиль",
       payment: "Оплата",
+      price: "Ориентировочная цена",
+      basePrice: "Базовая цена",
+      waitingPrice: "Ожидание",
+      distanceOverage: "Дополнительный километраж",
+      totalPrice: "Итого ориентировочно",
+      distance: "Расстояние",
       notes: "Комментарий",
       next:
         "Мы как можно скорее ответим с подтверждением доступности и цены. Для срочных изменений напишите нам в WhatsApp.",
@@ -147,11 +171,74 @@ const copyForLocale = (locale: Locale) => {
     flight: "Flight",
     vehicle: "Vehicle",
     payment: "Payment",
+    price: "Estimated price",
+    basePrice: "Base price",
+    waitingPrice: "Waiting time",
+    distanceOverage: "Distance overage",
+    totalPrice: "Total estimate",
+    distance: "Distance",
     notes: "Notes",
     next:
       "We will reply as soon as possible with availability and price confirmation. For urgent changes, message us on WhatsApp.",
     footer: "Inco Trans | Available 24/7"
   };
+};
+
+const priceRows = (payload: BookingRequestPayload, locale: Locale) => {
+  const estimate = payload.priceEstimate;
+  if (!estimate) return "";
+
+  const copy = copyForLocale(locale);
+  const rows = [
+    detailRow(copy.distance, `${formatDistance(estimate.distanceKm, locale)} km`),
+    detailRow(copy.basePrice, formatPrice(estimate.basePrice, locale)),
+    estimate.waitingPrice > 0
+      ? detailRow(
+          copy.waitingPrice,
+          `${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
+        )
+      : "",
+    estimate.distanceOverageKm > 0
+      ? detailRow(
+          copy.distanceOverage,
+          `${formatPrice(estimate.overagePrice, locale)} (${formatDistance(
+            estimate.distanceOverageKm,
+            locale
+          )} km over ${formatDistance(estimate.includedDistanceKm, locale)} km)`
+        )
+      : "",
+    detailRow(copy.totalPrice, formatPrice(estimate.totalPrice, locale))
+  ].join("");
+
+  return `
+    <h2 style="margin:24px 0 10px;color:#111827;font-size:17px;">${escapeHtml(copy.price)}</h2>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
+      ${rows}
+    </table>
+  `;
+};
+
+const priceTextRows = (payload: BookingRequestPayload, locale: Locale) => {
+  const estimate = payload.priceEstimate;
+  if (!estimate) return [];
+
+  const copy = copyForLocale(locale);
+  return [
+    "",
+    copy.price,
+    `${copy.distance}: ${formatDistance(estimate.distanceKm, locale)} km`,
+    `${copy.basePrice}: ${formatPrice(estimate.basePrice, locale)}`,
+    estimate.waitingPrice > 0
+      ? `${copy.waitingPrice}: ${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
+      : "",
+    estimate.distanceOverageKm > 0
+      ? `${copy.distanceOverage}: ${formatPrice(estimate.overagePrice, locale)} (${formatDistance(
+          estimate.distanceOverageKm,
+          locale
+        )} km over ${formatDistance(estimate.includedDistanceKm, locale)} km)`
+      : "",
+    `${copy.totalPrice}: ${formatPrice(estimate.totalPrice, locale)}`
+  ].filter(Boolean);
 };
 
 const detailRow = (label: string, value?: string | number | null) => {
@@ -208,6 +295,7 @@ function buildReservationReceiptEmail({
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
                     ${rows}
                   </table>
+                  ${priceRows(payload, payload.locale)}
                   <p style="margin:22px 0 0;color:#374151;font-size:14px;line-height:1.7;">${escapeHtml(copy.next)}</p>
                 </td>
               </tr>
@@ -239,6 +327,7 @@ function buildReservationReceiptEmail({
     `${copy.vehicle}: ${vehicleName(payload.vehicle)}`,
     `${copy.payment}: ${labelForPayment(payload.paymentMethod ?? "cash", payload.locale)}`,
     payload.message ? `${copy.notes}: ${payload.message}` : "",
+    ...priceTextRows(payload, payload.locale),
     "",
     copy.next
   ]
@@ -272,6 +361,31 @@ function buildReservationAdminEmail({
     detailRow("Flight", payload.flight),
     detailRow("Vehicle", vehicleName(payload.vehicle)),
     detailRow("Payment", labelForPayment(payload.paymentMethod ?? "cash", "en")),
+    detailRow(
+      "Estimated total",
+      payload.priceEstimate ? formatPrice(payload.priceEstimate.totalPrice, "en") : null
+    ),
+    detailRow(
+      "Route distance",
+      payload.priceEstimate
+        ? `${formatDistance(payload.priceEstimate.distanceKm, "en")} km`
+        : null
+    ),
+    detailRow(
+      "Distance overage",
+      payload.priceEstimate && payload.priceEstimate.distanceOverageKm > 0
+        ? `${formatDistance(payload.priceEstimate.distanceOverageKm, "en")} km / ${formatPrice(
+            payload.priceEstimate.overagePrice,
+            "en"
+          )}`
+        : null
+    ),
+    detailRow(
+      "Waiting price",
+      payload.priceEstimate && payload.priceEstimate.waitingPrice > 0
+        ? formatPrice(payload.priceEstimate.waitingPrice, "en")
+        : null
+    ),
     detailRow("Name", payload.fullName),
     detailRow("Email", payload.email),
     detailRow(
@@ -327,6 +441,21 @@ function buildReservationAdminEmail({
     payload.flight ? `Flight: ${payload.flight}` : "",
     `Vehicle: ${vehicleName(payload.vehicle)}`,
     `Payment: ${labelForPayment(payload.paymentMethod ?? "cash", "en")}`,
+    ...(payload.priceEstimate
+      ? [
+          `Estimated total: ${formatPrice(payload.priceEstimate.totalPrice, "en")}`,
+          `Route distance: ${formatDistance(payload.priceEstimate.distanceKm, "en")} km`,
+          payload.priceEstimate.distanceOverageKm > 0
+            ? `Distance overage: ${formatDistance(
+                payload.priceEstimate.distanceOverageKm,
+                "en"
+              )} km / ${formatPrice(payload.priceEstimate.overagePrice, "en")}`
+            : "",
+          payload.priceEstimate.waitingPrice > 0
+            ? `Waiting price: ${formatPrice(payload.priceEstimate.waitingPrice, "en")}`
+            : ""
+        ]
+      : []),
     "",
     `Name: ${payload.fullName}`,
     payload.email ? `Email: ${payload.email}` : "",

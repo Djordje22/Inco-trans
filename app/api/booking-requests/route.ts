@@ -46,6 +46,11 @@ export async function POST(request: Request) {
       company_name: payload.companyName || null,
       preferred_communication: payload.preferredCommunication || null,
       payment_method: payload.paymentMethod || "cash",
+      pickup_place: payload.pickupPlace ?? null,
+      destination_place: payload.destinationPlace ?? null,
+      route_distance_meters: payload.priceEstimate?.distanceMeters ?? null,
+      route_duration_seconds: payload.priceEstimate?.durationSeconds ?? null,
+      price_estimate: payload.priceEstimate ?? null,
       message: payload.message || null,
       terms_accepted: payload.termsAccepted ?? false,
       status: "new"
@@ -61,12 +66,13 @@ export async function POST(request: Request) {
   const stops = payload.stops ?? [];
   if (stops.length > 0) {
     const { error: stopsError } = await supabase.from("booking_stops").insert(
-      stops.map((value, index) => ({
-        booking_request_id: id,
-        position: index + 1,
-        value
-      }))
-    );
+        stops.map((value, index) => ({
+          booking_request_id: id,
+          position: index + 1,
+          value,
+          place: payload.stopPlaces?.[index] ?? null
+        }))
+      );
 
     if (stopsError) {
       return NextResponse.json(
