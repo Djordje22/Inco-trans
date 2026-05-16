@@ -260,6 +260,10 @@ export default function DateTimePicker({
     pendingDate !== null &&
     isSameDay(pendingDate, today) &&
     minutesFromTime(slot) < minutesFromTime(earliestTodayTime);
+  const visibleTimeSlots =
+    pendingDate !== null && isSameDay(pendingDate, today)
+      ? TIME_SLOTS.filter((slot) => !isTimeDisabled(slot))
+      : TIME_SLOTS;
 
   const canConfirm =
     pendingDate !== null &&
@@ -445,23 +449,19 @@ export default function DateTimePicker({
                 ref={timeListRef}
                 className="mt-2 max-h-[14rem] sm:max-h-[14rem] overflow-y-auto pr-1 space-y-1"
               >
-                {TIME_SLOTS.map((slot) => {
+                {visibleTimeSlots.map((slot) => {
                   const active = pendingTime === slot;
-                  const disabled = isTimeDisabled(slot);
                   return (
                     <button
                       key={slot}
                       type="button"
-                      disabled={disabled}
                       onClick={() => setPendingTime(slot)}
                       data-active={active}
                       className={
                         "block w-full rounded-md px-2.5 py-1.5 text-center text-xs font-medium transition-colors " +
                         (active
                           ? "bg-white text-ink-900"
-                          : disabled
-                            ? "text-white/25 cursor-not-allowed"
-                            : "text-white/80 hover:bg-white/8")
+                          : "text-white/80 hover:bg-white/8")
                       }
                     >
                       {slot}
