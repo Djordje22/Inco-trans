@@ -33,7 +33,8 @@ import {
   Plus,
   Minus,
   GripVertical,
-  Hourglass
+  Hourglass,
+  Search
 } from "lucide-react";
 import {
   DndContext,
@@ -535,17 +536,36 @@ const EMPTY: TransferData = {
 };
 
 const PHONE_COUNTRY_CODES = [
-  { code: "+381", flag: "🇷🇸" },
-  { code: "+382", flag: "🇲🇪" },
-  { code: "+387", flag: "🇧🇦" },
-  { code: "+385", flag: "🇭🇷" },
-  { code: "+386", flag: "🇸🇮" },
-  { code: "+389", flag: "🇲🇰" },
-  { code: "+49", flag: "🇩🇪" },
-  { code: "+43", flag: "🇦🇹" },
-  { code: "+41", flag: "🇨🇭" },
-  { code: "+44", flag: "🇬🇧" },
-  { code: "+1", flag: "🇺🇸" }
+  { code: "+381", flag: "🇷🇸", name: "Serbia" },
+  { code: "+1", flag: "🇺🇸", name: "United States" },
+  { code: "+44", flag: "🇬🇧", name: "United Kingdom" },
+  { code: "+49", flag: "🇩🇪", name: "Germany" },
+  { code: "+33", flag: "🇫🇷", name: "France" },
+  { code: "+39", flag: "🇮🇹", name: "Italy" },
+  { code: "+34", flag: "🇪🇸", name: "Spain" },
+  { code: "+7", flag: "🇷🇺", name: "Russia" },
+  { code: "+971", flag: "🇦🇪", name: "United Arab Emirates" },
+  { code: "+90", flag: "🇹🇷", name: "Turkey" },
+  { code: "+43", flag: "🇦🇹", name: "Austria" },
+  { code: "+41", flag: "🇨🇭", name: "Switzerland" },
+  { code: "+31", flag: "🇳🇱", name: "Netherlands" },
+  { code: "+32", flag: "🇧🇪", name: "Belgium" },
+  { code: "+30", flag: "🇬🇷", name: "Greece" },
+  { code: "+385", flag: "🇭🇷", name: "Croatia" },
+  { code: "+386", flag: "🇸🇮", name: "Slovenia" },
+  { code: "+382", flag: "🇲🇪", name: "Montenegro" },
+  { code: "+387", flag: "🇧🇦", name: "Bosnia and Herzegovina" },
+  { code: "+389", flag: "🇲🇰", name: "North Macedonia" },
+  { code: "+355", flag: "🇦🇱", name: "Albania" },
+  { code: "+359", flag: "🇧🇬", name: "Bulgaria" },
+  { code: "+40", flag: "🇷🇴", name: "Romania" },
+  { code: "+36", flag: "🇭🇺", name: "Hungary" },
+  { code: "+420", flag: "🇨🇿", name: "Czech Republic" },
+  { code: "+48", flag: "🇵🇱", name: "Poland" },
+  { code: "+61", flag: "🇦🇺", name: "Australia" },
+  { code: "+1", flag: "🇨🇦", name: "Canada" },
+  { code: "+86", flag: "🇨🇳", name: "China" },
+  { code: "+81", flag: "🇯🇵", name: "Japan" }
 ];
 
 const isEmailValid = (email: string) =>
@@ -1571,6 +1591,113 @@ function PaymentCard({
   );
 }
 
+function CountryCodeSelect({
+  value,
+  onChange,
+  ariaLabel
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  ariaLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const selected =
+    PHONE_COUNTRY_CODES.find((item) => item.code === value) ?? PHONE_COUNTRY_CODES[0];
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = normalizedQuery
+    ? PHONE_COUNTRY_CODES.filter(
+        (item) =>
+          item.name.toLowerCase().includes(normalizedQuery) ||
+          item.code.includes(normalizedQuery) ||
+          item.flag.includes(normalizedQuery)
+      )
+    : PHONE_COUNTRY_CODES;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative w-32 shrink-0">
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((next) => !next);
+          setQuery("");
+        }}
+        className="glass-input flex w-full items-center justify-between gap-1 px-2.5 text-left"
+      >
+        <span className="min-w-0 truncate">
+          {selected.flag} {selected.code}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/50" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="absolute left-0 top-full z-50 mt-2 w-[min(90vw,22rem)] overflow-hidden rounded-xl border border-white/12 bg-ink-900 shadow-2xl">
+          <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5">
+            <Search className="h-4 w-4 shrink-0 text-white/45" aria-hidden="true" />
+            <input
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search country..."
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40"
+              autoFocus
+            />
+          </div>
+          <div role="listbox" className="max-h-80 overflow-y-auto py-1">
+            {filtered.map((item) => {
+              const active = item.code === value;
+              return (
+                <button
+                  key={`${item.name}-${item.code}`}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => {
+                    onChange(item.code);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                  className={
+                    "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors " +
+                    (active ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/[0.07]")
+                  }
+                >
+                  <span className="w-7 text-center text-sm">{active ? "✓" : item.flag}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {item.name}
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold text-white/55">
+                    {item.code}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // ---------- Let us handle flow (1 step) ----------
 
 function HandleFlow({
@@ -1713,18 +1840,11 @@ function ContactFields({
       </Field>
       <Field label={dict.phone} required>
         <div className="flex items-stretch gap-2">
-          <select
-            aria-label={dict.countryCode}
-            className="glass-input w-32 shrink-0 appearance-auto px-2.5"
+          <CountryCodeSelect
+            ariaLabel={dict.countryCode}
             value={data.phoneCountryCode}
-            onChange={(e) => set("phoneCountryCode", e.target.value)}
-          >
-            {PHONE_COUNTRY_CODES.map((item) => (
-              <option key={item.code} value={item.code}>
-                {item.flag} {item.code}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => set("phoneCountryCode", value)}
+          />
           <input
             type="tel"
             autoComplete="tel"

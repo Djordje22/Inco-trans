@@ -34,6 +34,7 @@ const BCP47: Record<Locale, string> = {
 };
 
 const TIME_STEP_MIN = 15;
+const MIN_LEAD_MIN = 60;
 const TIME_SLOTS_PER_DAY = (24 * 60) / TIME_STEP_MIN + 1; // 00:00 through 24:00
 
 function pad(n: number): string {
@@ -61,6 +62,19 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+function minutesFromTime(value: string): number {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function earliestBookableTime(now: Date): string {
+  const min = new Date(now.getTime() + MIN_LEAD_MIN * 60 * 1000);
+  const totalMinutes = min.getHours() * 60 + min.getMinutes();
+  const rounded = Math.ceil(totalMinutes / TIME_STEP_MIN) * TIME_STEP_MIN;
+  if (rounded >= 24 * 60) return "24:00";
+  return `${pad(Math.floor(rounded / 60))}:${pad(rounded % 60)}`;
 }
 
 function formatTrigger(iso: string, locale: Locale): string {
@@ -148,6 +162,7 @@ export default function DateTimePicker({
   const dict = t(locale).modal;
   const pickerDict = dict.dateTimePicker;
   const today = startOfDay(new Date());
+  const earliestTodayTime = earliestBookableTime(new Date());
   const weekStart = 0;
 
   const initial = useMemo(() => parseStoredValue(value), [value]);
@@ -241,7 +256,15 @@ export default function DateTimePicker({
   };
 
   const isDateDisabled = (d: Date) => d < today;
-  const canConfirm = pendingDate !== null && pendingTime !== null;
+  const isTimeDisabled = (slot: string) =>
+    pendingDate !== null &&
+    isSameDay(pendingDate, today) &&
+    minutesFromTime(slot) < minutesFromTime(earliestTodayTime);
+
+  const canConfirm =
+    pendingDate !== null &&
+    pendingTime !== null &&
+    !isTimeDisabled(pendingTime);
 
   const onConfirm = () => {
     if (!pendingDate || !pendingTime) return;
@@ -424,17 +447,21 @@ export default function DateTimePicker({
               >
                 {TIME_SLOTS.map((slot) => {
                   const active = pendingTime === slot;
+                  const disabled = isTimeDisabled(slot);
                   return (
                     <button
                       key={slot}
                       type="button"
+                      disabled={disabled}
                       onClick={() => setPendingTime(slot)}
                       data-active={active}
                       className={
                         "block w-full rounded-md px-2.5 py-1.5 text-center text-xs font-medium transition-colors " +
                         (active
                           ? "bg-white text-ink-900"
-                          : "text-white/80 hover:bg-white/8")
+                          : disabled
+                            ? "text-white/25 cursor-not-allowed"
+                            : "text-white/80 hover:bg-white/8")
                       }
                     >
                       {slot}
