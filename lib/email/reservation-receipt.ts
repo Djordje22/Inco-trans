@@ -11,6 +11,12 @@ type SendReservationReceiptResult =
   | { sent: true }
   | { sent: false; reason: string };
 
+type SendReservationEmailsResult = {
+  receiptSent: boolean;
+  adminSent: boolean;
+  reasons: string[];
+};
+
 const escapeHtml = (value: string) =>
   value
     .replaceAll("&", "&amp;")
@@ -246,6 +252,145 @@ function buildReservationReceiptEmail({
   };
 }
 
+function buildReservationAdminEmail({
+  bookingId,
+  payload
+}: SendReservationReceiptArgs) {
+  const route = `${payload.pickup} -> ${payload.destination}`;
+  const stops = payload.stops?.filter(Boolean).join(" -> ");
+  const rows = [
+    detailRow("Request ID", bookingId),
+    detailRow("Source", payload.source),
+    detailRow("Locale", payload.locale),
+    detailRow("Service", labelForService(payload.service, "en")),
+    detailRow("Airport direction", payload.airportDirection),
+    detailRow("Route", route),
+    detailRow("Stops", stops),
+    detailRow("Date and time", formatDateTime(payload.dateTime, "en")),
+    detailRow("Passengers", payload.passengers),
+    detailRow("Luggage", payload.luggage ?? 0),
+    detailRow("Flight", payload.flight),
+    detailRow("Vehicle", vehicleName(payload.vehicle)),
+    detailRow("Payment", labelForPayment(payload.paymentMethod ?? "cash", "en")),
+    detailRow("Name", payload.fullName),
+    detailRow("Email", payload.email),
+    detailRow(
+      "Phone",
+      [payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")
+    ),
+    detailRow("Company", payload.companyName),
+    detailRow("Preferred communication", payload.preferredCommunication),
+    detailRow("Message", payload.message)
+  ].join("");
+
+  const subject = `New Inco Trans reservation request: ${payload.fullName}`;
+  const html = `
+    <div style="margin:0;padding:0;background:#f4f1ea;font-family:Inter,Arial,sans-serif;color:#111827;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;padding:28px 12px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6dccb;">
+              <tr>
+                <td style="background:#111111;padding:26px 28px;">
+                  <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#d7b56d;">${escapeHtml(siteConfig.name)}</div>
+                  <h1 style="margin:8px 0 0;color:#ffffff;font-size:26px;line-height:1.2;font-weight:700;">New reservation request</h1>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px;">
+                  <p style="margin:0 0 18px;color:#374151;font-size:15px;line-height:1.7;">A new reservation request was submitted on the website.</p>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
+                    ${rows}
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  const text = [
+    "New reservation request",
+    "",
+    `Request ID: ${bookingId}`,
+    `Source: ${payload.source}`,
+    `Locale: ${payload.locale}`,
+    `Service: ${labelForService(payload.service, "en")}`,
+    payload.airportDirection ? `Airport direction: ${payload.airportDirection}` : "",
+    `Route: ${route}`,
+    stops ? `Stops: ${stops}` : "",
+    `Date and time: ${formatDateTime(payload.dateTime, "en")}`,
+    `Passengers: ${payload.passengers}`,
+    `Luggage: ${payload.luggage ?? 0}`,
+    payload.flight ? `Flight: ${payload.flight}` : "",
+    `Vehicle: ${vehicleName(payload.vehicle)}`,
+    `Payment: ${labelForPayment(payload.paymentMethod ?? "cash", "en")}`,
+    "",
+    `Name: ${payload.fullName}`,
+    payload.email ? `Email: ${payload.email}` : "",
+    `Phone: ${[payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")}`,
+    payload.companyName ? `Company: ${payload.companyName}` : "",
+    payload.preferredCommunication
+      ? `Preferred communication: ${payload.preferredCommunication}`
+      : "",
+    payload.message ? `Message: ${payload.message}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    subject,
+    html,
+    text
+  };
+}
+
+async function sendResendEmail({
+  apiKey,
+  from,
+  to,
+  replyTo,
+  subject,
+  html,
+  text
+}: {
+  apiKey: string;
+  from: string;
+  to: string;
+  replyTo?: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<SendReservationReceiptResult> {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from,
+      to,
+      reply_to: replyTo?.startsWith("TODO") ? undefined : replyTo,
+      subject,
+      html,
+      text
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text().catch(() => "");
+    return {
+      sent: false,
+      reason: error || `Resend returned ${response.status}.`
+    };
+  }
+
+  return { sent: true };
+}
+
 export async function sendReservationReceiptEmail({
   bookingId,
   payload
@@ -263,29 +408,68 @@ export async function sendReservationReceiptEmail({
   }
 
   const email = buildReservationReceiptEmail({ bookingId, payload });
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from,
-      to: payload.email,
-      reply_to: replyTo.startsWith("TODO") ? undefined : replyTo,
-      subject: email.subject,
-      html: email.html,
-      text: email.text
-    })
+  return sendResendEmail({
+    apiKey,
+    from,
+    to: payload.email,
+    replyTo,
+    subject: email.subject,
+    html: email.html,
+    text: email.text
   });
+}
 
-  if (!response.ok) {
-    const error = await response.text().catch(() => "");
+export async function sendReservationEmails({
+  bookingId,
+  payload
+}: SendReservationReceiptArgs): Promise<SendReservationEmailsResult> {
+  const reasons: string[] = [];
+  const receiptResult = await sendReservationReceiptEmail({ bookingId, payload });
+  if (!receiptResult.sent) {
+    reasons.push(`Customer receipt: ${receiptResult.reason}`);
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESERVATION_EMAIL_FROM;
+  const replyTo = process.env.RESERVATION_EMAIL_REPLY_TO || siteConfig.contact.email;
+  const adminEmail = process.env.RESERVATION_ADMIN_EMAIL || replyTo;
+
+  if (!apiKey || !from) {
+    reasons.push("Admin notification: Email provider is not configured.");
     return {
-      sent: false,
-      reason: error || `Resend returned ${response.status}.`
+      receiptSent: receiptResult.sent,
+      adminSent: false,
+      reasons
     };
   }
 
-  return { sent: true };
+  if (!adminEmail || adminEmail.startsWith("TODO")) {
+    reasons.push("Admin notification: Admin email is not configured.");
+    return {
+      receiptSent: receiptResult.sent,
+      adminSent: false,
+      reasons
+    };
+  }
+
+  const email = buildReservationAdminEmail({ bookingId, payload });
+  const adminResult = await sendResendEmail({
+    apiKey,
+    from,
+    to: adminEmail,
+    replyTo: payload.email || replyTo,
+    subject: email.subject,
+    html: email.html,
+    text: email.text
+  });
+
+  if (!adminResult.sent) {
+    reasons.push(`Admin notification: ${adminResult.reason}`);
+  }
+
+  return {
+    receiptSent: receiptResult.sent,
+    adminSent: adminResult.sent,
+    reasons
+  };
 }

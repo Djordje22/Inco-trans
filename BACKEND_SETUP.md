@@ -86,9 +86,9 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 `SUPABASE_SERVICE_ROLE_KEY` is optional for public form inserts because RLS allows insert-only writes. Add it later for admin/server management features. Never expose `SUPABASE_SERVICE_ROLE_KEY` in browser code. It must only be set as a server-side environment variable on the host.
 
-## Reservation Receipt Emails
+## Reservation Emails
 
-Booking requests are saved first. If the request includes an email address and email env vars are configured, the API also sends a reservation-request receipt to the customer.
+Booking requests are saved first. If the request includes an email address and email env vars are configured, the API sends a reservation-request receipt to the customer. It also sends an admin notification with the booking details.
 
 Recommended provider: Resend.
 
@@ -98,9 +98,10 @@ Add these environment variables locally and in production:
 RESEND_API_KEY=your_resend_api_key
 RESERVATION_EMAIL_FROM="Inco Trans <reservations@your-domain.com>"
 RESERVATION_EMAIL_REPLY_TO=your_contact_email
+RESERVATION_ADMIN_EMAIL=admin_notification_email
 ```
 
-Until these are configured, bookings still save to Supabase, but `emailSent` will be `false` in the API response.
+Until these are configured, bookings still save to Supabase, but `emailSent` and `adminEmailSent` can be `false` in the API response. If `RESERVATION_ADMIN_EMAIL` is not set, admin notifications fall back to `RESERVATION_EMAIL_REPLY_TO`.
 
 ## Current Blocker
 

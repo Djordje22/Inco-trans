@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { validateBookingRequestPayload } from "@/lib/backend/payloads";
-import { sendReservationReceiptEmail } from "@/lib/email/reservation-receipt";
+import { sendReservationEmails } from "@/lib/email/reservation-receipt";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -76,13 +76,17 @@ export async function POST(request: Request) {
     }
   }
 
-  const emailResult = await sendReservationReceiptEmail({ bookingId: id, payload });
-  if (!emailResult.sent && emailResult.reason !== "Booking request does not include an email.") {
-    console.error("Reservation receipt email was not sent:", emailResult.reason);
+  const emailResult = await sendReservationEmails({ bookingId: id, payload });
+  if (emailResult.reasons.length > 0) {
+    console.error("Reservation email issue:", emailResult.reasons.join(" | "));
   }
 
   return NextResponse.json(
-    { id, emailSent: emailResult.sent },
+    {
+      id,
+      emailSent: emailResult.receiptSent,
+      adminEmailSent: emailResult.adminSent
+    },
     { status: 201 }
   );
 }
