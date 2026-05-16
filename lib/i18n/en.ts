@@ -295,7 +295,7 @@ export const en: Dict = {
         basePriceLabel: "Chauffeur service",
         waitingPriceLabel: "Waiting time ({hours}h at destination)",
         distanceOverageLabel:
-          "Distance overage ({total} km total; beyond included {included} km)",
+          "Distance overage ({overage} km beyond {included} km)",
         totalEstimateLabel: "Total estimated price",
         estimateDisclaimer: "Estimated price. The final price will be confirmed by our team.",
         paymentCardTitle: "Payment method",

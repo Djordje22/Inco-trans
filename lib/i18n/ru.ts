@@ -296,7 +296,7 @@ export const ru: Dict = {
         basePriceLabel: "Шофёр-сервис",
         waitingPriceLabel: "Время ожидания ({hours} ч на месте назначения)",
         distanceOverageLabel:
-          "Дополнительный километраж (всего {total} км; сверх включённых {included} км)",
+          "Дополнительный километраж ({overage} км сверх {included} км)",
         totalEstimateLabel: "Итого ориентировочно",
         estimateDisclaimer: "Ориентировочная цена. Финальную цену подтвердит наша команда.",
         paymentCardTitle: "Способ оплаты",

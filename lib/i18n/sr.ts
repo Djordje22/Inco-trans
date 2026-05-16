@@ -294,7 +294,7 @@ export const sr: Dict = {
         basePriceLabel: "Šofer servis",
         waitingPriceLabel: "Vreme čekanja ({hours}h na destinaciji)",
         distanceOverageLabel:
-          "Dodatna kilometraža (ukupno {total} km; preko uključenih {included} km)",
+          "Dodatna kilometraža ({overage} km preko {included} km)",
         totalEstimateLabel: "Ukupna okvirna cena",
         estimateDisclaimer: "Okvirna cena. Konačnu cenu će potvrditi naš tim.",
         paymentCardTitle: "Način plaćanja",

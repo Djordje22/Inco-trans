@@ -463,6 +463,15 @@ const BELGRADE_AIRPORT_COORDS = {
   longitude: 20.3091
 };
 
+const DRIVER_START_PLACE: AddressPlace = {
+  placeId: "ChIJ23nw8oZwWkcRLG9Y2HlpuB4",
+  label: "Vojislava Ilića 85, Beograd 11050, Srbija",
+  formattedAddress: "Vojislava Ilića 85, Beograd 11050, Srbija",
+  latitude: 44.790643,
+  longitude: 20.4985508,
+  countryCode: "rs"
+};
+
 const airportPlace = (label: string): AddressPlace => ({
   placeId: "belgrade-nikola-tesla-airport",
   label,
@@ -1238,7 +1247,7 @@ function ReviewStep({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        points,
+        points: [DRIVER_START_PLACE, ...points],
         waitingHours: data.waitingHours
       })
     })
@@ -1314,6 +1323,19 @@ function ReviewStep({
           }
         ]
       : []),
+    ...(hasPriceEstimate && estimate
+      ? [
+          {
+            label:
+              locale === "sr"
+                ? "Ukupna kilometraža"
+                : locale === "ru"
+                  ? "Общий километраж"
+                  : "Total distance",
+            value: `${formatDistance(estimate.distanceKm, locale)} km`
+          }
+        ]
+      : [])
   ];
   const vehicleItems = [{ label: dict.vehicleLabel, value: vehicleLabel }];
   const contactItems = [
@@ -1334,7 +1356,7 @@ function ReviewStep({
     { label: dict.messageLabel, value: data.message || "—" }
   ];
   const overageLabel = dict.distanceOverageLabel
-    .replace("{total}", formatDistance(estimate?.distanceKm ?? 0, locale))
+    .replace("{overage}", formatDistance(estimate?.distanceOverageKm ?? 0, locale))
     .replace("{included}", formatDistance(estimate?.includedDistanceKm ?? 50, locale));
   const waitingPriceLabel = dict.waitingPriceLabel.replace(
     "{hours}",
@@ -1879,19 +1901,10 @@ function SuccessPanel({
         {dict.success.body}
       </p>
       <div className="mt-6 space-y-2">
-        <a
-          href={siteConfig.contact.whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-gold w-full justify-center"
-        >
-          <WhatsappIcon />
-          {dict.phonePanel.whatsappCta}
-        </a>
         <button
           type="button"
           onClick={onClose}
-          className="btn-ghost w-full justify-center"
+          className="btn-gold w-full justify-center"
         >
           {dict.success.done}
         </button>
