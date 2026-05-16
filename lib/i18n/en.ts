@@ -131,7 +131,7 @@ export const en: Dict = {
     phone: "Phone",
     message: "Message",
     submit: "Send",
-    submitNote: "Submission coming soon — this is a demo form.",
+    submitNote: "Message sent. We will reply as soon as possible.",
     addressLabel: "Address",
     hoursLabel: "Hours",
     whatsappLabel: "WhatsApp",
@@ -146,7 +146,7 @@ export const en: Dict = {
     paymentsValue: "Cash and card",
     hoursValue: "24/7",
     disclaimer:
-      "Demo version of the website. Prices are indicative and confirmed at booking."
+      "Prices are indicative and confirmed before booking."
   },
   quotePage: {
     title: "Book a transfer",
@@ -183,7 +183,7 @@ export const en: Dict = {
     email: "Email",
     message: "Notes",
     submit: "Send request",
-    submitNote: "Submission coming soon — this is a demo form.",
+    submitNote: "Request sent. We will confirm availability and price as soon as possible.",
     twentyFourSeven: "Available 24/7",
     cardAndCash: "Cash and card"
   },
@@ -348,7 +348,7 @@ export const en: Dict = {
     },
     success: {
       title: "Thank you!",
-      body: "Demo version — your request was not actually sent. In production we'd reply right away, 24/7.",
+      body: "Your request was sent. We will reply with availability and a confirmed price as soon as possible.",
       done: "Close"
     },
     phonePanel: {

@@ -130,7 +130,7 @@ export const sr: Dict = {
     phone: "Telefon",
     message: "Poruka",
     submit: "Pošalji",
-    submitNote: "Slanje uskoro — ovo je demo forma.",
+    submitNote: "Poruka je poslata. Javićemo se što je pre moguće.",
     addressLabel: "Adresa",
     hoursLabel: "Radno vreme",
     whatsappLabel: "WhatsApp",
@@ -145,7 +145,7 @@ export const sr: Dict = {
     paymentsValue: "Gotovina i kartice",
     hoursValue: "24/7",
     disclaimer:
-      "Demo verzija sajta. Cene su orijentacione i potvrđuju se prilikom rezervacije."
+      "Cene su orijentacione i potvrđuju se pre rezervacije."
   },
   quotePage: {
     title: "Rezerviši transfer",
@@ -182,7 +182,7 @@ export const sr: Dict = {
     email: "Email",
     message: "Napomena",
     submit: "Pošalji zahtev",
-    submitNote: "Slanje uskoro — ovo je demo forma.",
+    submitNote: "Zahtev je poslat. Potvrdićemo dostupnost i cenu što je pre moguće.",
     twentyFourSeven: "Dostupni 24/7",
     cardAndCash: "Gotovina i kartice"
   },
@@ -347,7 +347,7 @@ export const sr: Dict = {
     },
     success: {
       title: "Hvala vam!",
-      body: "Demo verzija sajta — zahtev nije zaista poslat. U produkciji odgovaramo u najkraćem roku, 24/7.",
+      body: "Vaš zahtev je poslat. Javićemo se sa dostupnošću i potvrđenom cenom što je pre moguće.",
       done: "Zatvori"
     },
     phonePanel: {

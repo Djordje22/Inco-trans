@@ -8,7 +8,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
   type ReactNode
 } from "react";
 import Image from "next/image";
@@ -69,6 +68,7 @@ import DateTimePicker from "./DateTimePicker";
 // ---------- Context ----------
 
 type FlowKind = "choose" | "transfer" | "handle" | "phone" | "success";
+type SubmitState = "idle" | "submitting" | "error";
 
 type Ctx = {
   open: boolean;
@@ -525,6 +525,7 @@ function TransferFlow({
   const [preStep, setPreStep] = useState<"service" | "direction" | null>(
     "service"
   );
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
 
   const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -592,10 +593,45 @@ function TransferFlow({
     setStep((s) => (s + 1) as 2 | 3 | 4);
   };
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const submitRequest = async () => {
     if (!data.termsAccepted) return;
-    onDone();
+    setSubmitState("submitting");
+
+    const response = await fetch("/api/booking-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locale,
+        source: "reservation_modal",
+        service: data.service,
+        airportDirection: data.airportDirection,
+        pickup: data.pickup,
+        destination: data.destination,
+        stops: data.stops.map((stop) => stop.value),
+        waitingHours: data.waitingHours,
+        dateTime: data.dateTime,
+        passengers: data.passengers,
+        luggage: data.luggage,
+        flight: data.flight,
+        vehicle: data.vehicle,
+        fullName: data.fullName,
+        email: data.email,
+        phoneCountryCode: data.phoneCountryCode,
+        phone: data.phone,
+        companyName: data.companyName,
+        preferredCommunication: data.preferredCommunication,
+        paymentMethod: data.paymentMethod,
+        message: data.message,
+        termsAccepted: data.termsAccepted
+      })
+    });
+
+    if (response.ok) {
+      onDone();
+      return;
+    }
+
+    setSubmitState("error");
   };
 
   // Lock the prefilled endpoint so users can't edit it on the journey form.
@@ -647,16 +683,25 @@ function TransferFlow({
         locale={locale}
         onBack={onPrev}
         onNext={preStep !== null || step < 4 ? onNext : undefined}
-        onSubmit={preStep === null && step === 4 ? onSubmit : undefined}
+        onSubmit={preStep === null && step === 4 ? submitRequest : undefined}
         nextDisabled={
           (onServiceScreen && !serviceValid) ||
           (onDirectionScreen && !directionValid) ||
           (preStep === null && step === 1 && !journeyValid) ||
           (preStep === null && step === 2 && !vehicleValid) ||
           (preStep === null && step === 3 && !contactValid) ||
-          (preStep === null && step === 4 && !data.termsAccepted)
+          (preStep === null && step === 4 && !data.termsAccepted) ||
+          submitState === "submitting"
         }
       />
+      {submitState === "error" ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-100"
+        >
+          We could not send the request. Please try WhatsApp or phone.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -1406,19 +1451,48 @@ function HandleFlow({
 }) {
   const dict = t(locale).modal;
   const [data, setData] = useState<TransferData>(EMPTY);
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
   const valid = isContactValid(data);
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const submitInquiry = async () => {
     if (!valid) return;
-    onDone();
+    setSubmitState("submitting");
+
+    const response = await fetch("/api/contact-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locale,
+        source: "reservation_modal",
+        fullName: data.fullName,
+        email: data.email,
+        phoneCountryCode: data.phoneCountryCode,
+        phone: data.phone,
+        preferredCommunication: data.preferredCommunication,
+        companyName: data.companyName,
+        message: data.message
+      })
+    });
+
+    if (response.ok) {
+      onDone();
+      return;
+    }
+
+    setSubmitState("error");
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void submitInquiry();
+      }}
+      noValidate
+    >
       <StepHeading
         icon={<UserIcon />}
         title={dict.contact.heading}
@@ -1431,9 +1505,17 @@ function HandleFlow({
         locale={locale}
         onBack={onBack}
         submitLabel={dict.contact.submitInquiry}
-        onSubmit={onSubmit}
-        nextDisabled={!valid}
+        onSubmit={submitInquiry}
+        nextDisabled={!valid || submitState === "submitting"}
       />
+      {submitState === "error" ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-100"
+        >
+          We could not send the inquiry. Please try WhatsApp or phone.
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -2056,7 +2138,7 @@ function FormFooter({
   locale: Locale;
   onBack: () => void;
   onNext?: () => void;
-  onSubmit?: (e: FormEvent) => void;
+  onSubmit?: () => void;
   submitLabel?: string;
   nextDisabled?: boolean;
 }) {
@@ -2071,7 +2153,7 @@ function FormFooter({
       </button>
       {isSubmit ? (
         <button
-          type="submit"
+          type="button"
           onClick={onSubmit}
           disabled={nextDisabled}
           className="btn-gold disabled:opacity-50 disabled:cursor-not-allowed"
