@@ -4,7 +4,6 @@ import PageHero from "./PageHero";
 import ContactCTA from "./ContactCTA";
 import JsonLd from "./JsonLd";
 import { ReservationTrigger } from "./ReservationModal";
-import WhatsAppButton from "./WhatsAppButton";
 import FleetCard from "./FleetCard";
 import { vehicles } from "@/lib/fleet-data";
 import { routeMap, type Locale, type RouteKey } from "@/lib/site-config";
@@ -51,9 +50,10 @@ export default function ServicePage({ locale, service }: Props) {
             <ul className="mt-4 space-y-2 text-sm text-white/80">
               {page.included.map((i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span aria-hidden="true" className="mt-1 text-gold-400">
-                    ◆
-                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rotate-45 rounded-[1px] bg-gold-400"
+                  />
                   <span>{i}</span>
                 </li>
               ))}
@@ -70,7 +70,6 @@ export default function ServicePage({ locale, service }: Props) {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <ReservationTrigger>{page.ctaText}</ReservationTrigger>
-              <WhatsAppButton label={dict.hero.whatsappCta} variant="ghost" />
             </div>
           </div>
 

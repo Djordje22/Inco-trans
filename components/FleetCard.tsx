@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { type Vehicle, pricePlaceholder } from "@/lib/fleet-data";
-import { siteConfig, type Locale } from "@/lib/site-config";
+import { type Locale } from "@/lib/site-config";
 import { t } from "@/lib/i18n";
 import { ReservationTrigger } from "./ReservationModal";
 
@@ -13,10 +13,10 @@ export default function FleetCard({ vehicle, locale }: Props) {
   const dict = t(locale);
   const altText =
     locale === "sr"
-      ? `${vehicle.name} — vozilo iz Inco Trans flote sa profesionalnim šoferom`
+      ? `${vehicle.name} vozilo iz Inco Trans flote sa profesionalnim šoferom`
       : locale === "ru"
-        ? `${vehicle.name} — автомобиль Inco Trans с профессиональным шофёром`
-        : `${vehicle.name} — Inco Trans vehicle with professional chauffeur`;
+        ? `${vehicle.name} автомобиль Inco Trans с профессиональным шофёром`
+        : `${vehicle.name} Inco Trans vehicle with professional chauffeur`;
 
   return (
     <article className="glass rounded-2xl overflow-hidden flex flex-col">
@@ -58,9 +58,10 @@ export default function FleetCard({ vehicle, locale }: Props) {
         <ul className="mt-5 space-y-1.5 text-sm text-white/75">
           {vehicle.comfort[locale].map((c) => (
             <li key={c} className="flex items-start gap-2">
-              <span aria-hidden="true" className="mt-1 text-gold-400 text-[10px]">
-                ◆
-              </span>
+              <span
+                aria-hidden="true"
+                className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rotate-45 rounded-[1px] bg-gold-400"
+              />
               <span>{c}</span>
             </li>
           ))}
@@ -71,14 +72,6 @@ export default function FleetCard({ vehicle, locale }: Props) {
             {pricePlaceholder(locale)}
           </span>
           <div className="flex items-center gap-2">
-            <a
-              href={siteConfig.contact.whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-ghost !py-2 !px-3 text-xs"
-            >
-              {dict.fleetCard.whatsappBook}
-            </a>
             <ReservationTrigger className="btn-gold !py-2 !px-3 text-xs">
               {dict.fleetCard.reserve}
             </ReservationTrigger>

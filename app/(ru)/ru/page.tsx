@@ -13,7 +13,7 @@ import { siteConfig } from "@/lib/site-config";
 export const metadata = buildMetadata({
   locale: "ru",
   routeKey: "home",
-  title: `${siteConfig.name} — ${siteConfig.tagline.ru}`,
+  title: `${siteConfig.name} ${siteConfig.tagline.ru}`,
   description: siteConfig.description.ru
 });
 

@@ -4,7 +4,6 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import MobileMenu from "./MobileMenu";
 import NavServicesMenu from "./NavServicesMenu";
 import { ReservationTrigger } from "./ReservationModal";
-import WhatsAppMark from "./icons/WhatsAppMark";
 import {
   siteConfig,
   routeMap,
@@ -22,7 +21,7 @@ export default function Header({ locale, routeKey }: Props) {
   const dict = t(locale);
   const home = routeMap.home[locale];
 
-  // Top-level links (excluding services — those live in the dropdown).
+  // Top-level links. Services live in the dropdown.
   const flatLinks = [
     { href: routeMap.fleet[locale], label: dict.nav.fleet },
     { href: routeMap.about[locale], label: dict.nav.about },
@@ -63,15 +62,6 @@ export default function Header({ locale, routeKey }: Props) {
 
         <div className="ml-auto lg:ml-3 flex items-center gap-2">
           <LanguageSwitcher current={locale} routeKey={routeKey} />
-          <a
-            href={siteConfig.contact.whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={dict.nav.whatsapp}
-            className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/85 hover:bg-white/10"
-          >
-            <WhatsAppMark className="h-4 w-4" />
-          </a>
           <ReservationTrigger className="hidden sm:inline-flex btn-gold !py-2 !px-3 text-sm">
             {dict.nav.requestQuote}
           </ReservationTrigger>

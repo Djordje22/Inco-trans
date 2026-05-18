@@ -37,7 +37,10 @@ export default function QuotePage() {
             <ul className="mt-4 space-y-3 text-sm text-white/75">
               {dict.quotePage.notes.map((n) => (
                 <li key={n} className="flex items-start gap-2">
-                  <span aria-hidden="true" className="mt-1 text-gold-400">◆</span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rotate-45 rounded-[1px] bg-gold-400"
+                  />
                   <span>{n}</span>
                 </li>
               ))}

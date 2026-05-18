@@ -2,7 +2,7 @@ import { vehicles } from "@/lib/fleet-data";
 import type { Locale } from "@/lib/site-config";
 import FleetCard from "./FleetCard";
 
-// With only two vehicles the previous category filter UI is removed — both
+// With only two vehicles the previous category filter UI is removed. Both
 // cards are surfaced side-by-side on desktop and stacked on mobile.
 export default function FleetGrid({ locale }: { locale: Locale }) {
   return (

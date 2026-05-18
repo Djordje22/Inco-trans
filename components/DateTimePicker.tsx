@@ -17,7 +17,7 @@ import type { Locale } from "@/lib/site-config";
 import { t } from "@/lib/i18n";
 
 // ISO datetime-local format used internally and emitted to onChange:
-// "YYYY-MM-DDTHH:mm" — same as <input type="datetime-local">.
+// "YYYY-MM-DDTHH:mm", same as <input type="datetime-local">.
 
 type Props = {
   locale: Locale;
@@ -34,7 +34,7 @@ const BCP47: Record<Locale, string> = {
 };
 
 const TIME_STEP_MIN = 15;
-const MIN_LEAD_MIN = 60;
+const MIN_LEAD_MIN = 120;
 const TIME_SLOTS_PER_DAY = (24 * 60) / TIME_STEP_MIN + 1; // 00:00 through 24:00
 
 function pad(n: number): string {
@@ -69,12 +69,18 @@ function minutesFromTime(value: string): number {
   return hours * 60 + minutes;
 }
 
-function earliestBookableTime(now: Date): string {
+function earliestBookableDateTime(now: Date): Date {
   const min = new Date(now.getTime() + MIN_LEAD_MIN * 60 * 1000);
   const totalMinutes = min.getHours() * 60 + min.getMinutes();
   const rounded = Math.ceil(totalMinutes / TIME_STEP_MIN) * TIME_STEP_MIN;
-  if (rounded >= 24 * 60) return "24:00";
-  return `${pad(Math.floor(rounded / 60))}:${pad(rounded % 60)}`;
+  const next = new Date(min);
+  if (rounded >= 24 * 60) {
+    next.setDate(next.getDate() + 1);
+    next.setHours(0, 0, 0, 0);
+    return next;
+  }
+  next.setHours(Math.floor(rounded / 60), rounded % 60, 0, 0);
+  return next;
 }
 
 function formatTrigger(iso: string, locale: Locale): string {
@@ -161,8 +167,13 @@ export default function DateTimePicker({
 }: Props) {
   const dict = t(locale).modal;
   const pickerDict = dict.dateTimePicker;
-  const today = startOfDay(new Date());
-  const earliestTodayTime = earliestBookableTime(new Date());
+  const now = new Date();
+  const today = startOfDay(now);
+  const earliestBookable = earliestBookableDateTime(now);
+  const earliestBookableDay = startOfDay(earliestBookable);
+  const earliestBookableTime = `${pad(earliestBookable.getHours())}:${pad(
+    earliestBookable.getMinutes()
+  )}`;
   const weekStart = 0;
 
   const initial = useMemo(() => parseStoredValue(value), [value]);
@@ -227,8 +238,9 @@ export default function DateTimePicker({
   }, [open]);
 
   const minMonth =
-    viewYear < today.getFullYear() ||
-    (viewYear === today.getFullYear() && viewMonth <= today.getMonth());
+    viewYear < earliestBookableDay.getFullYear() ||
+    (viewYear === earliestBookableDay.getFullYear() &&
+      viewMonth <= earliestBookableDay.getMonth());
 
   const goPrevMonth = () => {
     if (minMonth) return;
@@ -251,17 +263,17 @@ export default function DateTimePicker({
   };
 
   const onPickDate = (d: Date) => {
-    if (d < today) return;
+    if (d < earliestBookableDay) return;
     setPendingDate(startOfDay(d));
   };
 
-  const isDateDisabled = (d: Date) => d < today;
+  const isDateDisabled = (d: Date) => d < earliestBookableDay;
   const isTimeDisabled = (slot: string) =>
     pendingDate !== null &&
-    isSameDay(pendingDate, today) &&
-    minutesFromTime(slot) < minutesFromTime(earliestTodayTime);
+    isSameDay(pendingDate, earliestBookableDay) &&
+    minutesFromTime(slot) < minutesFromTime(earliestBookableTime);
   const visibleTimeSlots =
-    pendingDate !== null && isSameDay(pendingDate, today)
+    pendingDate !== null && isSameDay(pendingDate, earliestBookableDay)
       ? TIME_SLOTS.filter((slot) => !isTimeDisabled(slot))
       : TIME_SLOTS;
 
@@ -359,7 +371,9 @@ export default function DateTimePicker({
                   >
                     {Array.from({ length: 12 }, (_, i) => {
                       const minM =
-                        viewYear === today.getFullYear() ? today.getMonth() : 0;
+                        viewYear === earliestBookableDay.getFullYear()
+                          ? earliestBookableDay.getMonth()
+                          : 0;
                       return (
                         <option key={i} value={i} disabled={i < minM}>
                           {monthName(locale, i, viewYear)}
@@ -377,8 +391,11 @@ export default function DateTimePicker({
                     onChange={(e) => {
                       const y = Number(e.target.value);
                       setViewYear(y);
-                      if (y === today.getFullYear() && viewMonth < today.getMonth()) {
-                        setViewMonth(today.getMonth());
+                      if (
+                        y === earliestBookableDay.getFullYear() &&
+                        viewMonth < earliestBookableDay.getMonth()
+                      ) {
+                        setViewMonth(earliestBookableDay.getMonth());
                       }
                     }}
                     className="glass-input !py-1 !px-2 text-xs cursor-pointer"

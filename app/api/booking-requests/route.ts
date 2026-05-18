@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       pickup_at: payload.dateTime,
       passengers: payload.passengers,
       luggage: payload.luggage ?? 0,
+      wifi_requested: payload.wifi ?? true,
       flight_number: payload.flight || null,
       vehicle_slug: payload.vehicle || null,
       full_name: payload.fullName,

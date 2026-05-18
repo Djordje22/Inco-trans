@@ -15,24 +15,24 @@ export const sr: Dict = {
     businessTransfer: "Poslovni transfer"
   },
   hero: {
-    eyebrow: "Beograd, Srbija · 24/7",
-    title1: "Luksuzni transfer",
-    title2: "i šofer servis u Beogradu",
+    eyebrow: "Beograd, Srbija",
+    title1: "Privatni transferi",
+    title2: "sa beogradskim potpisom",
     subtitle:
       "Profesionalni vozači, fiksne cene unapred i diskretna usluga. Aerodromski, poslovni i VIP transferi širom Srbije.",
     ctaPrimary: "Rezerviši transfer",
     ctaSecondary: "Pogledaj flotu",
-    whatsappCta: "Rezerviši preko WhatsAppa"
+    whatsappCta: "WhatsApp poruka"
   },
   badges: {
-    hours247: "Dostupni 24/7",
+    hours247: "Online rezervacije uvek",
     cashAndCard: "Gotovina i kartice",
     whatsapp: "WhatsApp rezervacija"
   },
   services: {
     title: "Naše usluge",
     subtitle:
-      "Izaberite uslugu koja vam odgovara — javljamo se sa fiksnom cenom u najkraćem roku.",
+      "Izaberite uslugu koja vam odgovara. Javljamo se sa fiksnom cenom u najkraćem roku.",
     learnMore: "Saznaj više",
     items: {
       airport: {
@@ -41,7 +41,7 @@ export const sr: Dict = {
       },
       chauffeur: {
         title: "Šofer servis",
-        desc: "Profesionalni vozač na sat ili po zahtevu — sastanci, događaji, gradske vožnje."
+        desc: "Profesionalni vozač na sat ili po zahtevu za sastanke, događaji, gradske vožnje."
       },
       business: {
         title: "Poslovni transfer",
@@ -66,14 +66,14 @@ export const sr: Dict = {
   fleetPage: {
     title: "Naša flota",
     subtitle:
-      "Dva pažljivo održavana vozila — Mercedes E klasa za poslovne transfere i Audi Q5 za aerodromske transfere i grupe sa prtljagom."
+      "Dva pažljivo održavana vozila: Mercedes E klasa i Audi A6 za aerodromske, poslovne i VIP transfere."
   },
   why: {
     title: "Zašto Inco Trans",
     items: [
       {
-        title: "Dostupni 24/7",
-        desc: "Rezervacija i transfer u bilo koje doba dana ili noći."
+        title: "Online rezervacije uvek",
+        desc: "Pošaljite rezervaciju kada vam odgovara. Pozivi su dostupni od 08:00 do 22:00 po vremenu u Beogradu."
       },
       {
         title: "Fiksne cene unapred",
@@ -94,7 +94,7 @@ export const sr: Dict = {
     steps: [
       {
         title: "1. Pošalji upit",
-        desc: "Forma na sajtu ili WhatsApp poruka — javljamo se u najkraćem roku."
+        desc: "Forma na sajtu ili WhatsApp poruka. Javljamo se u najkraćem roku."
       },
       {
         title: "2. Potvrda i fiksna cena",
@@ -110,20 +110,20 @@ export const sr: Dict = {
     title: "O Inco Trans",
     body: [
       "Inco Trans je specijalizovan za profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji. Bavimo se aerodromskim transferima, poslovnim prevozom i VIP transportom.",
-      "Cilj nam je jednostavna i diskretna usluga — fiksne cene unapred, profesionalni vozači, redovno održavana flota i dostupnost u svako doba."
+      "Cilj nam je jednostavna i diskretna usluga: fiksne cene unapred, profesionalni vozači, redovno održavana flota i jasna komunikacija."
     ],
     valuesTitle: "Naše vrednosti",
     values: [
       "Tačnost i pouzdanost",
       "Profesionalni i diskretni vozači",
       "Fiksne, transparentne cene",
-      "24/7 dostupnost u Beogradu i Srbiji"
+      "Online rezervacije i pozivi od 08:00 do 22:00"
     ]
   },
   contact: {
     title: "Kontakt",
     subtitle:
-      "Najbrži način da rezervišete transfer je preko WhatsAppa. Javljamo se odmah.",
+      "Pošaljite online zahtev za rezervaciju u bilo kom trenutku ili nas pozovite od 08:00 do 22:00 po vremenu u Beogradu.",
     formTitle: "Pošalji poruku",
     fullName: "Ime i prezime",
     email: "Email",
@@ -134,7 +134,7 @@ export const sr: Dict = {
     addressLabel: "Adresa",
     hoursLabel: "Radno vreme",
     whatsappLabel: "WhatsApp",
-    mapPlaceholder: "Mapa će biti dostupna uskoro."
+    mapPlaceholder: "Beograd, Srbija"
   },
   footer: {
     rights: "Sva prava zadržana.",
@@ -143,24 +143,24 @@ export const sr: Dict = {
     contact: "Kontakt",
     payments: "Plaćanje",
     paymentsValue: "Gotovina i kartice",
-    hoursValue: "24/7",
+    hoursValue: "Pozivi 08:00-22:00",
     disclaimer:
       "Cene su orijentacione i potvrđuju se pre rezervacije."
   },
   quotePage: {
     title: "Rezerviši transfer",
     subtitle:
-      "Pošaljite kratak zahtev — javljamo se sa dostupnim vozilom, imenom vozača i fiksnom cenom.",
+      "Pošaljite kratak zahtev. Javljamo se sa dostupnim vozilom, imenom vozača i fiksnom cenom.",
     detailsTitle: "Detalji rezervacije",
     notes: [
       "Plaćanje gotovinom ili karticom.",
       "Fiksna cena dogovorena pre vožnje.",
-      "Dostupni 24/7 — odgovor odmah preko WhatsAppa."
+      "Online rezervacije su otvorene uvek. Pozivi su dostupni od 08:00 do 22:00 po vremenu u Beogradu."
     ]
   },
   transportForm: {
     title: "Zahtev za transfer",
-    eyebrow: "24/7 rezervacija",
+    eyebrow: "Online rezervacija",
     serviceType: "Vrsta usluge",
     serviceOptionAirport: "Aerodromski transfer",
     serviceOptionChauffeur: "Šofer servis",
@@ -174,7 +174,7 @@ export const sr: Dict = {
     passengers: "Broj putnika",
     luggage: "Broj komada prtljaga",
     flightNumber: "Broj leta",
-    flightHint: "Opciono — pratimo dolazak i čekamo u slučaju kašnjenja.",
+    flightHint: "Opciono. Pratimo dolazak i čekamo u slučaju kašnjenja.",
     vehiclePreference: "Vozilo",
     vehicleAny: "Bilo koje vozilo",
     fullName: "Ime i prezime",
@@ -183,13 +183,13 @@ export const sr: Dict = {
     message: "Napomena",
     submit: "Pošalji zahtev",
     submitNote: "Zahtev je poslat. Potvrdićemo dostupnost i cenu što je pre moguće.",
-    twentyFourSeven: "Dostupni 24/7",
+    twentyFourSeven: "Online rezervacije uvek",
     cardAndCash: "Gotovina i kartice"
   },
   cta: {
     readyTitle: "Spremni za vaš sledeći transfer?",
     readyBody:
-      "Javite se preko WhatsAppa ili pošaljite kratak upit — odgovaramo u najkraćem roku, 24/7."
+      "Dogovorite vožnju online kada god vam odgovara. Za pozive, naš tim u Beogradu je dostupan od 08:00 do 22:00."
   },
   modal: {
     title: "Rezerviši transfer",
@@ -207,7 +207,7 @@ export const sr: Dict = {
         desc: "Naš tim pripremiće ponudu po meri"
       },
       whatsapp: {
-        title: "Rezerviši preko WhatsAppa"
+        title: "WhatsApp poruka"
       },
       phone: {
         title: "Pozovi telefonom"
@@ -239,8 +239,8 @@ export const sr: Dict = {
         pickup: "Mesto preuzimanja",
         destination: "Odredište",
         pickupDateTime: "Datum i vreme",
-        passengers: "Broj putnika",
-        luggage: "Broj komada prtljaga",
+        passengers: "Putnika",
+        luggage: "Prtljag",
         flightNumber: "Broj leta (ako je primenljivo)",
         flightHint: "Pratimo dolazak i čekamo u slučaju kašnjenja.",
         stopLabel: "Stajalište {n}",
@@ -248,6 +248,8 @@ export const sr: Dict = {
         addStop: "Dodaj stajalište",
         removeStop: "Ukloni stajalište",
         reorderStop: "Prevuci za promenu redosleda",
+        wifiLabel: "Wi-Fi",
+        wifiDesc: "Pripremamo Wi-Fi u vozilu za vožnju.",
         waitingTitle: "Sati čekanja",
         waitingDesc:
           "Dodajte sate ako vam je potrebno da vozač sačeka na odredištu.",
@@ -285,6 +287,9 @@ export const sr: Dict = {
         selectedServiceLabel: "Tip usluge",
         stopsLabel: "Stajališta",
         waitingLabel: "Čekanje",
+        wifiLabel: "Wi-Fi",
+        yes: "Da",
+        no: "Ne",
         fullNameLabel: "Ime i prezime",
         emailLabel: "Email adresa",
         phoneLabel: "Telefon",
@@ -352,7 +357,7 @@ export const sr: Dict = {
     },
     phonePanel: {
       heading: "Pozovi ili pošalji WhatsApp",
-      subheading: "Najbrži način — javljamo se odmah",
+      subheading: "Pozivi su dostupni od 08:00 do 22:00 po vremenu u Beogradu",
       whatsappCta: "WhatsApp poruka",
       callCta: "Pozovi",
       hours: "Radno vreme"
@@ -373,19 +378,19 @@ export const sr: Dict = {
         "Pomoć oko prtljaga",
         "Voda i Wi-Fi na zahtev",
         "Fiksna cena dogovorena unapred",
-        "Mercedes E klasa ili Audi Q5"
+        "Mercedes E klasa ili Audi A6"
       ],
       detailTitle: "Detalji usluge",
       detailBody: [
-        "Aerodromski transfer pokriva sve smerove: aerodrom — hotel, aerodrom — adresa, aerodrom — Beograd ili drugi grad u Srbiji, kao i obrnut smer.",
-        "Idealno za poslovne dolaske, porodice sa prtljagom i grupe do četiri putnika. Veće grupe javite na WhatsApp — kombinujemo dva vozila."
+        "Aerodromski transfer pokriva sve smerove: aerodrom, hotel, adresa, Beograd ili drugi grad u Srbiji, kao i obrnut smer.",
+        "Idealno za poslovne dolaske, porodice sa prtljagom i grupe do četiri putnika. Za veće grupe pošaljite zahtev za rezervaciju i kombinujemo dva vozila."
       ],
       keywordsTitle: "Često traženo",
       keywords: [
         "Transfer aerodrom Beograd",
         "Nikola Tesla transfer",
         "Transfer aerodrom hotel Beograd",
-        "Aerodromski transfer 24/7"
+        "Aerodromski transfer Beograd"
       ],
       ctaText: "Rezerviši transfer",
       crossLinkTitle: "Pogledajte i"
@@ -394,20 +399,20 @@ export const sr: Dict = {
       eyebrow: "Šofer servis",
       title: "Profesionalni šofer u Beogradu i Srbiji",
       subtitle:
-        "Vozač na sat ili po zahtevu — sastanci, događaji, dnevne vožnje po gradu i međugradski prevoz.",
+        "Vozač na sat ili po zahtevu za sastanke, događaji, dnevne vožnje po gradu i međugradski prevoz.",
       heroBody:
         "Šofer servis je idealan kada imate više obaveza u toku dana ili više stajališta. Vozilo i vozač su vam na raspolaganju onoliko koliko vam treba.",
       includedTitle: "Šta je uključeno",
       included: [
         "Profesionalni vozač sa lokalnim poznavanjem grada",
-        "Vozilo na raspolaganju po dogovoru — sat, pola dana, ceo dan",
+        "Vozilo na raspolaganju po dogovoru: sat, pola dana, ceo dan",
         "Više stajališta uključeno bez doplate",
-        "Diskretan vozač — privatne komunikacije bez prisluškivanja",
+        "Diskretan vozač, privatne komunikacije bez prisluškivanja",
         "Fiksna cena dogovorena unapred"
       ],
       detailTitle: "Kada koristiti",
       detailBody: [
-        "Poslovni sastanci u različitim delovima grada, događaji koje vodite, venčanja, večere i obilasci Beograda — sve gde vam treba isti vozač i vozilo veći deo dana.",
+        "Poslovni sastanci u različitim delovima grada, događaji koje vodite, venčanja, večere i obilasci Beograda, sve gde vam treba isti vozač i vozilo veći deo dana.",
         "Za međugradske vožnje (Novi Sad, Niš, granični prelazi) dogovaramo cenu posebno."
       ],
       keywordsTitle: "Često traženo",
@@ -426,7 +431,7 @@ export const sr: Dict = {
       subtitle:
         "Diskretan, tačan transfer za poslovne klijente, delegacije i VIP putnike. Plaćanje karticom, fakturisanje za firme.",
       heroBody:
-        "Inco Trans servis za firme — predvidiva tačnost, profesionalni vozači u uniformi po zahtevu, NDA-friendly diskrecija i fakturisanje po dogovoru.",
+        "Inco Trans servis za firme: predvidiva tačnost, profesionalni vozači u uniformi po zahtevu, NDA-friendly diskrecija i fakturisanje po dogovoru.",
       includedTitle: "Šta je uključeno",
       included: [
         "Tačni dolasci po programu sastanaka",

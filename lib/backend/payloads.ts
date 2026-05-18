@@ -31,6 +31,7 @@ export type BookingRequestPayload = {
   dateTime: string;
   passengers: number;
   luggage?: number;
+  wifi?: boolean;
   flight?: string;
   vehicle?: string;
   fullName: string;
@@ -187,6 +188,7 @@ export function validateBookingRequestPayload(
   const phone = asString(data.phone);
   const passengers = asInteger(data.passengers, 1);
   const luggage = asInteger(data.luggage, 0);
+  const wifi = typeof data.wifi === "boolean" ? data.wifi : true;
   const waitingHours = asInteger(data.waitingHours, 0);
 
   if (!locales.has(locale)) return { ok: false, error: "Unsupported locale." };
@@ -198,10 +200,10 @@ export function validateBookingRequestPayload(
   if (!pickup || !destination || !dateTime) {
     return { ok: false, error: "Pickup, destination and date/time are required." };
   }
-  if (passengers < 1 || passengers > 20) {
+  if (passengers < 1 || passengers > 4) {
     return { ok: false, error: "Passenger count is outside the allowed range." };
   }
-  if (luggage < 0 || luggage > 20) {
+  if (luggage < 0 || luggage > 4) {
     return { ok: false, error: "Luggage count is outside the allowed range." };
   }
   if (!fullName || phone.length < 5) {
@@ -235,6 +237,7 @@ export function validateBookingRequestPayload(
       dateTime,
       passengers,
       luggage,
+      wifi,
       flight: asOptionalString(data.flight),
       vehicle: asOptionalString(data.vehicle),
       fullName,

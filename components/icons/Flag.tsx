@@ -7,7 +7,7 @@ const COUNTRY: Record<Locale, { cc: string; alt: string }> = {
   ru: { cc: "ru", alt: "Россия" }
 };
 
-// Crisp inline flag from flagcdn.com — small PNGs, no domain config needed.
+// Crisp inline flag from flagcdn.com. Small PNGs, no domain config needed.
 // Rendered as a plain <img> with explicit dimensions to avoid layout shift.
 export default function Flag({
   locale,

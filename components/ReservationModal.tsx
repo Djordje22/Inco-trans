@@ -34,7 +34,8 @@ import {
   Minus,
   GripVertical,
   Hourglass,
-  Search
+  Search,
+  Wifi
 } from "lucide-react";
 import {
   DndContext,
@@ -261,7 +262,7 @@ function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
   );
 }
 
-// ---------- Step 1 — Choose ----------
+// ---------- Step 1, Choose ----------
 
 function ChooseStep({
   locale,
@@ -284,34 +285,10 @@ function ChooseStep({
       </div>
 
       <ul className="mt-7 space-y-3">
-        {/* WhatsApp first — primary CTA */}
-        <li>
-          <a
-            href={siteConfig.contact.whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group w-full flex items-center gap-3 rounded-xl border border-gold-400/40 bg-gold-400/10 px-3 py-3 hover:bg-gold-400/15 transition-colors"
-          >
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold-400/20 ring-1 ring-gold-400/40 text-gold-200">
-              <WhatsappIcon />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block font-semibold text-white text-sm sm:text-[15px]">
-                {dict.step1.whatsapp.title}
-              </span>
-              <span className="mt-0.5 block text-xs text-gold-200/85 truncate">
-                {siteConfig.contact.whatsapp}
-              </span>
-            </span>
-            <ChevronRight className="text-gold-200/70" />
-          </a>
-        </li>
-
         <ServiceCard
           icon={<CarIcon />}
           title={dict.step1.transfer.title}
           desc={dict.step1.transfer.desc}
-          chip={dict.step1.learnMore}
           onClick={() => onPick("transfer")}
         />
         <ServiceCard
@@ -495,6 +472,7 @@ type TransferData = {
   dateTime: string;
   passengers: number;
   luggage: number;
+  wifi: boolean;
   flight: string;
   vehicle: string;
   fullName: string;
@@ -522,6 +500,7 @@ const EMPTY: TransferData = {
   dateTime: "",
   passengers: 1,
   luggage: 0,
+  wifi: true,
   flight: "",
   vehicle: "",
   fullName: "",
@@ -685,6 +664,7 @@ function TransferFlow({
         dateTime: data.dateTime,
         passengers: data.passengers,
         luggage: data.luggage,
+        wifi: data.wifi,
         flight: data.flight,
         vehicle: data.vehicle,
         fullName: data.fullName,
@@ -707,10 +687,6 @@ function TransferFlow({
 
     setSubmitState("error");
   };
-
-  // Lock the prefilled endpoint so users can't edit it on the journey form.
-  const lockPickup = isAirport && data.airportDirection === "from";
-  const lockDestination = isAirport && data.airportDirection === "to";
 
   return (
     <div>
@@ -738,8 +714,6 @@ function TransferFlow({
             locale={locale}
             data={data}
             set={set}
-            lockPickup={lockPickup}
-            lockDestination={lockDestination}
           />
         ) : null}
         {preStep === null && step === 2 ? (
@@ -797,10 +771,10 @@ function ServiceStep({
       value: "airport",
       label: tf.serviceOptionAirport,
       desc: locale === "sr"
-        ? "Aerodrom Nikola Tesla — adresa, hotel ili grad."
+        ? "Aerodrom Nikola Tesla, adresa, hotel ili grad."
         : locale === "ru"
-          ? "Аэропорт Никола Тесла — адрес, отель или город."
-          : "Nikola Tesla Airport — address, hotel or city."
+          ? "Аэропорт Никола Тесла, адрес, отель или город."
+          : "Nikola Tesla Airport, address, hotel or city."
     },
     {
       value: "chauffeur",
@@ -824,10 +798,10 @@ function ServiceStep({
       value: "other",
       label: tf.serviceOptionOther,
       desc: locale === "sr"
-        ? "Drugačiji zahtev — opišite u napomeni."
+        ? "Drugačiji zahtev, opišite u napomeni."
         : locale === "ru"
-          ? "Иной запрос — опишите в комментарии."
-          : "Different request — describe in notes."
+          ? "Иной запрос, опишите в комментарии."
+          : "Different request, describe in notes."
     }
   ];
 
@@ -957,15 +931,11 @@ function AirportDirectionStep({
 function JourneyStep({
   locale,
   data,
-  set,
-  lockPickup = false,
-  lockDestination = false
+  set
 }: {
   locale: Locale;
   data: TransferData;
   set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
-  lockPickup?: boolean;
-  lockDestination?: boolean;
 }) {
   const dict = t(locale).modal.rent.journey;
   const tf = t(locale).transportForm;
@@ -1004,8 +974,6 @@ function JourneyStep({
               set("routeEstimate", undefined);
               set("routeEstimateStatus", "idle");
             }}
-            disabled={lockPickup}
-            readOnly={lockPickup}
           />
         </Field>
         <Field label={dict.destination} required iconLabel>
@@ -1020,8 +988,6 @@ function JourneyStep({
               set("routeEstimate", undefined);
               set("routeEstimateStatus", "idle");
             }}
-            disabled={lockDestination}
-            readOnly={lockDestination}
           />
         </Field>
         {isAirport ? (
@@ -1031,6 +997,7 @@ function JourneyStep({
           </>
         ) : null}
         {!isAirport ? dateTimeField : null}
+        <WifiToggle locale={locale} checked={data.wifi} onChange={(next) => set("wifi", next)} />
         <div className="grid grid-cols-2 gap-3">
           <Field label={dict.passengers} required>
             <input
@@ -1213,7 +1180,7 @@ function ReviewStep({
       case "other":
         return tf.serviceOptionOther;
       default:
-        return "—";
+        return " ";
     }
   })();
   const serviceWithDirection =
@@ -1308,7 +1275,7 @@ function ReviewStep({
       case "email":
         return contactDict.preferredEmail;
       default:
-        return "—";
+        return " ";
     }
   })();
 
@@ -1321,19 +1288,20 @@ function ReviewStep({
     { label: dict.selectedServiceLabel, value: serviceWithDirection }
   ];
   const tripItems = [
-    { label: dict.pickupLabel, value: data.pickup || "—" },
+    { label: dict.pickupLabel, value: data.pickup || " " },
     ...(stopValues.length > 0
       ? [{ label: dict.stopsLabel, value: stopsSummary }]
       : []),
-    { label: dict.destinationLabel, value: data.destination || "—" },
+    { label: dict.destinationLabel, value: data.destination || " " },
     {
       label: dict.whenLabel,
-      value: data.dateTime ? formatDateTime(data.dateTime, locale) : "—"
+      value: data.dateTime ? formatDateTime(data.dateTime, locale) : " "
     },
     { label: dict.passengersLabel, value: String(data.passengers) },
     { label: dict.luggageLabel, value: String(data.luggage) },
+    { label: dict.wifiLabel, value: data.wifi ? dict.yes : dict.no },
     ...(data.service === "airport"
-      ? [{ label: dict.flightLabel, value: data.flight || "—" }]
+      ? [{ label: dict.flightLabel, value: data.flight || " " }]
       : []),
     ...(data.service === "airport" && data.waitingHours > 0
       ? [
@@ -1359,21 +1327,21 @@ function ReviewStep({
   ];
   const vehicleItems = [{ label: dict.vehicleLabel, value: vehicleLabel }];
   const contactItems = [
-    { label: dict.fullNameLabel, value: data.fullName || "—" },
-    { label: dict.emailLabel, value: data.email || "—" },
+    { label: dict.fullNameLabel, value: data.fullName || " " },
+    { label: dict.emailLabel, value: data.email || " " },
     {
       label: dict.phoneLabel,
       value:
         data.phoneCountryCode || data.phone
           ? `${data.phoneCountryCode} ${data.phone}`.trim()
-          : "—"
+          : " "
     },
     {
       label: dict.preferredCommunicationLabel,
       value: preferredCommunicationLabel
     },
-    { label: dict.companyNameLabel, value: data.companyName || "—" },
-    { label: dict.messageLabel, value: data.message || "—" }
+    { label: dict.companyNameLabel, value: data.companyName || " " },
+    { label: dict.messageLabel, value: data.message || " " }
   ];
   const overageLabel = dict.distanceOverageLabel
     .replace("{overage}", formatDistance(estimate?.distanceOverageKm ?? 0, locale))
@@ -2418,7 +2386,7 @@ function WaitingHoursCard({
 
   return (
     <div>
-      <div className="glass rounded-xl p-4 flex items-start gap-3">
+      <div className="glass grid grid-cols-[auto_1fr] gap-3 rounded-xl p-4 sm:grid-cols-[auto_1fr_auto] sm:items-start">
         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-gold-300">
           <Hourglass className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
         </span>
@@ -2426,9 +2394,11 @@ function WaitingHoursCard({
           <h4 className="font-semibold text-sm text-white">
             {dict.waitingTitle}
           </h4>
-          <p className="mt-0.5 text-xs text-white/55">{dict.waitingDesc}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-white/55">
+            {dict.waitingDesc}
+          </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="col-span-2 flex items-center justify-end gap-2 shrink-0 sm:col-span-1">
           <button
             type="button"
             onClick={decrement}
@@ -2461,6 +2431,56 @@ function WaitingHoursCard({
         </p>
       ) : null}
     </div>
+  );
+}
+
+function WifiToggle({
+  locale,
+  checked,
+  onChange
+}: {
+  locale: Locale;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  const dict = t(locale).modal.rent.journey;
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="glass flex w-full items-center gap-3 rounded-xl p-4 text-left transition-colors hover:bg-white/8"
+    >
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-gold-300">
+        <Wifi className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-white">
+          {dict.wifiLabel}
+        </span>
+        <span className="mt-0.5 block text-xs text-white/55">
+          {dict.wifiDesc}
+        </span>
+      </span>
+      <span
+        aria-hidden="true"
+        className={
+          "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors " +
+          (checked
+            ? "border-gold-400/50 bg-gold-400"
+            : "border-white/15 bg-white/10")
+        }
+      >
+        <span
+          className={
+            "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform " +
+            (checked ? "translate-x-6" : "translate-x-1")
+          }
+        />
+      </span>
+    </button>
   );
 }
 

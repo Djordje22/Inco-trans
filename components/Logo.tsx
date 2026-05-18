@@ -12,7 +12,7 @@ export default function Logo({ href, brand, tagline }: Props) {
     <Link
       href={href}
       className="flex items-center gap-3 group"
-      aria-label={`${brand} — ${tagline ?? ""}`.trim()}
+      aria-label={`${brand} ${tagline ?? ""}`.trim()}
     >
       <span className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1 ring-white/10 bg-black/30">
         <Image

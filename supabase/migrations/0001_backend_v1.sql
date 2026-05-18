@@ -59,7 +59,8 @@ create table public.booking_requests (
   waiting_hours integer not null default 0 check (waiting_hours between 0 and 24),
   pickup_at timestamptz not null,
   passengers integer not null check (passengers between 1 and 20),
-  luggage integer not null default 0 check (luggage between 0 and 20),
+  luggage integer not null default 0 check (luggage between 0 and 4),
+  wifi_requested boolean not null default true,
   flight_number text,
   vehicle_slug text,
   full_name text not null,
@@ -272,15 +273,15 @@ insert into public.vehicles (
   1
 ),
 (
-  'audi-q5',
-  'Audi Q5',
-  '{"sr":"Premium SUV za aerodromske transfere i grupe sa prtljagom","en":"Premium SUV for airport transfers and luggage-heavy trips","ru":"Премиум-внедорожник для трансферов из аэропорта и поездок с багажом"}',
+  'audi-a6',
+  'Audi A6',
+  '{"sr":"Premium limuzina za aerodromske transfere i duže vožnje","en":"Premium sedan for airport transfers and longer rides","ru":"Премиальный седан для трансферов из аэропорта и дальних поездок"}',
   'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1600&q=80',
   4,
   4,
   '{"sr":"Automatik","en":"Automatic","ru":"Автомат"}',
   '{"sr":"Dizel","en":"Diesel","ru":"Дизель"}',
-  '{"sr":["Profesionalni šofer","Prostran prtljažnik za aerodromske transfere","Kožna sedišta i klima","Voda i Wi-Fi na zahtev"],"en":["Professional chauffeur","Spacious boot for airport transfers","Leather seats and climate control","Bottled water and Wi-Fi on request"],"ru":["Профессиональный шофёр","Просторный багажник для аэропорта","Кожаный салон и климат-контроль","Вода и Wi-Fi по запросу"]}',
+  '{"sr":["Profesionalni šofer","Udobna limuzina za aerodromske transfere","Kožna sedišta i klima","Voda i Wi-Fi na zahtev"],"en":["Professional chauffeur","Comfortable sedan for airport transfers","Leather seats and climate control","Bottled water and Wi-Fi on request"],"ru":["Профессиональный шофёр","Комфортный седан для трансферов из аэропорта","Кожаный салон и климат-контроль","Вода и Wi-Fi по запросу"]}',
   2
 )
 on conflict (slug) do nothing;

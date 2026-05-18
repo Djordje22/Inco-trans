@@ -174,11 +174,13 @@ export type Dict = {
         luggage: string;
         flightNumber: string;
         flightHint: string;
-        stopLabel: string; // e.g. "Stop {n}" — {n} is replaced at render
+        stopLabel: string; // e.g. "Stop {n}", {n} is replaced at render
         stopPlaceholder: string;
         addStop: string;
         removeStop: string;
         reorderStop: string;
+        wifiLabel: string;
+        wifiDesc: string;
         waitingTitle: string;
         waitingDesc: string;
         waitingDecreaseAria: string;
@@ -211,6 +213,9 @@ export type Dict = {
         selectedServiceLabel: string;
         stopsLabel: string;
         waitingLabel: string;
+        wifiLabel: string;
+        yes: string;
+        no: string;
         fullNameLabel: string;
         emailLabel: string;
         phoneLabel: string;

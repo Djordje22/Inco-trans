@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig, routeMap, type Locale } from "@/lib/site-config";
 import { t } from "@/lib/i18n";
+import WhatsAppMark from "./icons/WhatsAppMark";
 
 type Props = { locale: Locale };
 
@@ -77,7 +79,8 @@ export default function Footer({ locale }: Props) {
                 rel="noopener noreferrer"
                 className="hover:text-white"
               >
-                {dict.contact.whatsappLabel}: {siteConfig.contact.whatsapp}
+                <WhatsAppMark className="mr-2 inline h-4 w-4 align-[-2px]" />
+                {siteConfig.contact.whatsapp}
               </a>
             </li>
             <li>
@@ -85,6 +88,7 @@ export default function Footer({ locale }: Props) {
                 href={siteConfig.contact.phoneHref}
                 className="hover:text-white"
               >
+                <Phone className="mr-2 inline h-4 w-4 align-[-2px]" aria-hidden="true" />
                 {siteConfig.contact.phone}
               </a>
             </li>
@@ -93,10 +97,14 @@ export default function Footer({ locale }: Props) {
                 href={siteConfig.contact.emailHref}
                 className="hover:text-white"
               >
+                <Mail className="mr-2 inline h-4 w-4 align-[-2px]" aria-hidden="true" />
                 {siteConfig.contact.email}
               </a>
             </li>
-            <li>{siteConfig.contact.address}</li>
+            <li>
+              <MapPin className="mr-2 inline h-4 w-4 align-[-2px]" aria-hidden="true" />
+              {siteConfig.contact.address}
+            </li>
           </ul>
         </div>
 
@@ -107,7 +115,7 @@ export default function Footer({ locale }: Props) {
           </p>
           <h3 className="eyebrow mt-6">{dict.contact.hoursLabel}</h3>
           <p className="mt-3 text-sm text-white/70">
-            {dict.footer.hoursValue}
+            {siteConfig.contact.hours[locale]}
           </p>
         </div>
       </div>

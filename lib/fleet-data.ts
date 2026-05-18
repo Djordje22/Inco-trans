@@ -14,7 +14,7 @@ export type Vehicle = {
   comfort: { sr: string[]; en: string[]; ru: string[] };
 };
 
-// Two-vehicle fleet — do not add more without updating AGENT.md.
+// Two-vehicle fleet. Do not add more without updating AGENT.md.
 export const vehicles: Vehicle[] = [
   {
     slug: "mercedes-e-class",
@@ -52,12 +52,12 @@ export const vehicles: Vehicle[] = [
     }
   },
   {
-    slug: "audi-q5",
-    name: "Audi Q5",
+    slug: "audi-a6",
+    name: "Audi A6",
     tagline: {
-      sr: "Premium SUV za aerodromske transfere i grupe sa prtljagom",
-      en: "Premium SUV for airport transfers and luggage-heavy trips",
-      ru: "Премиум-внедорожник для трансферов из аэропорта и поездок с багажом"
+      sr: "Premium limuzina za aerodromske transfere i duže vožnje",
+      en: "Premium sedan for airport transfers and longer rides",
+      ru: "Премиальный седан для трансферов из аэропорта и дальних поездок"
     },
     image:
       "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1600&q=80",
@@ -68,19 +68,19 @@ export const vehicles: Vehicle[] = [
     comfort: {
       sr: [
         "Profesionalni šofer",
-        "Prostran prtljažnik za aerodromske transfere",
+        "Udobna limuzina za aerodromske transfere",
         "Kožna sedišta i klima",
         "Voda i Wi-Fi na zahtev"
       ],
       en: [
         "Professional chauffeur",
-        "Spacious boot for airport transfers",
+        "Comfortable sedan for airport transfers",
         "Leather seats and climate control",
         "Bottled water and Wi-Fi on request"
       ],
       ru: [
         "Профессиональный шофёр",
-        "Просторный багажник для аэропорта",
+        "Комфортный седан для трансферов из аэропорта",
         "Кожаный салон и климат-контроль",
         "Вода и Wi-Fi по запросу"
       ]

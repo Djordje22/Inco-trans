@@ -1,6 +1,5 @@
 // Single source of truth for business + brand details.
-// TODO placeholders are surfaced in the UI verbatim so they are easy to find
-// and replace later. Do not duplicate any of these values elsewhere.
+// Do not duplicate any of these values elsewhere.
 
 export const siteConfig = {
   name: "Inco Trans",
@@ -11,9 +10,9 @@ export const siteConfig = {
     ru: "Шофёр и люкс-трансфер в Белграде"
   },
   description: {
-    sr: "Inco Trans nudi profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji — aerodromski transfer, poslovni transfer, VIP prevoz. 24/7, gotovina ili kartica, WhatsApp rezervacija.",
-    en: "Inco Trans provides professional chauffeur service and luxury transfer in Belgrade and Serbia — airport transfer, business transfer, VIP transport. 24/7, cash or card, WhatsApp booking.",
-    ru: "Inco Trans — профессиональный шофёр-сервис и люкс-трансфер в Белграде и Сербии: трансфер из аэропорта, бизнес-трансфер, VIP-перевозки. 24/7, оплата наличными или картой, бронирование в WhatsApp."
+    sr: "Inco Trans nudi profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji: aerodromski transfer, poslovni transfer i VIP prevoz. Online rezervacije su dostupne uvek, a pozivi od 08:00 do 22:00 po vremenu u Beogradu.",
+    en: "Inco Trans provides professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfer, business transfer and VIP transport. Online reservations are always available, with calls from 08:00 to 22:00 Belgrade time.",
+    ru: "Inco Trans предлагает профессиональный шофёр-сервис и люкс-трансфер в Белграде и Сербии: трансфер из аэропорта, бизнес-трансфер и VIP-перевозки. Онлайн-бронирование доступно всегда, звонки принимаем с 08:00 до 22:00 по времени Белграда."
   },
   url: "https://incotrans.netlify.app",
   domain: "incotrans.netlify.app",
@@ -21,23 +20,21 @@ export const siteConfig = {
   locales: ["sr", "en", "ru"] as const,
 
   // Phone number is +381 65 283 3289 (national: 065 28 33 289).
-  // WhatsApp URL mirrors bgdiplomat's format so the deep-link works on mobile
-  // and falls back to web on desktop. Strip the leading 0, prefix country code.
   contact: {
     phone: "+381 65 283 3289",
     phoneHref: "tel:+381652833289",
     whatsapp: "+381 65 283 3289",
     whatsappHref:
       "https://api.whatsapp.com/send/?phone=381652833289&text&type=phone_number&app_absent=0",
-    email: "TODO: email",
-    emailHref: "mailto:TODO",
-    address: "TODO: adresa, Beograd, Srbija",
+    email: "dorde.bojovic@rechargeapps",
+    emailHref: "mailto:dorde.bojovic@rechargeapps",
+    address: "Belgrade, Serbia",
     city: "Beograd",
     country: "RS",
     hours: {
-      sr: "Dostupni 24/7",
-      en: "Available 24/7",
-      ru: "Доступны 24/7"
+      sr: "Pozivi: 08:00-22:00, vreme u Beogradu",
+      en: "Calls: 08:00-22:00, Belgrade time",
+      ru: "Звонки: 08:00-22:00, время Белграда"
     }
   },
 
@@ -59,7 +56,7 @@ export const localeLabels: Record<Locale, string> = {
   ru: "RU"
 };
 
-// Long names for the language switcher menu — used as the visible label inside
+// Long names for the language switcher menu, used as the visible label inside
 // the dropdown and as the `aria-label` for screen readers.
 export const localeNames: Record<Locale, string> = {
   sr: "Srpski",

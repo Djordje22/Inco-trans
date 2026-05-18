@@ -9,9 +9,9 @@ import {
   CarTaxiFront,
   BriefcaseBusiness
 } from "lucide-react";
-import WhatsAppMark from "./icons/WhatsAppMark";
-import { siteConfig, routeMap, type Locale } from "@/lib/site-config";
+import { routeMap, type Locale } from "@/lib/site-config";
 import { t, type ServiceKey } from "@/lib/i18n";
+import { useReservation } from "./ReservationModal";
 
 type Props = {
   locale: Locale;
@@ -32,6 +32,7 @@ const SERVICE_ROUTE: Record<ServiceKey, keyof typeof routeMap> = {
 
 export default function MobileMenu({ locale, flatLinks }: Props) {
   const [open, setOpen] = useState(false);
+  const { openModal } = useReservation();
   const dict = t(locale);
 
   useEffect(() => {
@@ -140,21 +141,16 @@ export default function MobileMenu({ locale, flatLinks }: Props) {
             </ul>
 
             <div className="hairline my-5" />
-            <a
-              href={siteConfig.contact.whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                openModal();
+              }}
               className="btn-gold w-full justify-center"
             >
-              <WhatsAppMark className="h-4 w-4" />
-              {dict.hero.whatsappCta}
-            </a>
-            <a
-              href={siteConfig.contact.phoneHref}
-              className="btn-ghost mt-2 w-full justify-center"
-            >
-              {siteConfig.contact.phone}
-            </a>
+              {dict.nav.requestQuote}
+            </button>
           </div>
         </div>
       ) : null}

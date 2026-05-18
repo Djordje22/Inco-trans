@@ -2,7 +2,6 @@ import PageShell from "@/components/PageShell";
 import PageHero from "@/components/PageHero";
 import ContactForm from "@/components/ContactForm";
 import JsonLd from "@/components/JsonLd";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { buildMetadata } from "@/lib/metadata";
 import { t } from "@/lib/i18n";
 import { siteConfig } from "@/lib/site-config";
@@ -63,19 +62,6 @@ export default function RuContactPage() {
                   </span>
                 </li>
               </ul>
-              <div className="mt-5">
-                <WhatsAppButton label={dict.hero.whatsappCta} />
-              </div>
-            </div>
-
-            <div className="glass rounded-2xl overflow-hidden">
-              <div
-                role="img"
-                aria-label={dict.contact.mapPlaceholder}
-                className="aspect-[16/10] bg-gradient-to-br from-ink-800 via-ink-700 to-ink-900 flex items-center justify-center text-sm text-white/55"
-              >
-                {dict.contact.mapPlaceholder}
-              </div>
             </div>
           </aside>
         </div>

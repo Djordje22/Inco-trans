@@ -15,24 +15,24 @@ export const en: Dict = {
     businessTransfer: "Business transfer"
   },
   hero: {
-    eyebrow: "Belgrade, Serbia · 24/7",
-    title1: "Luxury chauffeur",
-    title2: "and transfer in Belgrade",
+    eyebrow: "Belgrade, Serbia",
+    title1: "Private transfers",
+    title2: "with a Belgrade touch",
     subtitle:
       "Professional drivers, fixed prices agreed upfront, discreet service. Airport, business and VIP transfers across Serbia.",
     ctaPrimary: "Book transfer",
     ctaSecondary: "Browse fleet",
-    whatsappCta: "Book on WhatsApp"
+    whatsappCta: "Message on WhatsApp"
   },
   badges: {
-    hours247: "Available 24/7",
+    hours247: "Online reservations anytime",
     cashAndCard: "Cash and card",
     whatsapp: "WhatsApp booking"
   },
   services: {
     title: "Our services",
     subtitle:
-      "Pick the service that fits your trip — we reply with a fixed price as soon as possible.",
+      "Pick the service that fits your trip. We reply with a fixed price as soon as possible.",
     learnMore: "Learn more",
     items: {
       airport: {
@@ -41,7 +41,7 @@ export const en: Dict = {
       },
       chauffeur: {
         title: "Chauffeur service",
-        desc: "Professional driver by the hour or on demand — meetings, events, city travel."
+        desc: "Professional driver by the hour or on demand for meetings, events and city travel."
       },
       business: {
         title: "Business transfer",
@@ -67,14 +67,14 @@ export const en: Dict = {
   fleetPage: {
     title: "Our fleet",
     subtitle:
-      "Two carefully maintained vehicles — a Mercedes E Class for business transfers and an Audi Q5 for airport transfers and luggage-heavy trips."
+      "Two carefully maintained vehicles: a Mercedes E Class and an Audi A6 for airport, business and VIP transfers."
   },
   why: {
     title: "Why Inco Trans",
     items: [
       {
-        title: "Available 24/7",
-        desc: "Reservations and transfers any time of day or night."
+        title: "Online reservations anytime",
+        desc: "Send a reservation whenever it suits you. Calls are available 08:00-22:00 Belgrade time."
       },
       {
         title: "Fixed prices upfront",
@@ -95,7 +95,7 @@ export const en: Dict = {
     steps: [
       {
         title: "1. Send a request",
-        desc: "Website form or WhatsApp message — we reply as soon as possible."
+        desc: "Website form or WhatsApp message. We reply as soon as possible."
       },
       {
         title: "2. Confirmation and fixed price",
@@ -110,21 +110,21 @@ export const en: Dict = {
   about: {
     title: "About Inco Trans",
     body: [
-      "Inco Trans is focused on professional chauffeur service and luxury transfer in Belgrade and Serbia — airport transfers, business transport and VIP rides.",
-      "Our goal is a simple and discreet experience: fixed prices agreed upfront, professional drivers, a well-maintained fleet and availability at any hour."
+      "Inco Trans is focused on professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfers, business transport and VIP rides.",
+      "Our goal is a simple and discreet experience: fixed prices agreed upfront, professional drivers, a well-maintained fleet and clear communication."
     ],
     valuesTitle: "Our values",
     values: [
       "Punctuality and reliability",
       "Professional, discreet chauffeurs",
       "Fixed, transparent pricing",
-      "24/7 availability in Belgrade and Serbia"
+      "Online reservations with call support from 08:00 to 22:00"
     ]
   },
   contact: {
     title: "Contact",
     subtitle:
-      "The fastest way to book a transfer is on WhatsApp. We reply immediately.",
+      "Send a reservation request online anytime, or call us from 08:00 to 22:00 Belgrade time.",
     formTitle: "Send a message",
     fullName: "Full name",
     email: "Email",
@@ -135,7 +135,7 @@ export const en: Dict = {
     addressLabel: "Address",
     hoursLabel: "Hours",
     whatsappLabel: "WhatsApp",
-    mapPlaceholder: "Map coming soon."
+    mapPlaceholder: "Belgrade, Serbia"
   },
   footer: {
     rights: "All rights reserved.",
@@ -144,24 +144,24 @@ export const en: Dict = {
     contact: "Contact",
     payments: "Payment",
     paymentsValue: "Cash and card",
-    hoursValue: "24/7",
+    hoursValue: "Calls 08:00-22:00",
     disclaimer:
       "Prices are indicative and confirmed before booking."
   },
   quotePage: {
     title: "Book a transfer",
     subtitle:
-      "Send a short request — we reply with the assigned vehicle, the driver's name and a fixed price.",
+      "Send a short request. We reply with the assigned vehicle, the driver's name and a fixed price.",
     detailsTitle: "Booking details",
     notes: [
       "Payment in cash or by card.",
       "Fixed price agreed before the trip.",
-      "Available 24/7 — instant reply on WhatsApp."
+      "Online reservations are open anytime. Calls are available 08:00-22:00 Belgrade time."
     ]
   },
   transportForm: {
     title: "Transfer request",
-    eyebrow: "24/7 booking",
+    eyebrow: "Online booking",
     serviceType: "Service type",
     serviceOptionAirport: "Airport transfer",
     serviceOptionChauffeur: "Chauffeur service",
@@ -175,7 +175,7 @@ export const en: Dict = {
     passengers: "Passengers",
     luggage: "Luggage pieces",
     flightNumber: "Flight number",
-    flightHint: "Optional — we track arrivals and wait if the flight is delayed.",
+    flightHint: "Optional. We track arrivals and wait if the flight is delayed.",
     vehiclePreference: "Vehicle",
     vehicleAny: "Any vehicle",
     fullName: "Full name",
@@ -184,13 +184,13 @@ export const en: Dict = {
     message: "Notes",
     submit: "Send request",
     submitNote: "Request sent. We will confirm availability and price as soon as possible.",
-    twentyFourSeven: "Available 24/7",
+    twentyFourSeven: "Online reservations anytime",
     cardAndCash: "Cash and card"
   },
   cta: {
     readyTitle: "Ready for your next transfer?",
     readyBody:
-      "Message us on WhatsApp or send a quick request — we reply right away, 24/7."
+      "Arrange the ride online whenever you need it. For calls, our Belgrade team is available from 08:00 to 22:00."
   },
   modal: {
     title: "Book a transfer",
@@ -208,7 +208,7 @@ export const en: Dict = {
         desc: "Our team will build a custom offer for you"
       },
       whatsapp: {
-        title: "Book on WhatsApp"
+        title: "Message on WhatsApp"
       },
       phone: {
         title: "Book by phone"
@@ -249,6 +249,8 @@ export const en: Dict = {
         addStop: "Add stop",
         removeStop: "Remove stop",
         reorderStop: "Drag to reorder",
+        wifiLabel: "Wi-Fi",
+        wifiDesc: "Keep in-car Wi-Fi ready for the ride.",
         waitingTitle: "Waiting hours",
         waitingDesc:
           "Add hours if you need the driver to wait at your destination.",
@@ -286,6 +288,9 @@ export const en: Dict = {
         selectedServiceLabel: "Service type",
         stopsLabel: "Stops",
         waitingLabel: "Waiting",
+        wifiLabel: "Wi-Fi",
+        yes: "Yes",
+        no: "No",
         fullNameLabel: "Full name",
         emailLabel: "Email",
         phoneLabel: "Phone",
@@ -353,7 +358,7 @@ export const en: Dict = {
     },
     phonePanel: {
       heading: "Call or message on WhatsApp",
-      subheading: "Fastest path — we reply immediately",
+      subheading: "Calls are available 08:00-22:00 Belgrade time",
       whatsappCta: "Message on WhatsApp",
       callCta: "Call",
       hours: "Hours"
@@ -374,19 +379,19 @@ export const en: Dict = {
         "Luggage assistance",
         "Bottled water and Wi-Fi on request",
         "Fixed price agreed upfront",
-        "Mercedes E Class or Audi Q5"
+        "Mercedes E Class or Audi A6"
       ],
       detailTitle: "Service details",
       detailBody: [
-        "Airport transfer covers all directions: airport to hotel, airport to address, airport to Belgrade or another city in Serbia — and the reverse trip back to the terminal.",
-        "Ideal for business arrivals, families with luggage and groups of up to four passengers. For larger groups, message us on WhatsApp — we can pair two vehicles."
+        "Airport transfer covers all directions: airport to hotel, airport to address, airport to Belgrade or another city in Serbia, and the reverse trip back to the terminal.",
+        "Ideal for business arrivals, families with luggage and groups of up to four passengers. For larger groups, send a reservation request and we can pair two vehicles."
       ],
       keywordsTitle: "Frequently searched",
       keywords: [
         "Airport transfer Belgrade",
         "Nikola Tesla Airport transfer",
         "Belgrade airport hotel transfer",
-        "24/7 airport transfer"
+        "Belgrade airport transfer"
       ],
       ctaText: "Book airport transfer",
       crossLinkTitle: "See also"
@@ -395,20 +400,20 @@ export const en: Dict = {
       eyebrow: "Chauffeur service",
       title: "Professional chauffeur in Belgrade and Serbia",
       subtitle:
-        "A driver by the hour or on demand — meetings, events, day-long city travel and intercity trips.",
+        "A driver by the hour or on demand for meetings, events, day-long city travel and intercity trips.",
       heroBody:
         "Chauffeur service is the right fit when your day has multiple stops or appointments. The vehicle and driver are at your disposal for as long as you need.",
       includedTitle: "What's included",
       included: [
         "Professional driver with deep local knowledge",
-        "Vehicle on call — hourly, half-day or full-day",
+        "Vehicle on call: hourly, half-day or full-day",
         "Multiple stops included at no extra charge",
-        "Discreet driver — private conversations stay private",
+        "Discreet driver, private conversations stay private",
         "Fixed price agreed upfront"
       ],
       detailTitle: "When to use it",
       detailBody: [
-        "Business meetings spread across the city, events you're hosting, weddings, dinners and Belgrade sightseeing — anywhere you want the same driver and vehicle for most of the day.",
+        "Business meetings spread across the city, events you're hosting, weddings, dinners and Belgrade sightseeing, anywhere you want the same driver and vehicle for most of the day.",
         "For intercity trips (Novi Sad, Niš, border crossings) we agree the price separately."
       ],
       keywordsTitle: "Frequently searched",
@@ -427,7 +432,7 @@ export const en: Dict = {
       subtitle:
         "Discreet, punctual transfer for business clients, delegations and VIP guests. Card payment and company invoicing available.",
       heroBody:
-        "Inco Trans for companies — predictable timing, professional drivers (uniformed on request), NDA-friendly discretion and invoicing on contract.",
+        "Inco Trans for companies: predictable timing, professional drivers (uniformed on request), NDA-friendly discretion and invoicing on contract.",
       includedTitle: "What's included",
       included: [
         "Punctual arrivals matched to your meeting schedule",

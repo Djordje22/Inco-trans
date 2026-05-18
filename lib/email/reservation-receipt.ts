@@ -107,6 +107,9 @@ const copyForLocale = (locale: Locale) => {
       dateTime: "Datum i vreme",
       passengers: "Putnici",
       luggage: "Prtljag",
+      wifi: "Wi-Fi",
+      yes: "Da",
+      no: "Ne",
       flight: "Let",
       vehicle: "Vozilo",
       payment: "Plaćanje",
@@ -119,7 +122,7 @@ const copyForLocale = (locale: Locale) => {
       notes: "Napomena",
       next:
         "Javićemo se što je pre moguće sa potvrdom dostupnosti i cenom. Za hitne izmene pošaljite nam WhatsApp poruku.",
-      footer: "Inco Trans | Dostupni 24/7"
+      footer: "Inco Trans | Online rezervacije uvek"
     };
   }
 
@@ -138,6 +141,9 @@ const copyForLocale = (locale: Locale) => {
       dateTime: "Дата и время",
       passengers: "Пассажиры",
       luggage: "Багаж",
+      wifi: "Wi-Fi",
+      yes: "Да",
+      no: "Нет",
       flight: "Рейс",
       vehicle: "Автомобиль",
       payment: "Оплата",
@@ -150,7 +156,7 @@ const copyForLocale = (locale: Locale) => {
       notes: "Комментарий",
       next:
         "Мы как можно скорее ответим с подтверждением доступности и цены. Для срочных изменений напишите нам в WhatsApp.",
-      footer: "Inco Trans | Доступны 24/7"
+      footer: "Inco Trans | Онлайн-бронирование всегда"
     };
   }
 
@@ -168,6 +174,9 @@ const copyForLocale = (locale: Locale) => {
     dateTime: "Date and time",
     passengers: "Passengers",
     luggage: "Luggage",
+    wifi: "Wi-Fi",
+    yes: "Yes",
+    no: "No",
     flight: "Flight",
     vehicle: "Vehicle",
     payment: "Payment",
@@ -180,7 +189,7 @@ const copyForLocale = (locale: Locale) => {
     notes: "Notes",
     next:
       "We will reply as soon as possible with availability and price confirmation. For urgent changes, message us on WhatsApp.",
-    footer: "Inco Trans | Available 24/7"
+    footer: "Inco Trans | Online reservations anytime"
   };
 };
 
@@ -252,6 +261,9 @@ const detailRow = (label: string, value?: string | number | null) => {
   `;
 };
 
+const yesNo = (value: boolean | undefined, yes: string, no: string) =>
+  (value ?? true) ? yes : no;
+
 function buildReservationReceiptEmail({
   bookingId,
   payload
@@ -269,6 +281,7 @@ function buildReservationReceiptEmail({
     detailRow(copy.dateTime, formatDateTime(payload.dateTime, payload.locale)),
     detailRow(copy.passengers, payload.passengers),
     detailRow(copy.luggage, payload.luggage ?? 0),
+    detailRow(copy.wifi, yesNo(payload.wifi, copy.yes, copy.no)),
     detailRow(copy.flight, payload.flight),
     detailRow(copy.vehicle, vehicleName(payload.vehicle)),
     detailRow(copy.payment, labelForPayment(payload.paymentMethod ?? "cash", payload.locale)),
@@ -323,6 +336,7 @@ function buildReservationReceiptEmail({
     `${copy.dateTime}: ${formatDateTime(payload.dateTime, payload.locale)}`,
     `${copy.passengers}: ${payload.passengers}`,
     `${copy.luggage}: ${payload.luggage ?? 0}`,
+    `${copy.wifi}: ${yesNo(payload.wifi, copy.yes, copy.no)}`,
     payload.flight ? `${copy.flight}: ${payload.flight}` : "",
     `${copy.vehicle}: ${vehicleName(payload.vehicle)}`,
     `${copy.payment}: ${labelForPayment(payload.paymentMethod ?? "cash", payload.locale)}`,
@@ -358,6 +372,7 @@ function buildReservationAdminEmail({
     detailRow("Date and time", formatDateTime(payload.dateTime, "en")),
     detailRow("Passengers", payload.passengers),
     detailRow("Luggage", payload.luggage ?? 0),
+    detailRow("Wi-Fi", yesNo(payload.wifi, "Yes", "No")),
     detailRow("Flight", payload.flight),
     detailRow("Vehicle", vehicleName(payload.vehicle)),
     detailRow("Payment", labelForPayment(payload.paymentMethod ?? "cash", "en")),
@@ -438,6 +453,7 @@ function buildReservationAdminEmail({
     `Date and time: ${formatDateTime(payload.dateTime, "en")}`,
     `Passengers: ${payload.passengers}`,
     `Luggage: ${payload.luggage ?? 0}`,
+    `Wi-Fi: ${yesNo(payload.wifi, "Yes", "No")}`,
     payload.flight ? `Flight: ${payload.flight}` : "",
     `Vehicle: ${vehicleName(payload.vehicle)}`,
     `Payment: ${labelForPayment(payload.paymentMethod ?? "cash", "en")}`,
