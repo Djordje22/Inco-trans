@@ -36,7 +36,16 @@ export async function POST(request: Request) {
     .filter((point): point is PlacePoint => Boolean(point));
   const waitingHours =
     typeof body?.waitingHours === "number" ? Math.max(0, body.waitingHours) : 0;
-  const pricingModel = body?.service === "business" ? "long_distance" : "airport";
+  const chauffeurDurationHours =
+    typeof body?.chauffeurDurationHours === "number"
+      ? Math.max(1, body.chauffeurDurationHours)
+      : undefined;
+  const pricingModel =
+    body?.service === "business"
+      ? "long_distance"
+      : body?.service === "chauffeur"
+        ? "chauffeur"
+        : "airport";
 
   if (points.length < 2) {
     return NextResponse.json(
@@ -104,6 +113,7 @@ export async function POST(request: Request) {
         distanceMeters,
         durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : undefined,
         waitingHours,
+        chauffeurDurationHours,
         pricingModel
       })
     },

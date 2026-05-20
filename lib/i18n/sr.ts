@@ -243,6 +243,14 @@ export const sr: Dict = {
         luggage: "Prtljag",
         flightNumber: "Broj leta (ako je primenljivo)",
         flightHint: "Pratimo dolazak i čekamo u slučaju kašnjenja.",
+        chauffeurPickupDateTime: "Datum i vreme (početno vreme)",
+        chauffeurDropoffDateTime: "Datum i vreme do kada traje",
+        chauffeurDurationTitle: "Trajanje",
+        chauffeurDurationDesc: "{hours}h izabrano za šofer servis.",
+        chauffeurStandardDayNote:
+          "Standardni dan je 10 sati. Dodatni sati se naplaćuju po satnici.",
+        chauffeurDurationDecreaseAria: "Smanji trajanje šofer servisa",
+        chauffeurDurationIncreaseAria: "Povećaj trajanje šofer servisa",
         stopLabel: "Stajalište {n}",
         stopPlaceholder: "Dodaj međustanicu",
         addStop: "Dodaj stajalište",
@@ -267,6 +275,8 @@ export const sr: Dict = {
         pickupLabel: "Preuzimanje",
         destinationLabel: "Odredište",
         whenLabel: "Datum i vreme",
+        dropoffWhenLabel: "Traje do",
+        durationLabel: "Trajanje",
         passengersLabel: "Putnika",
         luggageLabel: "Prtljaga",
         flightLabel: "Broj leta",
@@ -301,6 +311,14 @@ export const sr: Dict = {
         distanceOverageLabel:
           "Dodatna kilometraža ({overage} km preko {included} km)",
         longDistancePriceLabel: "Duge relacije ({distance} km povratna ruta)",
+        chauffeurBasePriceLabel:
+          "Šofer servis do {hours}h ({included} km uključeno)",
+        chauffeurExtraHoursLabel: "Dodatni sati ({hours}h preko 10h)",
+        chauffeurPricingNote:
+          "Šofer servis od {hours}h uključuje do {included} km. Obračunska kilometraža je {distance} km; {overageText}",
+        chauffeurOverageText:
+          "{overage} km se naplaćuje €{rate}/km.",
+        chauffeurNoOverageText: "nema dodatne naplate za kilometražu.",
         totalEstimateLabel: "Ukupna okvirna cena",
         estimateDisclaimer: "Okvirna cena. Konačnu cenu će potvrditi naš tim.",
         billableDistanceLabel: "Obračunska kilometraža",

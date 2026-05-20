@@ -244,6 +244,14 @@ export const en: Dict = {
         luggage: "Luggage pieces",
         flightNumber: "Flight number (if applicable)",
         flightHint: "We track the arrival and wait if the flight is delayed.",
+        chauffeurPickupDateTime: "Pickup Date & Time (start time)",
+        chauffeurDropoffDateTime: "Drop-off Date & Time (end time)",
+        chauffeurDurationTitle: "Duration",
+        chauffeurDurationDesc: "{hours}h selected for chauffeur service.",
+        chauffeurStandardDayNote:
+          "Standard day is 10 hours. Additional hours will be charged at the hourly rate.",
+        chauffeurDurationDecreaseAria: "Decrease chauffeur service duration",
+        chauffeurDurationIncreaseAria: "Increase chauffeur service duration",
         stopLabel: "Stop {n}",
         stopPlaceholder: "Add an intermediate stop",
         addStop: "Add stop",
@@ -268,6 +276,8 @@ export const en: Dict = {
         pickupLabel: "Pickup",
         destinationLabel: "Destination",
         whenLabel: "When",
+        dropoffWhenLabel: "Until",
+        durationLabel: "Duration",
         passengersLabel: "Passengers",
         luggageLabel: "Luggage",
         flightLabel: "Flight",
@@ -302,6 +312,14 @@ export const en: Dict = {
         distanceOverageLabel:
           "Distance overage ({overage} km beyond {included} km)",
         longDistancePriceLabel: "Long-distance transfer ({distance} km round trip)",
+        chauffeurBasePriceLabel:
+          "Chauffeur service up to {hours}h ({included} km included)",
+        chauffeurExtraHoursLabel: "Additional hours ({hours}h beyond 10h)",
+        chauffeurPricingNote:
+          "{hours}h chauffeur service includes up to {included} km. Billable distance is {distance} km; {overageText}",
+        chauffeurOverageText:
+          "{overage} km is charged at €{rate}/km.",
+        chauffeurNoOverageText: "there is no additional distance charge.",
         totalEstimateLabel: "Total estimated price",
         estimateDisclaimer: "Estimated price. The final price will be confirmed by our team.",
         billableDistanceLabel: "Billable distance",

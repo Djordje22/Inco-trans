@@ -174,6 +174,13 @@ export type Dict = {
         luggage: string;
         flightNumber: string;
         flightHint: string;
+        chauffeurPickupDateTime: string;
+        chauffeurDropoffDateTime: string;
+        chauffeurDurationTitle: string;
+        chauffeurDurationDesc: string;
+        chauffeurStandardDayNote: string;
+        chauffeurDurationDecreaseAria: string;
+        chauffeurDurationIncreaseAria: string;
         stopLabel: string; // e.g. "Stop {n}", {n} is replaced at render
         stopPlaceholder: string;
         addStop: string;
@@ -197,6 +204,8 @@ export type Dict = {
         pickupLabel: string;
         destinationLabel: string;
         whenLabel: string;
+        dropoffWhenLabel: string;
+        durationLabel: string;
         passengersLabel: string;
         luggageLabel: string;
         flightLabel: string;
@@ -226,6 +235,11 @@ export type Dict = {
         waitingPriceLabel: string;
         distanceOverageLabel: string;
         longDistancePriceLabel: string;
+        chauffeurBasePriceLabel: string;
+        chauffeurExtraHoursLabel: string;
+        chauffeurPricingNote: string;
+        chauffeurOverageText: string;
+        chauffeurNoOverageText: string;
         totalEstimateLabel: string;
         estimateDisclaimer: string;
         billableDistanceLabel: string;

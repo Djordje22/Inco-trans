@@ -431,6 +431,9 @@ type PlaceSuggestion = {
 
 const MIN_WAITING_HOURS = 1;
 const MAX_WAITING_HOURS = 24;
+const MIN_CHAUFFEUR_DURATION_HOURS = 1;
+const MAX_CHAUFFEUR_DURATION_HOURS = 24;
+const STANDARD_CHAUFFEUR_DAY_HOURS = 10;
 
 const makeStopId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -471,6 +474,8 @@ type TransferData = {
   routeEstimateStatus: RouteEstimateStatus;
   waitingHours: number; // 0 = none, otherwise 1..MAX_WAITING_HOURS
   dateTime: string;
+  dropoffDateTime: string;
+  chauffeurDurationHours: number;
   passengers: number;
   luggage: number;
   wifi: boolean;
@@ -504,6 +509,8 @@ const EMPTY: TransferData = {
   routeEstimateStatus: "idle",
   waitingHours: 0,
   dateTime: "",
+  dropoffDateTime: "",
+  chauffeurDurationHours: 0,
   passengers: 1,
   luggage: 0,
   wifi: true,
@@ -596,6 +603,7 @@ function TransferFlow({
     setData((d) => ({ ...d, [k]: v }));
 
   const isAirport = data.service === "airport";
+  const isChauffeur = data.service === "chauffeur";
   const onServiceScreen = preStep === "service";
   const onDirectionScreen = preStep === "direction";
 
@@ -604,7 +612,9 @@ function TransferFlow({
   const journeyValid =
     data.pickup.trim() !== "" &&
     data.destination.trim() !== "" &&
-    data.dateTime.trim() !== "";
+    data.dateTime.trim() !== "" &&
+    (!isChauffeur ||
+      (data.dropoffDateTime.trim() !== "" && data.chauffeurDurationHours > 0));
   const vehicleValid = data.vehicle.trim() !== "";
   const contactValid = isContactValid(data);
 
@@ -680,6 +690,8 @@ function TransferFlow({
         stopPlaces: data.stops.map((stop) => stop.place).filter(Boolean),
         waitingHours: data.waitingHours,
         dateTime: data.dateTime,
+        dropoffDateTime: data.dropoffDateTime,
+        chauffeurDurationHours: data.chauffeurDurationHours,
         passengers: data.passengers,
         luggage: data.luggage,
         wifi: data.wifi,
@@ -960,15 +972,56 @@ function JourneyStep({
   const dict = t(locale).modal.rent.journey;
   const tf = t(locale).transportForm;
   const isAirport = data.service === "airport";
+  const isChauffeur = data.service === "chauffeur";
   const showFlight = isAirport;
+  const resetEstimate = () => {
+    set("routeEstimate", undefined);
+    set("routeEstimateStatus", "idle");
+  };
+  const setPickupDateTime = (value: string) => {
+    set("dateTime", value);
+    if (isChauffeur && data.dropoffDateTime) {
+      set(
+        "dropoffDateTime",
+        addHoursToDateTime(
+          value,
+          data.chauffeurDurationHours || MIN_CHAUFFEUR_DURATION_HOURS
+        )
+      );
+    }
+    resetEstimate();
+  };
+  const setDropoffDateTime = (value: string) => {
+    const duration = durationHoursBetween(data.dateTime, value);
+    if (data.dateTime && duration <= 0) {
+      const nextDuration = MIN_CHAUFFEUR_DURATION_HOURS;
+      set("chauffeurDurationHours", nextDuration);
+      set("dropoffDateTime", addHoursToDateTime(data.dateTime, nextDuration));
+      resetEstimate();
+      return;
+    }
+    if (data.dateTime) {
+      const nextDuration = clampChauffeurDuration(Math.ceil(duration));
+      set("chauffeurDurationHours", nextDuration);
+      set("dropoffDateTime", addHoursToDateTime(data.dateTime, nextDuration));
+    } else {
+      set("dropoffDateTime", value);
+    }
+    resetEstimate();
+  };
   const dateTimeField = (
-    <Field label={dict.pickupDateTime} required>
+    <Field
+      label={isChauffeur ? dict.chauffeurPickupDateTime : dict.pickupDateTime}
+      required
+    >
       <DateTimePicker
         id="qf-dt"
         locale={locale}
         value={data.dateTime}
-        onChange={(value) => set("dateTime", value)}
-        ariaLabel={dict.pickupDateTime}
+        onChange={setPickupDateTime}
+        ariaLabel={
+          isChauffeur ? dict.chauffeurPickupDateTime : dict.pickupDateTime
+        }
       />
     </Field>
   );
@@ -982,6 +1035,22 @@ function JourneyStep({
       />
       <div className="mt-5 space-y-4">
         {dateTimeField}
+        {isChauffeur ? (
+          <>
+            <Field label={dict.chauffeurDropoffDateTime} required>
+              <DateTimePicker
+                id="qf-dropoff-dt"
+                locale={locale}
+                value={data.dropoffDateTime}
+                onChange={setDropoffDateTime}
+                ariaLabel={dict.chauffeurDropoffDateTime}
+              />
+            </Field>
+            {data.dropoffDateTime ? (
+              <ChauffeurDurationCard locale={locale} data={data} set={set} />
+            ) : null}
+          </>
+        ) : null}
         <Field label={dict.pickup} required iconLabel>
           <AddressAutocomplete
             locale={locale}
@@ -1015,7 +1084,9 @@ function JourneyStep({
             <StopsList locale={locale} data={data} set={set} />
           </>
         ) : null}
-        <WaitingHoursCard locale={locale} data={data} set={set} />
+        {isAirport ? (
+          <WaitingHoursCard locale={locale} data={data} set={set} />
+        ) : null}
         <WifiToggle locale={locale} checked={data.wifi} onChange={(next) => set("wifi", next)} />
         <div className="grid grid-cols-2 gap-3">
           <Field label={dict.passengers} required>
@@ -1224,6 +1295,8 @@ function ReviewStep({
       ? `${data.destinationPlace.latitude},${data.destinationPlace.longitude}`
       : "",
     data.waitingHours,
+    data.dropoffDateTime,
+    data.chauffeurDurationHours,
     data.service
   ].join("|");
 
@@ -1255,7 +1328,8 @@ function ReviewStep({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         points: [DRIVER_START_PLACE, ...points, DRIVER_START_PLACE],
-        waitingHours: data.waitingHours,
+        waitingHours: data.service === "airport" ? data.waitingHours : 0,
+        chauffeurDurationHours: data.chauffeurDurationHours,
         service: data.service
       })
     })
@@ -1305,6 +1379,7 @@ function ReviewStep({
     data.routeEstimateStatus === "available" && Boolean(estimate);
   const hasDistanceOverage = (estimate?.distanceOverageKm ?? 0) > 0;
   const isLongDistanceEstimate = estimate?.pricingModel === "long_distance";
+  const isChauffeurEstimate = estimate?.pricingModel === "chauffeur";
 
   const serviceItems = [
     { label: dict.selectedServiceLabel, value: serviceWithDirection }
@@ -1319,6 +1394,25 @@ function ReviewStep({
       label: dict.whenLabel,
       value: data.dateTime ? formatDateTime(data.dateTime, locale) : " "
     },
+    ...(data.service === "chauffeur"
+      ? [
+          {
+            label: dict.dropoffWhenLabel,
+            value: data.dropoffDateTime
+              ? formatDateTime(data.dropoffDateTime, locale)
+              : " "
+          },
+          {
+            label: dict.durationLabel,
+            value: data.chauffeurDurationHours
+              ? `${data.chauffeurDurationHours} ${hourWord(
+                  locale,
+                  data.chauffeurDurationHours
+                )}`
+              : " "
+          }
+        ]
+      : []),
     { label: dict.passengersLabel, value: String(data.passengers) },
     { label: dict.luggageLabel, value: String(data.luggage) },
     { label: dict.wifiLabel, value: data.wifi ? dict.yes : dict.no },
@@ -1414,6 +1508,29 @@ function ReviewStep({
     "{distance}",
     formatDistance(estimate?.distanceKm ?? 0, locale)
   );
+  const chauffeurBasePriceLabel = dict.chauffeurBasePriceLabel
+    .replace(
+      "{hours}",
+      formatDistance(
+        estimate?.chauffeurIncludedHours ?? STANDARD_CHAUFFEUR_DAY_HOURS,
+        locale
+      )
+    )
+    .replace(
+      "{included}",
+      formatDistance(estimate?.includedDistanceKm ?? 0, locale)
+    );
+  const chauffeurExtraHoursLabel = dict.chauffeurExtraHoursLabel.replace(
+    "{hours}",
+    formatDistance(
+      estimate?.chauffeurExtraHours ?? estimate?.waitingHours ?? 0,
+      locale
+    )
+  );
+  const chauffeurPricingNote =
+    estimate && isChauffeurEstimate
+      ? buildChauffeurPricingNote(dict, estimate, locale)
+      : "";
   const termsHref = legalHref(locale, "terms");
   const privacyHref = legalHref(locale, "privacy");
 
@@ -1470,6 +1587,13 @@ function ReviewStep({
                     {formatPrice(estimate.overagePrice, locale)}
                   </dd>
                 </div>
+              ) : isChauffeurEstimate ? (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-white/55">{chauffeurBasePriceLabel}</dt>
+                  <dd className="text-right font-medium text-white">
+                    {formatPrice(estimate.basePrice, locale)}
+                  </dd>
+                </div>
               ) : (
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-white/55">{dict.basePriceLabel}</dt>
@@ -1480,7 +1604,11 @@ function ReviewStep({
               )}
               {estimate.waitingPrice > 0 ? (
                 <div className="flex items-start justify-between gap-3">
-                  <dt className="text-white/55">{waitingPriceLabel}</dt>
+                  <dt className="text-white/55">
+                    {isChauffeurEstimate
+                      ? chauffeurExtraHoursLabel
+                      : waitingPriceLabel}
+                  </dt>
                   <dd className="text-right font-medium text-white">
                     {formatPrice(estimate.waitingPrice, locale)}
                   </dd>
@@ -1505,8 +1633,15 @@ function ReviewStep({
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-white/55">
-              {dict.estimateDisclaimer}
+              {isChauffeurEstimate && chauffeurPricingNote
+                ? chauffeurPricingNote
+                : dict.estimateDisclaimer}
             </p>
+            {isChauffeurEstimate && chauffeurPricingNote ? (
+              <p className="mt-1 text-xs leading-relaxed text-white/45">
+                {dict.estimateDisclaimer}
+              </p>
+            ) : null}
           </section>
         ) : null}
 
@@ -2575,6 +2710,90 @@ function waitingBanner(locale: Locale, n: number): string {
   return `+${n} ${h} of waiting time will be added to your booking`;
 }
 
+function clampChauffeurDuration(value: number): number {
+  if (!Number.isFinite(value)) return MIN_CHAUFFEUR_DURATION_HOURS;
+  return Math.max(
+    MIN_CHAUFFEUR_DURATION_HOURS,
+    Math.min(MAX_CHAUFFEUR_DURATION_HOURS, Math.round(value))
+  );
+}
+
+function ChauffeurDurationCard({
+  locale,
+  data,
+  set
+}: {
+  locale: Locale;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+}) {
+  const dict = t(locale).modal.rent.journey;
+  const hours = clampChauffeurDuration(
+    data.chauffeurDurationHours || MIN_CHAUFFEUR_DURATION_HOURS
+  );
+
+  const setDuration = (next: number) => {
+    const clamped = clampChauffeurDuration(next);
+    set("chauffeurDurationHours", clamped);
+    if (data.dateTime) {
+      set("dropoffDateTime", addHoursToDateTime(data.dateTime, clamped));
+    }
+    set("routeEstimate", undefined);
+    set("routeEstimateStatus", "idle");
+  };
+
+  return (
+    <div>
+      <div className="glass grid grid-cols-[auto_1fr] gap-3 rounded-xl p-4 sm:grid-cols-[auto_1fr_auto] sm:items-start">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-gold-300">
+          <Hourglass className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h4 className="font-semibold text-sm text-white">
+            {dict.chauffeurDurationTitle}
+          </h4>
+          <p className="mt-0.5 text-xs leading-relaxed text-white/55">
+            {dict.chauffeurDurationDesc.replace("{hours}", String(hours))}
+          </p>
+        </div>
+        <div className="col-span-2 flex items-center justify-end gap-2 shrink-0 sm:col-span-1">
+          <button
+            type="button"
+            onClick={() => setDuration(hours - 1)}
+            aria-label={dict.chauffeurDurationDecreaseAria}
+            disabled={hours <= MIN_CHAUFFEUR_DURATION_HOURS}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Minus className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <input
+            type="number"
+            min={MIN_CHAUFFEUR_DURATION_HOURS}
+            max={MAX_CHAUFFEUR_DURATION_HOURS}
+            value={hours}
+            onChange={(event) => setDuration(Number(event.target.value))}
+            aria-label={dict.chauffeurDurationTitle}
+            className="h-8 w-14 rounded-full border border-white/10 bg-white/5 px-2 text-center text-sm font-semibold tabular-nums text-white outline-none focus:border-gold-300"
+          />
+          <span className="text-sm font-semibold text-white">h</span>
+          <button
+            type="button"
+            onClick={() => setDuration(hours + 1)}
+            aria-label={dict.chauffeurDurationIncreaseAria}
+            disabled={hours >= MAX_CHAUFFEUR_DURATION_HOURS}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <p className="mt-2 text-xs leading-relaxed text-white/45">
+        {dict.chauffeurStandardDayNote}
+      </p>
+    </div>
+  );
+}
+
 function WaitingHoursCard({
   locale,
   data,
@@ -2838,6 +3057,36 @@ function parseDateTimeValue(value: string): { date: string; time: string } | nul
   return { date: match[1], time: match[2] };
 }
 
+function dateTimeValueToDate(value: string): Date | null {
+  const parsed = parseDateTimeValue(value);
+  if (!parsed) return null;
+  const [year, month, day] = parsed.date.split("-").map(Number);
+  const [hours, minutes] = parsed.time.split(":").map(Number);
+  const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function dateToDateTimeValue(date: Date): string {
+  const pad = (value: number) => (value < 10 ? `0${value}` : String(value));
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate()
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function addHoursToDateTime(value: string, hours: number): string {
+  const date = dateTimeValueToDate(value);
+  if (!date) return "";
+  const next = new Date(date.getTime() + hours * 60 * 60 * 1000);
+  return dateToDateTimeValue(next);
+}
+
+function durationHoursBetween(startValue: string, endValue: string): number {
+  const start = dateTimeValueToDate(startValue);
+  const end = dateTimeValueToDate(endValue);
+  if (!start || !end) return 0;
+  return (end.getTime() - start.getTime()) / (60 * 60 * 1000);
+}
+
 function formatDateTime(iso: string, locale: Locale): string {
   try {
     const parsed = parseDateTimeValue(iso);
@@ -2871,6 +3120,28 @@ function formatDistance(value: number, locale: Locale): string {
     minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
     maximumFractionDigits: 1
   }).format(value);
+}
+
+function buildChauffeurPricingNote(
+  dict: ReviewDictionary,
+  estimate: RoutePriceEstimate,
+  locale: Locale
+): string {
+  const overageText =
+    estimate.distanceOverageKm > 0
+      ? dict.chauffeurOverageText
+          .replace("{overage}", formatDistance(estimate.distanceOverageKm, locale))
+          .replace("{rate}", formatDistance(estimate.distanceOverageRate, locale))
+      : dict.chauffeurNoOverageText;
+
+  return dict.chauffeurPricingNote
+    .replace(
+      "{hours}",
+      formatDistance(estimate.chauffeurDurationHours ?? 0, locale)
+    )
+    .replace("{included}", formatDistance(estimate.includedDistanceKm, locale))
+    .replace("{distance}", formatDistance(estimate.distanceKm, locale))
+    .replace("{overageText}", overageText);
 }
 
 function legalHref(locale: Locale, page: "terms" | "privacy"): string {

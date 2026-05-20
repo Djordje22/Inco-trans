@@ -29,6 +29,8 @@ export type BookingRequestPayload = {
   stopPlaces?: BookingPlace[];
   waitingHours?: number;
   dateTime: string;
+  dropoffDateTime?: string;
+  chauffeurDurationHours?: number;
   passengers: number;
   luggage?: number;
   wifi?: boolean;
@@ -131,8 +133,11 @@ const asOptionalPriceEstimate = (value: unknown): RoutePriceEstimate | undefined
   const data = asRecord(value);
   if (!data) return undefined;
 
+  const rawPricingModel = asString(data.pricingModel);
   const pricingModel =
-    asString(data.pricingModel) === "long_distance" ? "long_distance" : "airport";
+    rawPricingModel === "long_distance" || rawPricingModel === "chauffeur"
+      ? rawPricingModel
+      : "airport";
   const distanceMeters = asNumber(data.distanceMeters);
   const distanceKm = asNumber(data.distanceKm);
   const includedDistanceKm = asNumber(data.includedDistanceKm);
@@ -175,6 +180,10 @@ const asOptionalPriceEstimate = (value: unknown): RoutePriceEstimate | undefined
     waitingPrice,
     overagePrice,
     totalPrice,
+    chauffeurDurationHours: asNumber(data.chauffeurDurationHours),
+    chauffeurIncludedHours: asNumber(data.chauffeurIncludedHours),
+    chauffeurExtraHours: asNumber(data.chauffeurExtraHours),
+    chauffeurExtraHourlyRate: asNumber(data.chauffeurExtraHourlyRate),
     currency: "EUR",
     source: "google_routes"
   };
@@ -196,6 +205,7 @@ export function validateBookingRequestPayload(
   const pickup = asString(data.pickup);
   const destination = asString(data.destination);
   const dateTime = asString(data.dateTime);
+  const dropoffDateTime = asString(data.dropoffDateTime);
   const fullName = asString(data.fullName);
   const email = asString(data.email);
   const phone = asString(data.phone);
@@ -203,6 +213,7 @@ export function validateBookingRequestPayload(
   const luggage = asInteger(data.luggage, 0);
   const wifi = typeof data.wifi === "boolean" ? data.wifi : true;
   const waitingHours = asInteger(data.waitingHours, 0);
+  const chauffeurDurationHours = asInteger(data.chauffeurDurationHours, 0);
   const bookingForOther = Boolean(data.bookingForOther);
   const passengerName = asString(data.passengerName);
   const passengerPhone = asString(data.passengerPhone);
@@ -217,6 +228,9 @@ export function validateBookingRequestPayload(
   }
   if (!pickup || !destination || !dateTime) {
     return { ok: false, error: "Pickup, destination and date/time are required." };
+  }
+  if (service === "chauffeur" && (!dropoffDateTime || chauffeurDurationHours < 1)) {
+    return { ok: false, error: "Chauffeur service end time and duration are required." };
   }
   if (passengers < 1 || passengers > 4) {
     return { ok: false, error: "Passenger count is outside the allowed range." };
@@ -256,6 +270,9 @@ export function validateBookingRequestPayload(
       stopPlaces: asPlaceArray(data.stopPlaces),
       waitingHours,
       dateTime,
+      dropoffDateTime: asOptionalString(dropoffDateTime),
+      chauffeurDurationHours:
+        service === "chauffeur" ? Math.max(1, chauffeurDurationHours) : undefined,
       passengers,
       luggage,
       wifi,

@@ -106,6 +106,8 @@ const copyForLocale = (locale: Locale) => {
       route: "Ruta",
       stops: "Stajališta",
       dateTime: "Datum i vreme",
+      dropoffDateTime: "Traje do",
+      duration: "Trajanje",
       passengers: "Putnici",
       luggage: "Prtljag",
       wifi: "Wi-Fi",
@@ -118,6 +120,8 @@ const copyForLocale = (locale: Locale) => {
       basePrice: "Osnovna cena",
       waitingPrice: "Čekanje",
       distanceOverage: "Dodatna kilometraža",
+      chauffeurService: "Šofer servis",
+      chauffeurExtraHours: "Dodatni sati",
       longDistanceTransfer: "Duge relacije",
       totalPrice: "Ukupno okvirno",
       distance: "Obračunska kilometraža",
@@ -151,6 +155,8 @@ const copyForLocale = (locale: Locale) => {
       route: "Маршрут",
       stops: "Остановки",
       dateTime: "Дата и время",
+      dropoffDateTime: "До",
+      duration: "Длительность",
       passengers: "Пассажиры",
       luggage: "Багаж",
       wifi: "Wi-Fi",
@@ -163,6 +169,8 @@ const copyForLocale = (locale: Locale) => {
       basePrice: "Базовая цена",
       waitingPrice: "Ожидание",
       distanceOverage: "Дополнительный километраж",
+      chauffeurService: "Шофёр-сервис",
+      chauffeurExtraHours: "Дополнительные часы",
       longDistanceTransfer: "Дальняя поездка",
       totalPrice: "Итого ориентировочно",
       distance: "Расчётный километраж",
@@ -195,6 +203,8 @@ const copyForLocale = (locale: Locale) => {
     route: "Route",
     stops: "Stops",
     dateTime: "Date and time",
+    dropoffDateTime: "Until",
+    duration: "Duration",
     passengers: "Passengers",
     luggage: "Luggage",
     wifi: "Wi-Fi",
@@ -207,6 +217,8 @@ const copyForLocale = (locale: Locale) => {
     basePrice: "Base price",
     waitingPrice: "Waiting time",
     distanceOverage: "Distance overage",
+    chauffeurService: "Chauffeur service",
+    chauffeurExtraHours: "Additional hours",
     longDistanceTransfer: "Long-distance transfer",
     totalPrice: "Total estimate",
     distance: "Billable distance",
@@ -236,14 +248,24 @@ const priceRows = (payload: BookingRequestPayload, locale: Locale) => {
     estimate.distanceKm,
     locale
   )} km ${locale === "sr" ? "povratna ruta" : locale === "ru" ? "туда и обратно" : "round trip"})`;
+  const chauffeurBaseLabel = `${copy.chauffeurService} ${locale === "sr" ? "do" : locale === "ru" ? "до" : "up to"} ${formatDistance(
+    estimate.chauffeurIncludedHours ?? 10,
+    locale
+  )}h (${formatDistance(estimate.includedDistanceKm, locale)} km ${
+    locale === "sr" ? "uključeno" : locale === "ru" ? "включено" : "included"
+  })`;
   const rows = [
     detailRow(copy.distance, `${formatDistance(estimate.distanceKm, locale)} km`),
     estimate.pricingModel === "long_distance"
       ? detailRow(longDistanceLabel, formatPrice(estimate.overagePrice, locale))
+      : estimate.pricingModel === "chauffeur"
+        ? detailRow(chauffeurBaseLabel, formatPrice(estimate.basePrice, locale))
       : detailRow(copy.basePrice, formatPrice(estimate.basePrice, locale)),
     estimate.waitingPrice > 0
       ? detailRow(
-          copy.waitingPrice,
+          estimate.pricingModel === "chauffeur"
+            ? copy.chauffeurExtraHours
+            : copy.waitingPrice,
           `${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
         )
       : "",
@@ -276,15 +298,23 @@ const priceTextRows = (payload: BookingRequestPayload, locale: Locale) => {
     estimate.distanceKm,
     locale
   )} km ${locale === "sr" ? "povratna ruta" : locale === "ru" ? "туда и обратно" : "round trip"})`;
+  const chauffeurBaseLabel = `${copy.chauffeurService} ${locale === "sr" ? "do" : locale === "ru" ? "до" : "up to"} ${formatDistance(
+    estimate.chauffeurIncludedHours ?? 10,
+    locale
+  )}h (${formatDistance(estimate.includedDistanceKm, locale)} km ${
+    locale === "sr" ? "uključeno" : locale === "ru" ? "включено" : "included"
+  })`;
   return [
     "",
     copy.price,
     `${copy.distance}: ${formatDistance(estimate.distanceKm, locale)} km`,
     estimate.pricingModel === "long_distance"
       ? `${longDistanceLabel}: ${formatPrice(estimate.overagePrice, locale)}`
+      : estimate.pricingModel === "chauffeur"
+        ? `${chauffeurBaseLabel}: ${formatPrice(estimate.basePrice, locale)}`
       : `${copy.basePrice}: ${formatPrice(estimate.basePrice, locale)}`,
     estimate.waitingPrice > 0
-      ? `${copy.waitingPrice}: ${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
+      ? `${estimate.pricingModel === "chauffeur" ? copy.chauffeurExtraHours : copy.waitingPrice}: ${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
       : "",
     estimate.pricingModel !== "long_distance" && estimate.distanceOverageKm > 0
       ? `${copy.distanceOverage}: ${formatPrice(estimate.overagePrice, locale)} (${formatDistance(
@@ -325,6 +355,20 @@ function buildReservationReceiptEmail({
     detailRow(copy.route, route),
     detailRow(copy.stops, stops),
     detailRow(copy.dateTime, formatDateTime(payload.dateTime, payload.locale)),
+    payload.service === "chauffeur"
+      ? detailRow(
+          copy.dropoffDateTime,
+          payload.dropoffDateTime
+            ? formatDateTime(payload.dropoffDateTime, payload.locale)
+            : null
+        )
+      : "",
+    payload.service === "chauffeur"
+      ? detailRow(
+          copy.duration,
+          payload.chauffeurDurationHours ? `${payload.chauffeurDurationHours}h` : null
+        )
+      : "",
     detailRow(copy.passengers, payload.passengers),
     detailRow(copy.luggage, payload.luggage ?? 0),
     detailRow(copy.wifi, yesNo(payload.wifi, copy.yes, copy.no)),
@@ -393,6 +437,12 @@ function buildReservationReceiptEmail({
     `${copy.route}: ${route}`,
     stops ? `${copy.stops}: ${stops}` : "",
     `${copy.dateTime}: ${formatDateTime(payload.dateTime, payload.locale)}`,
+    payload.service === "chauffeur" && payload.dropoffDateTime
+      ? `${copy.dropoffDateTime}: ${formatDateTime(payload.dropoffDateTime, payload.locale)}`
+      : "",
+    payload.service === "chauffeur" && payload.chauffeurDurationHours
+      ? `${copy.duration}: ${payload.chauffeurDurationHours}h`
+      : "",
     `${copy.passengers}: ${payload.passengers}`,
     `${copy.luggage}: ${payload.luggage ?? 0}`,
     `${copy.wifi}: ${yesNo(payload.wifi, copy.yes, copy.no)}`,
@@ -503,6 +553,18 @@ function buildReservationAdminEmail({
     detailRow("Ruta", route),
     detailRow("Stajališta", stops),
     detailRow("Datum i vreme", formatDateTime(payload.dateTime, "sr")),
+    payload.service === "chauffeur"
+      ? detailRow(
+          "Traje do",
+          payload.dropoffDateTime ? formatDateTime(payload.dropoffDateTime, "sr") : null
+        )
+      : "",
+    payload.service === "chauffeur"
+      ? detailRow(
+          "Trajanje",
+          payload.chauffeurDurationHours ? `${payload.chauffeurDurationHours}h` : null
+        )
+      : "",
     detailRow("Putnici", payload.passengers),
     detailRow("Prtljag", payload.luggage ?? 0),
     detailRow("Wi-Fi", yesNo(payload.wifi, "Da", "Ne")),
@@ -544,7 +606,7 @@ function buildReservationAdminEmail({
         : null
     ),
     detailRow(
-      "Cena čekanja",
+      payload.priceEstimate?.pricingModel === "chauffeur" ? "Dodatni sati" : "Cena čekanja",
       payload.priceEstimate && payload.priceEstimate.waitingPrice > 0
         ? formatPrice(payload.priceEstimate.waitingPrice, "sr")
         : null
@@ -599,6 +661,12 @@ function buildReservationAdminEmail({
     `Ruta: ${route}`,
     stops ? `Stajališta: ${stops}` : "",
     `Datum i vreme: ${formatDateTime(payload.dateTime, "sr")}`,
+    payload.service === "chauffeur" && payload.dropoffDateTime
+      ? `Traje do: ${formatDateTime(payload.dropoffDateTime, "sr")}`
+      : "",
+    payload.service === "chauffeur" && payload.chauffeurDurationHours
+      ? `Trajanje: ${payload.chauffeurDurationHours}h`
+      : "",
     `Putnici: ${payload.passengers}`,
     `Prtljag: ${payload.luggage ?? 0}`,
     `Wi-Fi: ${yesNo(payload.wifi, "Da", "Ne")}`,
@@ -628,7 +696,7 @@ function buildReservationAdminEmail({
               )} km / ${formatPrice(payload.priceEstimate.overagePrice, "sr")}`
             : "",
           payload.priceEstimate.waitingPrice > 0
-            ? `Cena čekanja: ${formatPrice(payload.priceEstimate.waitingPrice, "sr")}`
+            ? `${payload.priceEstimate.pricingModel === "chauffeur" ? "Dodatni sati" : "Cena čekanja"}: ${formatPrice(payload.priceEstimate.waitingPrice, "sr")}`
             : ""
         ]
       : []),

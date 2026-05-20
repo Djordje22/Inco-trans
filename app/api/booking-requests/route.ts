@@ -26,6 +26,14 @@ function messageWithExtras(payload: BookingRequestPayload) {
     );
   }
 
+  if (payload.service === "chauffeur") {
+    lines.push(
+      "Šofer servis:",
+      `Do datum i vreme: ${payload.dropoffDateTime ?? ""}`,
+      `Trajanje: ${payload.chauffeurDurationHours ?? ""}h`
+    );
+  }
+
   return lines.join("\n");
 }
 

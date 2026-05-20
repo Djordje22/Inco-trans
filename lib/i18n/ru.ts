@@ -245,6 +245,14 @@ export const ru: Dict = {
         luggage: "Багаж",
         flightNumber: "Номер рейса (если применимо)",
         flightHint: "Мы отслеживаем прилёт и ждём в случае задержки.",
+        chauffeurPickupDateTime: "Дата и время подачи (начало)",
+        chauffeurDropoffDateTime: "Дата и время окончания",
+        chauffeurDurationTitle: "Длительность",
+        chauffeurDurationDesc: "{hours} ч выбрано для шофёр-сервиса.",
+        chauffeurStandardDayNote:
+          "Стандартный день — 10 часов. Дополнительные часы оплачиваются по часовому тарифу.",
+        chauffeurDurationDecreaseAria: "Уменьшить длительность шофёр-сервиса",
+        chauffeurDurationIncreaseAria: "Увеличить длительность шофёр-сервиса",
         stopLabel: "Остановка {n}",
         stopPlaceholder: "Добавьте промежуточную остановку",
         addStop: "Добавить остановку",
@@ -269,6 +277,8 @@ export const ru: Dict = {
         pickupLabel: "Подача",
         destinationLabel: "Куда",
         whenLabel: "Когда",
+        dropoffWhenLabel: "До",
+        durationLabel: "Длительность",
         passengersLabel: "Пассажиров",
         luggageLabel: "Багаж",
         flightLabel: "Рейс",
@@ -303,6 +313,14 @@ export const ru: Dict = {
         distanceOverageLabel:
           "Дополнительный километраж ({overage} км сверх {included} км)",
         longDistancePriceLabel: "Дальняя поездка ({distance} км туда и обратно)",
+        chauffeurBasePriceLabel:
+          "Шофёр-сервис до {hours} ч ({included} км включено)",
+        chauffeurExtraHoursLabel: "Дополнительные часы ({hours} ч сверх 10 ч)",
+        chauffeurPricingNote:
+          "Шофёр-сервис на {hours} ч включает до {included} км. Расчётный километраж: {distance} км; {overageText}",
+        chauffeurOverageText:
+          "{overage} км оплачивается по €{rate}/км.",
+        chauffeurNoOverageText: "доплаты за километраж нет.",
         totalEstimateLabel: "Итого ориентировочно",
         estimateDisclaimer: "Ориентировочная цена. Финальную цену подтвердит наша команда.",
         billableDistanceLabel: "Расчётный километраж",

@@ -1,5 +1,5 @@
 export type RoutePriceEstimate = {
-  pricingModel: "airport" | "long_distance";
+  pricingModel: "airport" | "long_distance" | "chauffeur";
   distanceMeters: number;
   durationSeconds?: number;
   distanceKm: number;
@@ -12,6 +12,10 @@ export type RoutePriceEstimate = {
   waitingPrice: number;
   overagePrice: number;
   totalPrice: number;
+  chauffeurDurationHours?: number;
+  chauffeurIncludedHours?: number;
+  chauffeurExtraHours?: number;
+  chauffeurExtraHourlyRate?: number;
   currency: "EUR";
   source: "google_routes";
 };
@@ -21,6 +25,15 @@ export const BASE_TRANSFER_PRICE = 30;
 export const WAITING_HOURLY_RATE = 30;
 export const AIRPORT_DISTANCE_OVERAGE_RATE = 1;
 export const LONG_DISTANCE_RATE = 1;
+export const CHAUFFEUR_DISTANCE_OVERAGE_RATE = 1;
+export const CHAUFFEUR_EXTRA_HOURLY_RATE = 30;
+
+const CHAUFFEUR_TIERS = [
+  { maxHours: 4, includedDistanceKm: 50, basePrice: 100 },
+  { maxHours: 6, includedDistanceKm: 100, basePrice: 140 },
+  { maxHours: 8, includedDistanceKm: 150, basePrice: 170 },
+  { maxHours: 10, includedDistanceKm: 200, basePrice: 200 }
+];
 
 const roundMoney = (value: number) => Math.round(value * 100) / 100;
 const roundDistance = (value: number) => Math.round(value * 10) / 10;
@@ -29,11 +42,13 @@ export function buildRoutePriceEstimate({
   distanceMeters,
   durationSeconds,
   waitingHours,
+  chauffeurDurationHours,
   pricingModel
 }: {
   distanceMeters: number;
   durationSeconds?: number;
   waitingHours: number;
+  chauffeurDurationHours?: number;
   pricingModel?: RoutePriceEstimate["pricingModel"];
 }): RoutePriceEstimate {
   const distanceKm = roundDistance(distanceMeters / 1000);
@@ -41,30 +56,68 @@ export function buildRoutePriceEstimate({
     ? Math.max(0, Math.trunc(waitingHours))
     : 0;
   const model = pricingModel ?? "airport";
+  const safeChauffeurDurationHours = Number.isFinite(chauffeurDurationHours)
+    ? Math.max(1, Math.ceil(chauffeurDurationHours as number))
+    : 1;
+  const chauffeurTier =
+    model === "chauffeur"
+      ? CHAUFFEUR_TIERS.find((tier) => safeChauffeurDurationHours <= tier.maxHours) ??
+        CHAUFFEUR_TIERS[CHAUFFEUR_TIERS.length - 1]
+      : undefined;
+  const chauffeurExtraHours =
+    model === "chauffeur" ? Math.max(0, safeChauffeurDurationHours - 10) : 0;
   const distanceOverageKm =
     model === "airport"
       ? roundDistance(Math.max(0, distanceKm - INCLUDED_DISTANCE_KM))
-      : distanceKm;
-  const waitingPrice = roundMoney(safeWaitingHours * WAITING_HOURLY_RATE);
+      : model === "chauffeur"
+        ? roundDistance(
+            Math.max(0, distanceKm - (chauffeurTier?.includedDistanceKm ?? 0))
+          )
+        : distanceKm;
+  const waitingPrice =
+    model === "chauffeur"
+      ? roundMoney(chauffeurExtraHours * CHAUFFEUR_EXTRA_HOURLY_RATE)
+      : roundMoney(safeWaitingHours * WAITING_HOURLY_RATE);
   const distanceRate =
-    model === "airport" ? AIRPORT_DISTANCE_OVERAGE_RATE : LONG_DISTANCE_RATE;
+    model === "airport"
+      ? AIRPORT_DISTANCE_OVERAGE_RATE
+      : model === "chauffeur"
+        ? CHAUFFEUR_DISTANCE_OVERAGE_RATE
+        : LONG_DISTANCE_RATE;
   const overagePrice = roundMoney(distanceOverageKm * distanceRate);
-  const basePrice = model === "airport" ? BASE_TRANSFER_PRICE : 0;
+  const basePrice =
+    model === "airport"
+      ? BASE_TRANSFER_PRICE
+      : model === "chauffeur"
+        ? chauffeurTier?.basePrice ?? 0
+        : 0;
 
   return {
     pricingModel: model,
     distanceMeters,
     durationSeconds,
     distanceKm,
-    includedDistanceKm: model === "airport" ? INCLUDED_DISTANCE_KM : 0,
+    includedDistanceKm:
+      model === "airport"
+        ? INCLUDED_DISTANCE_KM
+        : model === "chauffeur"
+          ? chauffeurTier?.includedDistanceKm ?? 0
+          : 0,
     distanceOverageKm,
     distanceOverageRate: distanceRate,
     basePrice,
-    waitingHours: safeWaitingHours,
-    waitingHourlyRate: WAITING_HOURLY_RATE,
+    waitingHours: model === "chauffeur" ? chauffeurExtraHours : safeWaitingHours,
+    waitingHourlyRate:
+      model === "chauffeur" ? CHAUFFEUR_EXTRA_HOURLY_RATE : WAITING_HOURLY_RATE,
     waitingPrice,
     overagePrice,
     totalPrice: roundMoney(basePrice + waitingPrice + overagePrice),
+    chauffeurDurationHours:
+      model === "chauffeur" ? safeChauffeurDurationHours : undefined,
+    chauffeurIncludedHours: model === "chauffeur" ? chauffeurTier?.maxHours : undefined,
+    chauffeurExtraHours: model === "chauffeur" ? chauffeurExtraHours : undefined,
+    chauffeurExtraHourlyRate:
+      model === "chauffeur" ? CHAUFFEUR_EXTRA_HOURLY_RATE : undefined,
     currency: "EUR",
     source: "google_routes"
   };
