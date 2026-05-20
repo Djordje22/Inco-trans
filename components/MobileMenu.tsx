@@ -7,7 +7,7 @@ import {
   X,
   PlaneLanding,
   CarTaxiFront,
-  BriefcaseBusiness
+  Route
 } from "lucide-react";
 import { routeMap, type Locale } from "@/lib/site-config";
 import { t, type ServiceKey } from "@/lib/i18n";
@@ -21,7 +21,7 @@ type Props = {
 const SERVICE_ICONS = {
   airport: PlaneLanding,
   chauffeur: CarTaxiFront,
-  business: BriefcaseBusiness
+  business: Route
 } as const;
 
 const SERVICE_ROUTE: Record<ServiceKey, keyof typeof routeMap> = {

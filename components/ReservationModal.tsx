@@ -35,7 +35,8 @@ import {
   GripVertical,
   Hourglass,
   Search,
-  Wifi
+  Wifi,
+  Bell
 } from "lucide-react";
 import {
   DndContext,
@@ -442,11 +443,11 @@ const BELGRADE_AIRPORT_COORDS = {
 };
 
 const DRIVER_START_PLACE: AddressPlace = {
-  placeId: "ChIJ23nw8oZwWkcRLG9Y2HlpuB4",
-  label: "Vojislava Ilića 85, Beograd 11050, Srbija",
-  formattedAddress: "Vojislava Ilića 85, Beograd 11050, Srbija",
-  latitude: 44.790643,
-  longitude: 20.4985508,
+  placeId: "slavija-belgrade",
+  label: "Slavija, Beograd, Srbija",
+  formattedAddress: "Slavija, Beograd, Srbija",
+  latitude: 44.802416,
+  longitude: 20.465601,
   countryCode: "rs"
 };
 
@@ -484,6 +485,11 @@ type TransferData = {
   paymentMethod: PaymentMethod;
   termsAccepted: boolean;
   message: string;
+  bookingForOther: boolean;
+  passengerName: string;
+  passengerPhoneCountryCode: string;
+  passengerPhone: string;
+  reminderRequested: boolean;
 };
 
 const EMPTY: TransferData = {
@@ -511,7 +517,12 @@ const EMPTY: TransferData = {
   preferredCommunication: "",
   paymentMethod: "cash",
   termsAccepted: false,
-  message: ""
+  message: "",
+  bookingForOther: false,
+  passengerName: "",
+  passengerPhoneCountryCode: "+381",
+  passengerPhone: "",
+  reminderRequested: false
 };
 
 const PHONE_COUNTRY_CODES = [
@@ -550,11 +561,18 @@ const PHONE_COUNTRY_CODES = [
 const isEmailValid = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-const isContactValid = (data: TransferData) =>
+const isContactValid = (
+  data: TransferData,
+  options: { messageRequired?: boolean } = {}
+) =>
   data.fullName.trim().length > 1 &&
   isEmailValid(data.email) &&
   data.phone.trim().length >= 5 &&
-  data.preferredCommunication !== "";
+  data.preferredCommunication !== "" &&
+  (!options.messageRequired || data.message.trim().length > 0) &&
+  (!data.bookingForOther ||
+    (data.passengerName.trim().length > 1 &&
+      data.passengerPhone.trim().length >= 5));
 
 function TransferFlow({
   locale,
@@ -675,6 +693,12 @@ function TransferFlow({
         preferredCommunication: data.preferredCommunication,
         paymentMethod: data.paymentMethod,
         message: data.message,
+        bookingForOther: data.bookingForOther,
+        passengerName: data.passengerName,
+        passengerPhoneCountryCode: data.passengerPhoneCountryCode,
+        passengerPhone: data.passengerPhone,
+        reminderRequested: data.reminderRequested,
+        reminderMinutesBefore: 5,
         termsAccepted: data.termsAccepted,
         priceEstimate: data.routeEstimate
       })
@@ -720,7 +744,12 @@ function TransferFlow({
           <VehicleStep locale={locale} data={data} set={set} />
         ) : null}
         {preStep === null && step === 3 ? (
-          <ContactFields locale={locale} data={data} set={set} />
+          <ContactFields
+            locale={locale}
+            data={data}
+            set={set}
+            showReminder
+          />
         ) : null}
         {preStep === null && step === 4 ? (
           <ReviewStep locale={locale} data={data} set={set} />
@@ -789,19 +818,10 @@ function ServiceStep({
       value: "business",
       label: tf.serviceOptionBusiness,
       desc: locale === "sr"
-        ? "Korporativni i VIP transfer, kartica ili faktura."
+        ? "Duže rute po Srbiji, regionu ili van zemlje."
         : locale === "ru"
-          ? "Корпоративный и VIP-трансфер, карта или счёт."
-          : "Corporate and VIP transfer, card or invoice."
-    },
-    {
-      value: "other",
-      label: tf.serviceOptionOther,
-      desc: locale === "sr"
-        ? "Drugačiji zahtev, opišite u napomeni."
-        : locale === "ru"
-          ? "Иной запрос, опишите в комментарии."
-          : "Different request, describe in notes."
+          ? "Дальние маршруты по Сербии, региону или за границу."
+          : "Longer routes across Serbia, the region or abroad."
     }
   ];
 
@@ -961,7 +981,7 @@ function JourneyStep({
         subtitle={dict.subheading}
       />
       <div className="mt-5 space-y-4">
-        {isAirport ? dateTimeField : null}
+        {dateTimeField}
         <Field label={dict.pickup} required iconLabel>
           <AddressAutocomplete
             locale={locale}
@@ -993,10 +1013,9 @@ function JourneyStep({
         {isAirport ? (
           <>
             <StopsList locale={locale} data={data} set={set} />
-            <WaitingHoursCard locale={locale} data={data} set={set} />
           </>
         ) : null}
-        {!isAirport ? dateTimeField : null}
+        <WaitingHoursCard locale={locale} data={data} set={set} />
         <WifiToggle locale={locale} checked={data.wifi} onChange={(next) => set("wifi", next)} />
         <div className="grid grid-cols-2 gap-3">
           <Field label={dict.passengers} required>
@@ -1204,7 +1223,8 @@ function ReviewStep({
     data.destinationPlace
       ? `${data.destinationPlace.latitude},${data.destinationPlace.longitude}`
       : "",
-    data.waitingHours
+    data.waitingHours,
+    data.service
   ].join("|");
 
   useEffect(() => {
@@ -1234,8 +1254,9 @@ function ReviewStep({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        points: [DRIVER_START_PLACE, ...points],
-        waitingHours: data.waitingHours
+        points: [DRIVER_START_PLACE, ...points, DRIVER_START_PLACE],
+        waitingHours: data.waitingHours,
+        service: data.service
       })
     })
       .then((response) => response.json())
@@ -1283,6 +1304,7 @@ function ReviewStep({
   const hasPriceEstimate =
     data.routeEstimateStatus === "available" && Boolean(estimate);
   const hasDistanceOverage = (estimate?.distanceOverageKm ?? 0) > 0;
+  const isLongDistanceEstimate = estimate?.pricingModel === "long_distance";
 
   const serviceItems = [
     { label: dict.selectedServiceLabel, value: serviceWithDirection }
@@ -1314,12 +1336,7 @@ function ReviewStep({
     ...(hasPriceEstimate && estimate
       ? [
           {
-            label:
-              locale === "sr"
-                ? "Ukupna kilometraža"
-                : locale === "ru"
-                  ? "Общий километраж"
-                  : "Total distance",
+            label: dict.billableDistanceLabel,
             value: `${formatDistance(estimate.distanceKm, locale)} km`
           }
         ]
@@ -1340,6 +1357,49 @@ function ReviewStep({
       label: dict.preferredCommunicationLabel,
       value: preferredCommunicationLabel
     },
+    ...(data.bookingForOther
+      ? [
+          {
+            label:
+              locale === "sr"
+                ? "Ime putnika"
+                : locale === "ru"
+                  ? "Имя пассажира"
+                  : "Passenger name",
+            value: data.passengerName || " "
+          },
+          {
+            label:
+              locale === "sr"
+                ? "Telefon putnika"
+                : locale === "ru"
+                  ? "Телефон пассажира"
+                  : "Passenger phone",
+            value:
+              data.passengerPhoneCountryCode || data.passengerPhone
+                ? `${data.passengerPhoneCountryCode} ${data.passengerPhone}`.trim()
+                : " "
+          }
+        ]
+      : []),
+    ...(data.reminderRequested
+      ? [
+          {
+            label:
+              locale === "sr"
+                ? "Podsetnik"
+                : locale === "ru"
+                  ? "Напоминание"
+                  : "Reminder",
+            value:
+              locale === "sr"
+                ? "5 minuta nakon slanja zahteva"
+                : locale === "ru"
+                  ? "через 5 минут после отправки запроса"
+                  : "5 minutes after request submission"
+          }
+        ]
+      : []),
     { label: dict.companyNameLabel, value: data.companyName || " " },
     { label: dict.messageLabel, value: data.message || " " }
   ];
@@ -1349,6 +1409,10 @@ function ReviewStep({
   const waitingPriceLabel = dict.waitingPriceLabel.replace(
     "{hours}",
     formatDistance(data.waitingHours, locale)
+  );
+  const longDistancePriceLabel = dict.longDistancePriceLabel.replace(
+    "{distance}",
+    formatDistance(estimate?.distanceKm ?? 0, locale)
   );
   const termsHref = legalHref(locale, "terms");
   const privacyHref = legalHref(locale, "privacy");
@@ -1399,12 +1463,21 @@ function ReviewStep({
               {dict.estimateCardTitle}
             </h4>
             <dl className="mt-3 space-y-2 text-sm">
-              <div className="flex items-start justify-between gap-3">
-                <dt className="text-white/55">{dict.basePriceLabel}</dt>
-                <dd className="text-right font-medium text-white">
-                  {formatPrice(estimate.basePrice, locale)}
-                </dd>
-              </div>
+              {isLongDistanceEstimate ? (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-white/55">{longDistancePriceLabel}</dt>
+                  <dd className="text-right font-medium text-white">
+                    {formatPrice(estimate.overagePrice, locale)}
+                  </dd>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-white/55">{dict.basePriceLabel}</dt>
+                  <dd className="text-right font-medium text-white">
+                    {formatPrice(estimate.basePrice, locale)}
+                  </dd>
+                </div>
+              )}
               {estimate.waitingPrice > 0 ? (
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-white/55">{waitingPriceLabel}</dt>
@@ -1413,7 +1486,7 @@ function ReviewStep({
                   </dd>
                 </div>
               ) : null}
-              {hasDistanceOverage ? (
+              {hasDistanceOverage && !isLongDistanceEstimate ? (
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-white/55">{overageLabel}</dt>
                   <dd className="text-right font-medium text-white">
@@ -1683,7 +1756,7 @@ function HandleFlow({
   const set = <K extends keyof TransferData>(k: K, v: TransferData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
 
-  const valid = isContactValid(data);
+  const valid = isContactValid(data, { messageRequired: true });
 
   const submitInquiry = async () => {
     if (!valid) return;
@@ -1701,7 +1774,11 @@ function HandleFlow({
         phone: data.phone,
         preferredCommunication: data.preferredCommunication,
         companyName: data.companyName,
-        message: data.message
+        message: data.message,
+        bookingForOther: data.bookingForOther,
+        passengerName: data.passengerName,
+        passengerPhoneCountryCode: data.passengerPhoneCountryCode,
+        passengerPhone: data.passengerPhone
       })
     });
 
@@ -1727,7 +1804,13 @@ function HandleFlow({
         subtitle={dict.contact.subheading}
       />
       <div className="mt-5">
-        <ContactFields locale={locale} data={data} set={set} />
+        <ContactFields
+          locale={locale}
+          data={data}
+          set={set}
+          messageRequired
+          messagePlaceholder={dict.contact.handleMessagePlaceholder}
+        />
       </div>
       <FormFooter
         locale={locale}
@@ -1753,11 +1836,17 @@ function HandleFlow({
 function ContactFields({
   locale,
   data,
-  set
+  set,
+  messageRequired = false,
+  messagePlaceholder,
+  showReminder = false
 }: {
   locale: Locale;
   data: TransferData;
   set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+  messageRequired?: boolean;
+  messagePlaceholder?: string;
+  showReminder?: boolean;
 }) {
   const dict = t(locale).modal.contact;
   const communicationOptions: {
@@ -1824,6 +1913,68 @@ function ContactFields({
           />
         </div>
       </Field>
+      <Field label={dict.companyName}>
+        <input
+          type="text"
+          autoComplete="organization"
+          className="glass-input"
+          placeholder={dict.companyNamePlaceholder}
+          value={data.companyName}
+          onChange={(e) => set("companyName", e.target.value)}
+        />
+      </Field>
+
+      <ToggleCard
+        checked={data.bookingForOther}
+        onChange={(checked) => set("bookingForOther", checked)}
+        title={dict.bookingForOtherTitle}
+        description={dict.bookingForOtherDesc}
+      />
+
+      {data.bookingForOther ? (
+        <div className="space-y-4 border-l-2 border-gold-500/70 pl-4">
+          <Field label={dict.passengerName} required>
+            <input
+              type="text"
+              autoComplete="off"
+              className="glass-input"
+              placeholder={dict.passengerNamePlaceholder}
+              value={data.passengerName}
+              onChange={(e) => set("passengerName", e.target.value)}
+              required
+            />
+          </Field>
+          <Field label={dict.passengerPhone} required>
+            <div className="flex items-stretch gap-2">
+              <CountryCodeSelect
+                ariaLabel={dict.countryCode}
+                value={data.passengerPhoneCountryCode}
+                onChange={(value) => set("passengerPhoneCountryCode", value)}
+              />
+              <input
+                type="tel"
+                autoComplete="off"
+                className="glass-input flex-1"
+                placeholder={dict.phonePlaceholder}
+                value={data.passengerPhone}
+                onChange={(e) => set("passengerPhone", e.target.value)}
+                required
+              />
+            </div>
+          </Field>
+        </div>
+      ) : null}
+
+      <Field label={dict.message} required={messageRequired}>
+        <textarea
+          rows={3}
+          className="glass-input resize-none"
+          placeholder={messagePlaceholder ?? dict.messagePlaceholder}
+          value={data.message}
+          onChange={(e) => set("message", e.target.value)}
+          required={messageRequired}
+        />
+      </Field>
       <fieldset>
         <legend className="mb-1.5 flex items-center gap-1 text-[11px] uppercase tracking-widest text-white/60">
           {dict.preferredCommunication}
@@ -1861,26 +2012,98 @@ function ContactFields({
           })}
         </div>
       </fieldset>
-      <Field label={dict.companyName}>
-        <input
-          type="text"
-          autoComplete="organization"
-          className="glass-input"
-          placeholder={dict.companyNamePlaceholder}
-          value={data.companyName}
-          onChange={(e) => set("companyName", e.target.value)}
+      {showReminder ? (
+        <ReminderToggle
+          checked={data.reminderRequested}
+          onChange={(checked) => set("reminderRequested", checked)}
+          title={dict.reminderTitle}
+          description={dict.reminderDesc}
         />
-      </Field>
-      <Field label={dict.message}>
-        <textarea
-          rows={3}
-          className="glass-input resize-none"
-          placeholder={dict.messagePlaceholder}
-          value={data.message}
-          onChange={(e) => set("message", e.target.value)}
-        />
-      </Field>
+      ) : null}
     </div>
+  );
+}
+
+function ToggleCard({
+  checked,
+  onChange,
+  title,
+  description
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  title: string;
+  description: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex w-full items-center gap-4 rounded-xl bg-white/[0.025] px-4 py-4 text-left transition-colors hover:bg-white/[0.05]"
+    >
+      <span
+        aria-hidden="true"
+        className={
+          "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors " +
+          (checked
+            ? "border-white bg-white text-ink-950"
+            : "border-white/35 bg-transparent text-transparent")
+        }
+      >
+        <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-white">{title}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-white/50">
+          {description}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function ReminderToggle({
+  checked,
+  onChange,
+  title,
+  description
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  title: string;
+  description: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex w-full items-center gap-4 rounded-xl px-0 py-2 text-left transition-colors hover:bg-white/[0.03] sm:px-1"
+    >
+      <span
+        aria-hidden="true"
+        className={
+          "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors " +
+          (checked
+            ? "border-white bg-white text-ink-950"
+            : "border-white/35 bg-transparent text-transparent")
+        }
+      >
+        <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+      </span>
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-gold-300">
+        <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-white">{title}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-white/50">
+          {description}
+        </span>
+      </span>
+    </button>
   );
 }
 

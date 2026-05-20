@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   PlaneLanding,
   CarTaxiFront,
-  BriefcaseBusiness,
+  Route,
   ChevronDown
 } from "lucide-react";
 import { routeMap, type Locale } from "@/lib/site-config";
@@ -16,7 +16,7 @@ type Props = { locale: Locale };
 const ICONS = {
   airport: PlaneLanding,
   chauffeur: CarTaxiFront,
-  business: BriefcaseBusiness
+  business: Route
 } as const;
 
 const ROUTE_KEY: Record<ServiceKey, keyof typeof routeMap> = {
@@ -82,16 +82,19 @@ export default function NavServicesMenu({ locale }: Props) {
                     href={href}
                     role="menuitem"
                     onClick={() => setOpen(false)}
-                    className="flex items-start gap-3 rounded-lg px-3 py-2.5 hover:bg-white/8 transition-colors"
+                    className="group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-white/10 hover:shadow-[0_14px_30px_rgba(0,0,0,0.28)] focus-visible:-translate-y-0.5 focus-visible:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300/45"
                   >
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold-400/15 ring-1 ring-gold-400/30 text-gold-300">
-                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold-400/15 text-gold-300 ring-1 ring-gold-400/30 transition-all duration-300 group-hover:scale-110 group-hover:bg-gold-400/25 group-hover:text-gold-200 group-hover:ring-gold-300/60">
+                      <Icon
+                        className="h-4 w-4 transition-transform duration-300 group-hover:rotate-6"
+                        aria-hidden="true"
+                      />
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-white">
+                      <span className="block text-sm font-semibold text-white transition-colors group-hover:text-gold-100">
                         {item.title}
                       </span>
-                      <span className="mt-0.5 block text-xs text-white/55 line-clamp-2">
+                      <span className="mt-0.5 block text-xs text-white/55 line-clamp-2 transition-colors group-hover:text-white/75">
                         {item.desc}
                       </span>
                     </span>

@@ -3,8 +3,86 @@ import { randomUUID } from "crypto";
 import { validateBookingRequestPayload } from "@/lib/backend/payloads";
 import { sendReservationEmails } from "@/lib/email/reservation-receipt";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import type { BookingRequestPayload } from "@/lib/backend/payloads";
 
 export const runtime = "nodejs";
+
+function messageWithExtras(payload: BookingRequestPayload) {
+  const lines = [payload.message?.trim() ?? ""].filter(Boolean);
+
+  if (payload.bookingForOther) {
+    lines.push(
+      "Rezervacija za drugu osobu:",
+      `Ime putnika: ${payload.passengerName ?? ""}`,
+      `Telefon putnika: ${[payload.passengerPhoneCountryCode, payload.passengerPhone]
+        .filter(Boolean)
+        .join(" ")}`
+    );
+  }
+
+  if (payload.reminderRequested) {
+    lines.push(
+      `Podsetnik: da, ${payload.reminderMinutesBefore ?? 5} minuta nakon slanja zahteva`
+    );
+  }
+
+  return lines.join("\n");
+}
+
+function bookingInsertPayload(id: string, payload: BookingRequestPayload) {
+  return {
+    id,
+    locale: payload.locale,
+    source: payload.source,
+    service: payload.service,
+    airport_direction: payload.airportDirection || null,
+    pickup: payload.pickup,
+    destination: payload.destination,
+    waiting_hours: payload.waitingHours ?? 0,
+    pickup_at: payload.dateTime,
+    passengers: payload.passengers,
+    luggage: payload.luggage ?? 0,
+    wifi_requested: payload.wifi ?? true,
+    flight_number: payload.flight || null,
+    vehicle_slug: payload.vehicle || null,
+    full_name: payload.fullName,
+    email: payload.email || null,
+    phone_country_code: payload.phoneCountryCode || null,
+    phone: payload.phone,
+    company_name: payload.companyName || null,
+    preferred_communication: payload.preferredCommunication || null,
+    payment_method: payload.paymentMethod || "cash",
+    pickup_place: payload.pickupPlace ?? null,
+    destination_place: payload.destinationPlace ?? null,
+    route_distance_meters: payload.priceEstimate?.distanceMeters ?? null,
+    route_duration_seconds: payload.priceEstimate?.durationSeconds ?? null,
+    price_estimate: payload.priceEstimate ?? null,
+    message: messageWithExtras(payload) || null,
+    terms_accepted: payload.termsAccepted ?? false,
+    status: "new"
+  };
+}
+
+function legacyBookingInsertPayload(
+  payload: ReturnType<typeof bookingInsertPayload>
+) {
+  const {
+    wifi_requested,
+    pickup_place,
+    destination_place,
+    route_distance_meters,
+    route_duration_seconds,
+    price_estimate,
+    ...legacyPayload
+  } = payload;
+  void wifi_requested;
+  void pickup_place;
+  void destination_place;
+  void route_distance_meters;
+  void route_duration_seconds;
+  void price_estimate;
+  return legacyPayload;
+}
 
 export async function POST(request: Request) {
   const parsed = validateBookingRequestPayload(await request.json().catch(() => null));
@@ -23,41 +101,22 @@ export async function POST(request: Request) {
 
   const payload = parsed.value;
   const id = randomUUID();
-  const { error } = await supabase
-    .from("booking_requests")
-    .insert({
-      id,
-      locale: payload.locale,
-      source: payload.source,
-      service: payload.service,
-      airport_direction: payload.airportDirection || null,
-      pickup: payload.pickup,
-      destination: payload.destination,
-      waiting_hours: payload.waitingHours ?? 0,
-      pickup_at: payload.dateTime,
-      passengers: payload.passengers,
-      luggage: payload.luggage ?? 0,
-      wifi_requested: payload.wifi ?? true,
-      flight_number: payload.flight || null,
-      vehicle_slug: payload.vehicle || null,
-      full_name: payload.fullName,
-      email: payload.email || null,
-      phone_country_code: payload.phoneCountryCode || null,
-      phone: payload.phone,
-      company_name: payload.companyName || null,
-      preferred_communication: payload.preferredCommunication || null,
-      payment_method: payload.paymentMethod || "cash",
-      pickup_place: payload.pickupPlace ?? null,
-      destination_place: payload.destinationPlace ?? null,
-      route_distance_meters: payload.priceEstimate?.distanceMeters ?? null,
-      route_duration_seconds: payload.priceEstimate?.durationSeconds ?? null,
-      price_estimate: payload.priceEstimate ?? null,
-      message: payload.message || null,
-      terms_accepted: payload.termsAccepted ?? false,
-      status: "new"
-    });
+  const insertPayload = bookingInsertPayload(id, payload);
+  let { error } = await supabase.from("booking_requests").insert(insertPayload);
+
+  if (error?.code === "PGRST204") {
+    console.error(
+      "Booking request insert schema mismatch, retrying legacy insert:",
+      error.message
+    );
+    const retry = await supabase
+      .from("booking_requests")
+      .insert(legacyBookingInsertPayload(insertPayload));
+    error = retry.error;
+  }
 
   if (error) {
+    console.error("Booking request insert failed:", error);
     return NextResponse.json(
       { error: "Unable to save booking request." },
       { status: 500 }
@@ -92,7 +151,8 @@ export async function POST(request: Request) {
     {
       id,
       emailSent: emailResult.receiptSent,
-      adminEmailSent: emailResult.adminSent
+      adminEmailSent: emailResult.adminSent,
+      reminderScheduled: emailResult.reminderScheduled
     },
     { status: 201 }
   );

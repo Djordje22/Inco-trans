@@ -2,8 +2,25 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { validateContactMessagePayload } from "@/lib/backend/payloads";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import type { ContactMessagePayload } from "@/lib/backend/payloads";
 
 export const runtime = "nodejs";
+
+function messageWithExtras(payload: ContactMessagePayload) {
+  const lines = [payload.message.trim()].filter(Boolean);
+
+  if (payload.bookingForOther) {
+    lines.push(
+      "Rezervacija za drugu osobu:",
+      `Ime putnika: ${payload.passengerName ?? ""}`,
+      `Telefon putnika: ${[payload.passengerPhoneCountryCode, payload.passengerPhone]
+        .filter(Boolean)
+        .join(" ")}`
+    );
+  }
+
+  return lines.join("\n");
+}
 
 export async function POST(request: Request) {
   const parsed = validateContactMessagePayload(await request.json().catch(() => null));
@@ -34,11 +51,12 @@ export async function POST(request: Request) {
       phone: payload.phone || null,
       preferred_communication: payload.preferredCommunication || null,
       company_name: payload.companyName || null,
-      message: payload.message,
+      message: messageWithExtras(payload),
       status: "new"
     });
 
   if (error) {
+    console.error("Contact message insert failed:", error);
     return NextResponse.json(
       { error: "Unable to save contact message." },
       { status: 500 }

@@ -225,8 +225,11 @@ export type Dict = {
         basePriceLabel: string;
         waitingPriceLabel: string;
         distanceOverageLabel: string;
+        longDistancePriceLabel: string;
         totalEstimateLabel: string;
         estimateDisclaimer: string;
+        billableDistanceLabel: string;
+        billableDistanceNote: string;
         paymentCardTitle: string;
         paymentCard: string;
         paymentCardDesc: string;
@@ -251,12 +254,20 @@ export type Dict = {
       countryCode: string;
       companyName: string;
       companyNamePlaceholder: string;
+      bookingForOtherTitle: string;
+      bookingForOtherDesc: string;
+      passengerName: string;
+      passengerNamePlaceholder: string;
+      passengerPhone: string;
+      reminderTitle: string;
+      reminderDesc: string;
       preferredCommunication: string;
       preferredPhoneSms: string;
       preferredViberWhatsapp: string;
       preferredEmail: string;
       message: string;
       messagePlaceholder: string;
+      handleMessagePlaceholder: string;
       submitInquiry: string;
     };
     buttons: {

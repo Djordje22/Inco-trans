@@ -1,17 +1,5 @@
-import ServicePage from "@/components/ServicePage";
-import { buildMetadata } from "@/lib/metadata";
-import { t } from "@/lib/i18n";
-
-const locale = "en" as const;
-const page = t(locale).servicePages.business;
-
-export const metadata = buildMetadata({
-  locale,
-  routeKey: "businessTransfer",
-  title: page.title,
-  description: page.subtitle
-});
+import { redirect } from "next/navigation";
 
 export default function BusinessTransferPage() {
-  return <ServicePage locale={locale} service="business" />;
+  redirect("/en/long-distance-transfer");
 }

@@ -14,6 +14,7 @@ type SendReservationReceiptResult =
 type SendReservationEmailsResult = {
   receiptSent: boolean;
   adminSent: boolean;
+  reminderScheduled: boolean;
   reasons: string[];
 };
 
@@ -38,9 +39,9 @@ const labelForService = (service: BookingRequestPayload["service"], locale: Loca
       ru: "Шофёр-сервис"
     },
     business: {
-      sr: "Poslovni transfer",
-      en: "Business transfer",
-      ru: "Бизнес-трансфер"
+      sr: "Duge relacije",
+      en: "Long-distance transfer",
+      ru: "Дальняя поездка"
     },
     other: {
       sr: "Drugo",
@@ -117,9 +118,20 @@ const copyForLocale = (locale: Locale) => {
       basePrice: "Osnovna cena",
       waitingPrice: "Čekanje",
       distanceOverage: "Dodatna kilometraža",
+      longDistanceTransfer: "Duge relacije",
       totalPrice: "Ukupno okvirno",
-      distance: "Kilometraža",
+      distance: "Obračunska kilometraža",
       notes: "Napomena",
+      bookingForOther: "Rezervacija za drugu osobu",
+      passengerName: "Ime putnika",
+      passengerPhone: "Telefon putnika",
+      reminder: "Podsetnik",
+      reminderEnabled: "Da, 5 minuta nakon slanja zahteva",
+      reminderSubject: "Podsetnik za Inco Trans vožnju",
+      reminderPreview: "Vaša zakazana vožnja je uskoro.",
+      reminderHeading: "Podsetnik za vožnju",
+      reminderIntro:
+        "Podsećamo vas na zakazanu Inco Trans vožnju. Ako treba da izmenite detalje, javite nam se što pre.",
       next:
         "Javićemo se što je pre moguće sa potvrdom dostupnosti i cenom. Za hitne izmene pošaljite nam WhatsApp poruku.",
       footer: "Inco Trans | Online rezervacije uvek"
@@ -151,9 +163,20 @@ const copyForLocale = (locale: Locale) => {
       basePrice: "Базовая цена",
       waitingPrice: "Ожидание",
       distanceOverage: "Дополнительный километраж",
+      longDistanceTransfer: "Дальняя поездка",
       totalPrice: "Итого ориентировочно",
-      distance: "Расстояние",
+      distance: "Расчётный километраж",
       notes: "Комментарий",
+      bookingForOther: "Бронирование для другого человека",
+      passengerName: "Имя пассажира",
+      passengerPhone: "Телефон пассажира",
+      reminder: "Напоминание",
+      reminderEnabled: "Да, через 5 минут после отправки запроса",
+      reminderSubject: "Напоминание о поездке Inco Trans",
+      reminderPreview: "Ваша запланированная поездка скоро.",
+      reminderHeading: "Напоминание о поездке",
+      reminderIntro:
+        "Напоминаем о запланированной поездке Inco Trans. Если нужно изменить детали, пожалуйста, свяжитесь с нами как можно раньше.",
       next:
         "Мы как можно скорее ответим с подтверждением доступности и цены. Для срочных изменений напишите нам в WhatsApp.",
       footer: "Inco Trans | Онлайн-бронирование всегда"
@@ -184,9 +207,20 @@ const copyForLocale = (locale: Locale) => {
     basePrice: "Base price",
     waitingPrice: "Waiting time",
     distanceOverage: "Distance overage",
+    longDistanceTransfer: "Long-distance transfer",
     totalPrice: "Total estimate",
-    distance: "Distance",
+    distance: "Billable distance",
     notes: "Notes",
+    bookingForOther: "Booking for another person",
+    passengerName: "Passenger name",
+    passengerPhone: "Passenger phone",
+    reminder: "Reminder",
+    reminderEnabled: "Yes, 5 minutes after request submission",
+    reminderSubject: "Inco Trans trip reminder",
+    reminderPreview: "Your scheduled ride is coming up.",
+    reminderHeading: "Trip reminder",
+    reminderIntro:
+      "This is a reminder for your scheduled Inco Trans ride. If you need to change any details, please contact us as soon as possible.",
     next:
       "We will reply as soon as possible with availability and price confirmation. For urgent changes, message us on WhatsApp.",
     footer: "Inco Trans | Online reservations anytime"
@@ -198,16 +232,22 @@ const priceRows = (payload: BookingRequestPayload, locale: Locale) => {
   if (!estimate) return "";
 
   const copy = copyForLocale(locale);
+  const longDistanceLabel = `${copy.longDistanceTransfer} (${formatDistance(
+    estimate.distanceKm,
+    locale
+  )} km ${locale === "sr" ? "povratna ruta" : locale === "ru" ? "туда и обратно" : "round trip"})`;
   const rows = [
     detailRow(copy.distance, `${formatDistance(estimate.distanceKm, locale)} km`),
-    detailRow(copy.basePrice, formatPrice(estimate.basePrice, locale)),
+    estimate.pricingModel === "long_distance"
+      ? detailRow(longDistanceLabel, formatPrice(estimate.overagePrice, locale))
+      : detailRow(copy.basePrice, formatPrice(estimate.basePrice, locale)),
     estimate.waitingPrice > 0
       ? detailRow(
           copy.waitingPrice,
           `${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
         )
       : "",
-    estimate.distanceOverageKm > 0
+    estimate.pricingModel !== "long_distance" && estimate.distanceOverageKm > 0
       ? detailRow(
           copy.distanceOverage,
           `${formatPrice(estimate.overagePrice, locale)} (${formatDistance(
@@ -232,15 +272,21 @@ const priceTextRows = (payload: BookingRequestPayload, locale: Locale) => {
   if (!estimate) return [];
 
   const copy = copyForLocale(locale);
+  const longDistanceLabel = `${copy.longDistanceTransfer} (${formatDistance(
+    estimate.distanceKm,
+    locale
+  )} km ${locale === "sr" ? "povratna ruta" : locale === "ru" ? "туда и обратно" : "round trip"})`;
   return [
     "",
     copy.price,
     `${copy.distance}: ${formatDistance(estimate.distanceKm, locale)} km`,
-    `${copy.basePrice}: ${formatPrice(estimate.basePrice, locale)}`,
+    estimate.pricingModel === "long_distance"
+      ? `${longDistanceLabel}: ${formatPrice(estimate.overagePrice, locale)}`
+      : `${copy.basePrice}: ${formatPrice(estimate.basePrice, locale)}`,
     estimate.waitingPrice > 0
       ? `${copy.waitingPrice}: ${formatPrice(estimate.waitingPrice, locale)} (${estimate.waitingHours}h)`
       : "",
-    estimate.distanceOverageKm > 0
+    estimate.pricingModel !== "long_distance" && estimate.distanceOverageKm > 0
       ? `${copy.distanceOverage}: ${formatPrice(estimate.overagePrice, locale)} (${formatDistance(
           estimate.distanceOverageKm,
           locale
@@ -285,6 +331,19 @@ function buildReservationReceiptEmail({
     detailRow(copy.flight, payload.flight),
     detailRow(copy.vehicle, vehicleName(payload.vehicle)),
     detailRow(copy.payment, labelForPayment(payload.paymentMethod ?? "cash", payload.locale)),
+    payload.bookingForOther
+      ? detailRow(copy.bookingForOther, copy.yes)
+      : "",
+    payload.bookingForOther
+      ? detailRow(copy.passengerName, payload.passengerName)
+      : "",
+    payload.bookingForOther
+      ? detailRow(
+          copy.passengerPhone,
+          [payload.passengerPhoneCountryCode, payload.passengerPhone].filter(Boolean).join(" ")
+        )
+      : "",
+    payload.reminderRequested ? detailRow(copy.reminder, copy.reminderEnabled) : "",
     detailRow(copy.notes, payload.message)
   ].join("");
 
@@ -340,6 +399,16 @@ function buildReservationReceiptEmail({
     payload.flight ? `${copy.flight}: ${payload.flight}` : "",
     `${copy.vehicle}: ${vehicleName(payload.vehicle)}`,
     `${copy.payment}: ${labelForPayment(payload.paymentMethod ?? "cash", payload.locale)}`,
+    payload.bookingForOther ? `${copy.bookingForOther}: ${copy.yes}` : "",
+    payload.bookingForOther && payload.passengerName
+      ? `${copy.passengerName}: ${payload.passengerName}`
+      : "",
+    payload.bookingForOther && payload.passengerPhone
+      ? `${copy.passengerPhone}: ${[payload.passengerPhoneCountryCode, payload.passengerPhone]
+          .filter(Boolean)
+          .join(" ")}`
+      : "",
+    payload.reminderRequested ? `${copy.reminder}: ${copy.reminderEnabled}` : "",
     payload.message ? `${copy.notes}: ${payload.message}` : "",
     ...priceTextRows(payload, payload.locale),
     "",
@@ -355,79 +424,37 @@ function buildReservationReceiptEmail({
   };
 }
 
-function buildReservationAdminEmail({
+function buildReservationReminderEmail({
   bookingId,
   payload
 }: SendReservationReceiptArgs) {
+  const copy = copyForLocale(payload.locale);
   const route = `${payload.pickup} -> ${payload.destination}`;
-  const stops = payload.stops?.filter(Boolean).join(" -> ");
   const rows = [
-    detailRow("Request ID", bookingId),
-    detailRow("Source", payload.source),
-    detailRow("Locale", payload.locale),
-    detailRow("Service", labelForService(payload.service, "en")),
-    detailRow("Airport direction", payload.airportDirection),
-    detailRow("Route", route),
-    detailRow("Stops", stops),
-    detailRow("Date and time", formatDateTime(payload.dateTime, "en")),
-    detailRow("Passengers", payload.passengers),
-    detailRow("Luggage", payload.luggage ?? 0),
-    detailRow("Wi-Fi", yesNo(payload.wifi, "Yes", "No")),
-    detailRow("Flight", payload.flight),
-    detailRow("Vehicle", vehicleName(payload.vehicle)),
-    detailRow("Payment", labelForPayment(payload.paymentMethod ?? "cash", "en")),
-    detailRow(
-      "Estimated total",
-      payload.priceEstimate ? formatPrice(payload.priceEstimate.totalPrice, "en") : null
-    ),
-    detailRow(
-      "Route distance",
-      payload.priceEstimate
-        ? `${formatDistance(payload.priceEstimate.distanceKm, "en")} km`
-        : null
-    ),
-    detailRow(
-      "Distance overage",
-      payload.priceEstimate && payload.priceEstimate.distanceOverageKm > 0
-        ? `${formatDistance(payload.priceEstimate.distanceOverageKm, "en")} km / ${formatPrice(
-            payload.priceEstimate.overagePrice,
-            "en"
-          )}`
-        : null
-    ),
-    detailRow(
-      "Waiting price",
-      payload.priceEstimate && payload.priceEstimate.waitingPrice > 0
-        ? formatPrice(payload.priceEstimate.waitingPrice, "en")
-        : null
-    ),
-    detailRow("Name", payload.fullName),
-    detailRow("Email", payload.email),
-    detailRow(
-      "Phone",
-      [payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")
-    ),
-    detailRow("Company", payload.companyName),
-    detailRow("Preferred communication", payload.preferredCommunication),
-    detailRow("Message", payload.message)
+    detailRow(copy.bookingId, bookingId),
+    detailRow(copy.service, labelForService(payload.service, payload.locale)),
+    detailRow(copy.route, route),
+    detailRow(copy.dateTime, formatDateTime(payload.dateTime, payload.locale)),
+    detailRow(copy.passengers, payload.passengers),
+    detailRow(copy.vehicle, vehicleName(payload.vehicle))
   ].join("");
 
-  const subject = `New Inco Trans reservation request: ${payload.fullName}`;
   const html = `
     <div style="margin:0;padding:0;background:#f4f1ea;font-family:Inter,Arial,sans-serif;color:#111827;">
+      <span style="display:none;opacity:0;visibility:hidden;">${escapeHtml(copy.reminderPreview)}</span>
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;padding:28px 12px;">
         <tr>
           <td align="center">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6dccb;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6dccb;">
               <tr>
                 <td style="background:#111111;padding:26px 28px;">
                   <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#d7b56d;">${escapeHtml(siteConfig.name)}</div>
-                  <h1 style="margin:8px 0 0;color:#ffffff;font-size:26px;line-height:1.2;font-weight:700;">New reservation request</h1>
+                  <h1 style="margin:8px 0 0;color:#ffffff;font-size:26px;line-height:1.2;font-weight:700;">${escapeHtml(copy.reminderHeading)}</h1>
                 </td>
               </tr>
               <tr>
                 <td style="padding:28px;">
-                  <p style="margin:0 0 18px;color:#374151;font-size:15px;line-height:1.7;">A new reservation request was submitted on the website.</p>
+                  <p style="margin:0 0 18px;color:#374151;font-size:15px;line-height:1.7;">${escapeHtml(copy.reminderIntro)}</p>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
                     ${rows}
                   </table>
@@ -441,46 +468,179 @@ function buildReservationAdminEmail({
   `;
 
   const text = [
-    "New reservation request",
+    copy.reminderHeading,
     "",
-    `Request ID: ${bookingId}`,
-    `Source: ${payload.source}`,
-    `Locale: ${payload.locale}`,
-    `Service: ${labelForService(payload.service, "en")}`,
-    payload.airportDirection ? `Airport direction: ${payload.airportDirection}` : "",
-    `Route: ${route}`,
-    stops ? `Stops: ${stops}` : "",
-    `Date and time: ${formatDateTime(payload.dateTime, "en")}`,
-    `Passengers: ${payload.passengers}`,
-    `Luggage: ${payload.luggage ?? 0}`,
-    `Wi-Fi: ${yesNo(payload.wifi, "Yes", "No")}`,
-    payload.flight ? `Flight: ${payload.flight}` : "",
-    `Vehicle: ${vehicleName(payload.vehicle)}`,
-    `Payment: ${labelForPayment(payload.paymentMethod ?? "cash", "en")}`,
+    copy.reminderIntro,
+    "",
+    `${copy.bookingId}: ${bookingId}`,
+    `${copy.service}: ${labelForService(payload.service, payload.locale)}`,
+    `${copy.route}: ${route}`,
+    `${copy.dateTime}: ${formatDateTime(payload.dateTime, payload.locale)}`,
+    `${copy.passengers}: ${payload.passengers}`,
+    `${copy.vehicle}: ${vehicleName(payload.vehicle)}`
+  ].join("\n");
+
+  return {
+    subject: copy.reminderSubject,
+    html,
+    text
+  };
+}
+
+function buildReservationAdminEmail({
+  bookingId,
+  payload
+}: SendReservationReceiptArgs) {
+  const copy = copyForLocale("sr");
+  const route = `${payload.pickup} -> ${payload.destination}`;
+  const stops = payload.stops?.filter(Boolean).join(" -> ");
+  const rows = [
+    detailRow("Broj zahteva", bookingId),
+    detailRow("Izvor", payload.source),
+    detailRow("Jezik sajta", payload.locale),
+    detailRow("Usluga", labelForService(payload.service, "sr")),
+    detailRow("Smer aerodroma", payload.airportDirection),
+    detailRow("Ruta", route),
+    detailRow("Stajališta", stops),
+    detailRow("Datum i vreme", formatDateTime(payload.dateTime, "sr")),
+    detailRow("Putnici", payload.passengers),
+    detailRow("Prtljag", payload.luggage ?? 0),
+    detailRow("Wi-Fi", yesNo(payload.wifi, "Da", "Ne")),
+    detailRow("Let", payload.flight),
+    detailRow("Vozilo", vehicleName(payload.vehicle)),
+    detailRow("Plaćanje", labelForPayment(payload.paymentMethod ?? "cash", "sr")),
+    payload.bookingForOther
+      ? detailRow(copy.bookingForOther, copy.yes)
+      : "",
+    payload.bookingForOther ? detailRow(copy.passengerName, payload.passengerName) : "",
+    payload.bookingForOther
+      ? detailRow(
+          copy.passengerPhone,
+          [payload.passengerPhoneCountryCode, payload.passengerPhone].filter(Boolean).join(" ")
+        )
+      : "",
+    payload.reminderRequested ? detailRow(copy.reminder, copy.reminderEnabled) : "",
+    detailRow(
+      "Ukupna okvirna cena",
+      payload.priceEstimate ? formatPrice(payload.priceEstimate.totalPrice, "sr") : null
+    ),
+    detailRow(
+      "Obračunska kilometraža",
+      payload.priceEstimate
+        ? `${formatDistance(payload.priceEstimate.distanceKm, "sr")} km`
+        : null
+    ),
+    detailRow(
+      payload.priceEstimate?.pricingModel === "long_distance"
+        ? "Duge relacije"
+        : "Dodatna kilometraža",
+      payload.priceEstimate && payload.priceEstimate.distanceOverageKm > 0
+        ? `${formatDistance(
+            payload.priceEstimate.pricingModel === "long_distance"
+              ? payload.priceEstimate.distanceKm
+              : payload.priceEstimate.distanceOverageKm,
+            "sr"
+          )} km / ${formatPrice(payload.priceEstimate.overagePrice, "sr")}`
+        : null
+    ),
+    detailRow(
+      "Cena čekanja",
+      payload.priceEstimate && payload.priceEstimate.waitingPrice > 0
+        ? formatPrice(payload.priceEstimate.waitingPrice, "sr")
+        : null
+    ),
+    detailRow("Ime i prezime", payload.fullName),
+    detailRow("Email", payload.email),
+    detailRow(
+      "Telefon",
+      [payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")
+    ),
+    detailRow("Firma", payload.companyName),
+    detailRow("Željeni način komunikacije", payload.preferredCommunication),
+    detailRow("Napomena", payload.message)
+  ].join("");
+
+  const subject = `Novi Inco Trans zahtev za rezervaciju: ${payload.fullName}`;
+  const html = `
+    <div style="margin:0;padding:0;background:#f4f1ea;font-family:Inter,Arial,sans-serif;color:#111827;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;padding:28px 12px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e6dccb;">
+              <tr>
+                <td style="background:#111111;padding:26px 28px;">
+                  <div style="font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#d7b56d;">${escapeHtml(siteConfig.name)}</div>
+                  <h1 style="margin:8px 0 0;color:#ffffff;font-size:26px;line-height:1.2;font-weight:700;">Novi zahtev za rezervaciju</h1>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px;">
+                  <p style="margin:0 0 18px;color:#374151;font-size:15px;line-height:1.7;">Novi zahtev za rezervaciju je poslat preko sajta.</p>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
+                    ${rows}
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  const text = [
+    "Novi zahtev za rezervaciju",
+    "",
+    `Broj zahteva: ${bookingId}`,
+    `Izvor: ${payload.source}`,
+    `Jezik sajta: ${payload.locale}`,
+    `Usluga: ${labelForService(payload.service, "sr")}`,
+    payload.airportDirection ? `Smer aerodroma: ${payload.airportDirection}` : "",
+    `Ruta: ${route}`,
+    stops ? `Stajališta: ${stops}` : "",
+    `Datum i vreme: ${formatDateTime(payload.dateTime, "sr")}`,
+    `Putnici: ${payload.passengers}`,
+    `Prtljag: ${payload.luggage ?? 0}`,
+    `Wi-Fi: ${yesNo(payload.wifi, "Da", "Ne")}`,
+    payload.flight ? `Let: ${payload.flight}` : "",
+    `Vozilo: ${vehicleName(payload.vehicle)}`,
+    `Plaćanje: ${labelForPayment(payload.paymentMethod ?? "cash", "sr")}`,
+    payload.bookingForOther ? `${copy.bookingForOther}: ${copy.yes}` : "",
+    payload.bookingForOther && payload.passengerName
+      ? `${copy.passengerName}: ${payload.passengerName}`
+      : "",
+    payload.bookingForOther && payload.passengerPhone
+      ? `${copy.passengerPhone}: ${[payload.passengerPhoneCountryCode, payload.passengerPhone]
+          .filter(Boolean)
+          .join(" ")}`
+      : "",
+    payload.reminderRequested ? `${copy.reminder}: ${copy.reminderEnabled}` : "",
     ...(payload.priceEstimate
       ? [
-          `Estimated total: ${formatPrice(payload.priceEstimate.totalPrice, "en")}`,
-          `Route distance: ${formatDistance(payload.priceEstimate.distanceKm, "en")} km`,
+          `Ukupna okvirna cena: ${formatPrice(payload.priceEstimate.totalPrice, "sr")}`,
+          `Obračunska kilometraža: ${formatDistance(payload.priceEstimate.distanceKm, "sr")} km`,
           payload.priceEstimate.distanceOverageKm > 0
-            ? `Distance overage: ${formatDistance(
-                payload.priceEstimate.distanceOverageKm,
-                "en"
-              )} km / ${formatPrice(payload.priceEstimate.overagePrice, "en")}`
+            ? `${payload.priceEstimate.pricingModel === "long_distance" ? "Duge relacije" : "Dodatna kilometraža"}: ${formatDistance(
+                payload.priceEstimate.pricingModel === "long_distance"
+                  ? payload.priceEstimate.distanceKm
+                  : payload.priceEstimate.distanceOverageKm,
+                "sr"
+              )} km / ${formatPrice(payload.priceEstimate.overagePrice, "sr")}`
             : "",
           payload.priceEstimate.waitingPrice > 0
-            ? `Waiting price: ${formatPrice(payload.priceEstimate.waitingPrice, "en")}`
+            ? `Cena čekanja: ${formatPrice(payload.priceEstimate.waitingPrice, "sr")}`
             : ""
         ]
       : []),
     "",
-    `Name: ${payload.fullName}`,
+    `Ime i prezime: ${payload.fullName}`,
     payload.email ? `Email: ${payload.email}` : "",
-    `Phone: ${[payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")}`,
-    payload.companyName ? `Company: ${payload.companyName}` : "",
+    `Telefon: ${[payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")}`,
+    payload.companyName ? `Firma: ${payload.companyName}` : "",
     payload.preferredCommunication
-      ? `Preferred communication: ${payload.preferredCommunication}`
+      ? `Željeni način komunikacije: ${payload.preferredCommunication}`
       : "",
-    payload.message ? `Message: ${payload.message}` : ""
+    payload.message ? `Napomena: ${payload.message}` : ""
   ]
     .filter(Boolean)
     .join("\n");
@@ -499,7 +659,8 @@ async function sendResendEmail({
   replyTo,
   subject,
   html,
-  text
+  text,
+  scheduledAt
 }: {
   apiKey: string;
   from: string;
@@ -508,6 +669,7 @@ async function sendResendEmail({
   subject: string;
   html: string;
   text: string;
+  scheduledAt?: string;
 }): Promise<SendReservationReceiptResult> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -521,7 +683,8 @@ async function sendResendEmail({
       reply_to: replyTo?.startsWith("TODO") ? undefined : replyTo,
       subject,
       html,
-      text
+      text,
+      scheduled_at: scheduledAt
     })
   });
 
@@ -564,6 +727,55 @@ export async function sendReservationReceiptEmail({
   });
 }
 
+function reminderScheduledAt(payload: BookingRequestPayload): string | null {
+  const minutesAfterSubmit = payload.reminderMinutesBefore ?? 5;
+  const scheduledAt = new Date(Date.now() + minutesAfterSubmit * 60 * 1000);
+  const maximum = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  if (scheduledAt > maximum) return null;
+  return scheduledAt.toISOString();
+}
+
+async function scheduleReservationReminderEmail({
+  bookingId,
+  payload
+}: SendReservationReceiptArgs): Promise<SendReservationReceiptResult> {
+  if (!payload.reminderRequested) {
+    return { sent: false, reason: "Reminder was not requested." };
+  }
+  if (!payload.email) {
+    return { sent: false, reason: "Booking request does not include an email." };
+  }
+
+  const scheduledAt = reminderScheduledAt(payload);
+  if (!scheduledAt) {
+    return {
+      sent: false,
+      reason: "Reminder time is outside the email provider scheduling window."
+    };
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESERVATION_EMAIL_FROM;
+  const replyTo = process.env.RESERVATION_EMAIL_REPLY_TO || siteConfig.contact.email;
+
+  if (!apiKey || !from) {
+    return { sent: false, reason: "Email provider is not configured." };
+  }
+
+  const email = buildReservationReminderEmail({ bookingId, payload });
+  return sendResendEmail({
+    apiKey,
+    from,
+    to: payload.email,
+    replyTo,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    scheduledAt
+  });
+}
+
 export async function sendReservationEmails({
   bookingId,
   payload
@@ -573,17 +785,25 @@ export async function sendReservationEmails({
   if (!receiptResult.sent) {
     reasons.push(`Customer receipt: ${receiptResult.reason}`);
   }
+  const reminderResult = await scheduleReservationReminderEmail({
+    bookingId,
+    payload
+  });
+  if (payload.reminderRequested && !reminderResult.sent) {
+    reasons.push(`Customer reminder: ${reminderResult.reason}`);
+  }
 
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESERVATION_EMAIL_FROM;
   const replyTo = process.env.RESERVATION_EMAIL_REPLY_TO || siteConfig.contact.email;
-  const adminEmail = process.env.RESERVATION_ADMIN_EMAIL || replyTo;
+  const adminEmail = process.env.RESERVATION_ADMIN_EMAIL || process.env.RESERVATION_EMAIL_REPLY_TO;
 
   if (!apiKey || !from) {
     reasons.push("Admin notification: Email provider is not configured.");
     return {
       receiptSent: receiptResult.sent,
       adminSent: false,
+      reminderScheduled: reminderResult.sent,
       reasons
     };
   }
@@ -593,6 +813,7 @@ export async function sendReservationEmails({
     return {
       receiptSent: receiptResult.sent,
       adminSent: false,
+      reminderScheduled: reminderResult.sent,
       reasons
     };
   }
@@ -615,6 +836,7 @@ export async function sendReservationEmails({
   return {
     receiptSent: receiptResult.sent,
     adminSent: adminResult.sent,
+    reminderScheduled: reminderResult.sent,
     reasons
   };
 }

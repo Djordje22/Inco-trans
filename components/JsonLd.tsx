@@ -77,11 +77,14 @@ export default function JsonLd({ locale }: Props) {
     {
       "@context": "https://schema.org",
       "@type": "Service",
-      "@id": `${url}#service-business`,
+      "@id": `${url}#service-long-distance`,
       name: dict.servicePages.business.title,
-      serviceType: "Business transfer",
+      serviceType: "Long-distance transfer",
       description: dict.servicePages.business.subtitle,
-      areaServed: { "@type": "City", name: "Belgrade" },
+      areaServed: [
+        { "@type": "City", name: "Belgrade" },
+        { "@type": "Country", name: "Serbia" }
+      ],
       provider,
       url: joinUrl(url, routeMap.businessTransfer[locale])
     }

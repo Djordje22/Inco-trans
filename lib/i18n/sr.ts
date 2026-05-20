@@ -12,14 +12,14 @@ export const sr: Dict = {
     services: "Usluge",
     airportTransfer: "Aerodromski transfer",
     chauffeurService: "Šofer servis",
-    businessTransfer: "Poslovni transfer"
+    businessTransfer: "Duge relacije"
   },
   hero: {
     eyebrow: "Beograd, Srbija",
     title1: "Privatni transferi",
     title2: "sa beogradskim potpisom",
     subtitle:
-      "Profesionalni vozači, fiksne cene unapred i diskretna usluga. Aerodromski, poslovni i VIP transferi širom Srbije.",
+      "Profesionalni vozači, fiksne cene unapred i diskretna usluga. Aerodromski transferi, duge relacije i VIP prevoz širom Srbije i regiona.",
     ctaPrimary: "Rezerviši transfer",
     ctaSecondary: "Pogledaj flotu",
     whatsappCta: "WhatsApp poruka"
@@ -44,8 +44,8 @@ export const sr: Dict = {
         desc: "Profesionalni vozač na sat ili po zahtevu za sastanke, događaji, gradske vožnje."
       },
       business: {
-        title: "Poslovni transfer",
-        desc: "VIP transport, korporativni dolasci i odlasci, diskrecija i tačnost."
+        title: "Duge relacije",
+        desc: "Udobne vožnje van Beograda, po Srbiji i regionu, uz unapred dogovorenu cenu."
       }
     }
   },
@@ -66,7 +66,7 @@ export const sr: Dict = {
   fleetPage: {
     title: "Naša flota",
     subtitle:
-      "Dva pažljivo održavana vozila: Mercedes E klasa i Audi A6 za aerodromske, poslovne i VIP transfere."
+      "Dva pažljivo održavana vozila: Mercedes E klasa i Audi A6 za aerodromske transfere, duge relacije i VIP prevoz."
   },
   why: {
     title: "Zašto Inco Trans",
@@ -109,7 +109,7 @@ export const sr: Dict = {
   about: {
     title: "O Inco Trans",
     body: [
-      "Inco Trans je specijalizovan za profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji. Bavimo se aerodromskim transferima, poslovnim prevozom i VIP transportom.",
+      "Inco Trans je specijalizovan za profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji. Bavimo se aerodromskim transferima, dugim relacijama i VIP transportom.",
       "Cilj nam je jednostavna i diskretna usluga: fiksne cene unapred, profesionalni vozači, redovno održavana flota i jasna komunikacija."
     ],
     valuesTitle: "Naše vrednosti",
@@ -164,7 +164,7 @@ export const sr: Dict = {
     serviceType: "Vrsta usluge",
     serviceOptionAirport: "Aerodromski transfer",
     serviceOptionChauffeur: "Šofer servis",
-    serviceOptionBusiness: "Poslovni transfer",
+    serviceOptionBusiness: "Duge relacije",
     serviceOptionOther: "Drugo",
     pickup: "Mesto preuzimanja",
     pickupPlaceholder: "Adresa, hotel ili aerodrom",
@@ -200,7 +200,7 @@ export const sr: Dict = {
       learnMore: "Saznaj više",
       transfer: {
         title: "Rezerviši transfer",
-        desc: "Aerodrom, šofer ili poslovni transfer"
+        desc: "Aerodrom, šofer ili duge relacije"
       },
       handle: {
         title: "Pustite nas da sredimo sve",
@@ -296,12 +296,16 @@ export const sr: Dict = {
         preferredCommunicationLabel: "Željeni način komunikacije",
         companyNameLabel: "Naziv kompanije",
         messageLabel: "Napomena",
-        basePriceLabel: "Šofer servis",
+        basePriceLabel: "Aerodromski transfer",
         waitingPriceLabel: "Vreme čekanja ({hours}h na destinaciji)",
         distanceOverageLabel:
           "Dodatna kilometraža ({overage} km preko {included} km)",
+        longDistancePriceLabel: "Duge relacije ({distance} km povratna ruta)",
         totalEstimateLabel: "Ukupna okvirna cena",
         estimateDisclaimer: "Okvirna cena. Konačnu cenu će potvrditi naš tim.",
+        billableDistanceLabel: "Obračunska kilometraža",
+        billableDistanceNote:
+          "Obračunska kilometraža uključuje dolazak vozila iz baze, vožnju putnika i povratak vozila u bazu.",
         paymentCardTitle: "Način plaćanja",
         paymentCard: "Kartica",
         paymentCardDesc: "Kreditna ili debitna kartica",
@@ -327,12 +331,23 @@ export const sr: Dict = {
       countryCode: "Pozivni broj",
       companyName: "Naziv kompanije",
       companyNamePlaceholder: "Naziv kompanije (opciono)",
+      bookingForOtherTitle: "Rezervišem za drugu osobu",
+      bookingForOtherDesc:
+        "Unesite podatke o putniku ako se razlikuju od vaših kontakt podataka",
+      passengerName: "Ime putnika",
+      passengerNamePlaceholder: "Unesite ime i prezime putnika",
+      passengerPhone: "Telefon putnika",
+      reminderTitle: "Pošaljite mi podsetnik pre putovanja",
+      reminderDesc:
+        "Poslaćemo vam podsetnik 5 minuta nakon slanja zahteva",
       preferredCommunication: "Željeni način komunikacije",
       preferredPhoneSms: "Telefon SMS",
       preferredViberWhatsapp: "Viber/WhatsApp",
       preferredEmail: "Email",
       message: "Napomena",
       messagePlaceholder: "Dodatne informacije (opciono)",
+      handleMessagePlaceholder:
+        "Opišite vaše potrebe i naš tim će pripremiti najbolju ponudu za vas.",
       submitInquiry: "Pošalji upit"
     },
     buttons: {
@@ -426,33 +441,34 @@ export const sr: Dict = {
       crossLinkTitle: "Pogledajte i"
     },
     business: {
-      eyebrow: "Poslovni transfer",
-      title: "Poslovni i VIP transport u Beogradu",
+      eyebrow: "Duge relacije",
+      title: "Transferi za duge relacije",
       subtitle:
-        "Diskretan, tačan transfer za poslovne klijente, delegacije i VIP putnike. Plaćanje karticom, fakturisanje za firme.",
+        "Udoban privatni transfer između gradova, ka odredištima van Beograda ili van Srbije, uz profesionalnog vozača i cenu dogovorenu unapred.",
       heroBody:
-        "Inco Trans servis za firme: predvidiva tačnost, profesionalni vozači u uniformi po zahtevu, NDA-friendly diskrecija i fakturisanje po dogovoru.",
+        "Putujte između gradova mirno, udobno i bez žurbe. Servis dugih relacija je namenjen međugradskim rutama, poslovnim putovanjima i odlascima do destinacija van Beograda ili Srbije.",
       includedTitle: "Šta je uključeno",
       included: [
-        "Tačni dolasci po programu sastanaka",
-        "Diskretan vozač i tih enterijer za poverljive razgovore",
-        "Plaćanje karticom ili po fakturi",
-        "Više vozila za delegacije po dogovoru",
-        "Engleski jezik na zahtev"
+        "Profesionalni vozač za duže rute",
+        "Planirano preuzimanje i dolazak na adresu",
+        "Pauze tokom puta po dogovoru",
+        "Pomoć oko prtljaga, voda i Wi-Fi na zahtev",
+        "Fiksna cena dogovorena unapred",
+        "Mercedes E klasa ili Audi A6"
       ],
-      detailTitle: "Za koga",
+      detailTitle: "Kada koristiti",
       detailBody: [
-        "Korporativni dolasci stranih kolega, sastanci sa klijentima, organizovani transferi za konferencije i događaje, kao i lični VIP transferi.",
-        "Stojimo na raspolaganju i za stalne ugovore o transportu sa fiksnim cenama po smeru."
+        "Kada vam treba vozilo za Novi Sad, Niš, Zlatibor, Kopaonik, granične prelaze, aerodrome u regionu ili destinacije van Srbije.",
+        "Rutu, vreme polaska, stajališta i eventualno čekanje dogovaramo pre vožnje, kako biste znali tačan plan i cenu."
       ],
       keywordsTitle: "Često traženo",
       keywords: [
-        "Poslovni transfer Beograd",
-        "VIP transport Beograd",
-        "Korporativni transfer Srbija",
-        "Business class transfer"
+        "Duge relacije Beograd",
+        "Međugradski transfer",
+        "Transfer po Srbiji",
+        "Privatni transfer van Srbije"
       ],
-      ctaText: "Zatraži poslovnu ponudu",
+      ctaText: "Zatraži ponudu za dugu relaciju",
       crossLinkTitle: "Pogledajte i"
     }
   }

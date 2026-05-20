@@ -10,9 +10,9 @@ export const siteConfig = {
     ru: "Шофёр и люкс-трансфер в Белграде"
   },
   description: {
-    sr: "Inco Trans nudi profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji: aerodromski transfer, poslovni transfer i VIP prevoz. Online rezervacije su dostupne uvek, a pozivi od 08:00 do 22:00 po vremenu u Beogradu.",
-    en: "Inco Trans provides professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfer, business transfer and VIP transport. Online reservations are always available, with calls from 08:00 to 22:00 Belgrade time.",
-    ru: "Inco Trans предлагает профессиональный шофёр-сервис и люкс-трансфер в Белграде и Сербии: трансфер из аэропорта, бизнес-трансфер и VIP-перевозки. Онлайн-бронирование доступно всегда, звонки принимаем с 08:00 до 22:00 по времени Белграда."
+    sr: "Inco Trans nudi profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji: aerodromski transfer, duge relacije i VIP prevoz. Online rezervacije su dostupne uvek, a pozivi od 08:00 do 22:00 po vremenu u Beogradu.",
+    en: "Inco Trans provides professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfer, long-distance transfers and VIP transport. Online reservations are always available, with calls from 08:00 to 22:00 Belgrade time.",
+    ru: "Inco Trans предлагает профессиональный шофёр-сервис и люкс-трансфер в Белграде и Сербии: трансфер из аэропорта, дальние поездки и VIP-перевозки. Онлайн-бронирование доступно всегда, звонки принимаем с 08:00 до 22:00 по времени Белграда."
   },
   url: "https://incotrans.netlify.app",
   domain: "incotrans.netlify.app",
@@ -83,9 +83,9 @@ export const routeMap = {
     ru: "/ru/chauffeur-service"
   },
   businessTransfer: {
-    sr: "/poslovni-transfer",
-    en: "/en/business-transfer",
-    ru: "/ru/business-transfer"
+    sr: "/duge-relacije",
+    en: "/en/long-distance-transfer",
+    ru: "/ru/long-distance-transfer"
   },
   terms: {
     sr: "/uslovi-koriscenja",

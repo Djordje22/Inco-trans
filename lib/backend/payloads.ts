@@ -42,6 +42,12 @@ export type BookingRequestPayload = {
   preferredCommunication?: PreferredCommunication;
   paymentMethod?: PaymentMethod;
   message?: string;
+  bookingForOther?: boolean;
+  passengerName?: string;
+  passengerPhoneCountryCode?: string;
+  passengerPhone?: string;
+  reminderRequested?: boolean;
+  reminderMinutesBefore?: number;
   termsAccepted?: boolean;
   priceEstimate?: RoutePriceEstimate;
 };
@@ -56,6 +62,10 @@ export type ContactMessagePayload = {
   preferredCommunication?: PreferredCommunication;
   companyName?: string;
   message: string;
+  bookingForOther?: boolean;
+  passengerName?: string;
+  passengerPhoneCountryCode?: string;
+  passengerPhone?: string;
 };
 
 type ValidationResult<T> =
@@ -121,6 +131,8 @@ const asOptionalPriceEstimate = (value: unknown): RoutePriceEstimate | undefined
   const data = asRecord(value);
   if (!data) return undefined;
 
+  const pricingModel =
+    asString(data.pricingModel) === "long_distance" ? "long_distance" : "airport";
   const distanceMeters = asNumber(data.distanceMeters);
   const distanceKm = asNumber(data.distanceKm);
   const includedDistanceKm = asNumber(data.includedDistanceKm);
@@ -150,6 +162,7 @@ const asOptionalPriceEstimate = (value: unknown): RoutePriceEstimate | undefined
   }
 
   return {
+    pricingModel,
     distanceMeters,
     durationSeconds: asNumber(data.durationSeconds),
     distanceKm,
@@ -190,6 +203,11 @@ export function validateBookingRequestPayload(
   const luggage = asInteger(data.luggage, 0);
   const wifi = typeof data.wifi === "boolean" ? data.wifi : true;
   const waitingHours = asInteger(data.waitingHours, 0);
+  const bookingForOther = Boolean(data.bookingForOther);
+  const passengerName = asString(data.passengerName);
+  const passengerPhone = asString(data.passengerPhone);
+  const reminderRequested = Boolean(data.reminderRequested);
+  const reminderMinutesBefore = asInteger(data.reminderMinutesBefore, 5);
 
   if (!locales.has(locale)) return { ok: false, error: "Unsupported locale." };
   if (!sources.has(source)) return { ok: false, error: "Unsupported source." };
@@ -208,6 +226,9 @@ export function validateBookingRequestPayload(
   }
   if (!fullName || phone.length < 5) {
     return { ok: false, error: "Name and phone are required." };
+  }
+  if (bookingForOther && (passengerName.length < 2 || passengerPhone.length < 5)) {
+    return { ok: false, error: "Passenger name and phone are required." };
   }
   if (!isEmailLike(email)) return { ok: false, error: "Invalid email address." };
 
@@ -248,6 +269,12 @@ export function validateBookingRequestPayload(
       preferredCommunication: preferredCommunication as PreferredCommunication,
       paymentMethod: paymentMethod as PaymentMethod,
       message: asOptionalString(data.message),
+      bookingForOther,
+      passengerName: asOptionalString(passengerName),
+      passengerPhoneCountryCode: asOptionalString(data.passengerPhoneCountryCode),
+      passengerPhone: asOptionalString(passengerPhone),
+      reminderRequested,
+      reminderMinutesBefore: Math.max(1, Math.min(24 * 60, reminderMinutesBefore)),
       termsAccepted: Boolean(data.termsAccepted),
       priceEstimate: asOptionalPriceEstimate(data.priceEstimate)
     }
@@ -267,6 +294,9 @@ export function validateContactMessagePayload(
   const phone = asString(data.phone);
   const message = asString(data.message);
   const preferredCommunication = asString(data.preferredCommunication);
+  const bookingForOther = Boolean(data.bookingForOther);
+  const passengerName = asString(data.passengerName);
+  const passengerPhone = asString(data.passengerPhone);
 
   if (!locales.has(locale)) return { ok: false, error: "Unsupported locale." };
   if (source !== "contact_page" && source !== "reservation_modal") {
@@ -279,6 +309,12 @@ export function validateContactMessagePayload(
   if (!isEmailLike(email)) return { ok: false, error: "Invalid email address." };
   if (!message && source === "contact_page") {
     return { ok: false, error: "Message is required." };
+  }
+  if (!message && source === "reservation_modal") {
+    return { ok: false, error: "Message is required." };
+  }
+  if (bookingForOther && (passengerName.length < 2 || passengerPhone.length < 5)) {
+    return { ok: false, error: "Passenger name and phone are required." };
   }
   if (!communicationMethods.has(preferredCommunication)) {
     return { ok: false, error: "Unsupported communication preference." };
@@ -295,7 +331,11 @@ export function validateContactMessagePayload(
       phoneCountryCode: asOptionalString(data.phoneCountryCode),
       preferredCommunication: preferredCommunication as PreferredCommunication,
       companyName: asOptionalString(data.companyName),
-      message
+      message,
+      bookingForOther,
+      passengerName: asOptionalString(passengerName),
+      passengerPhoneCountryCode: asOptionalString(data.passengerPhoneCountryCode),
+      passengerPhone: asOptionalString(passengerPhone)
     }
   };
 }

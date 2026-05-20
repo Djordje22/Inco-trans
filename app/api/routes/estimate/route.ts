@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     .filter((point): point is PlacePoint => Boolean(point));
   const waitingHours =
     typeof body?.waitingHours === "number" ? Math.max(0, body.waitingHours) : 0;
+  const pricingModel = body?.service === "business" ? "long_distance" : "airport";
 
   if (points.length < 2) {
     return NextResponse.json(
@@ -102,7 +103,8 @@ export async function POST(request: Request) {
       estimate: buildRoutePriceEstimate({
         distanceMeters,
         durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : undefined,
-        waitingHours
+        waitingHours,
+        pricingModel
       })
     },
     { status: 200 }

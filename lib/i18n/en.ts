@@ -12,14 +12,14 @@ export const en: Dict = {
     services: "Services",
     airportTransfer: "Airport transfer",
     chauffeurService: "Chauffeur service",
-    businessTransfer: "Business transfer"
+    businessTransfer: "Long-distance transfers"
   },
   hero: {
     eyebrow: "Belgrade, Serbia",
     title1: "Private transfers",
     title2: "with a Belgrade touch",
     subtitle:
-      "Professional drivers, fixed prices agreed upfront, discreet service. Airport, business and VIP transfers across Serbia.",
+      "Professional drivers, fixed prices agreed upfront and discreet service. Airport transfers, long-distance trips and VIP transport across Serbia and the region.",
     ctaPrimary: "Book transfer",
     ctaSecondary: "Browse fleet",
     whatsappCta: "Message on WhatsApp"
@@ -44,8 +44,8 @@ export const en: Dict = {
         desc: "Professional driver by the hour or on demand for meetings, events and city travel."
       },
       business: {
-        title: "Business transfer",
-        desc: "VIP transport, corporate arrivals and departures, discretion and punctuality."
+        title: "Long-distance transfers",
+        desc: "Comfortable rides beyond Belgrade, across Serbia or the region, with pricing agreed upfront."
       }
     }
   },
@@ -67,7 +67,7 @@ export const en: Dict = {
   fleetPage: {
     title: "Our fleet",
     subtitle:
-      "Two carefully maintained vehicles: a Mercedes E Class and an Audi A6 for airport, business and VIP transfers."
+      "Two carefully maintained vehicles: a Mercedes E Class and an Audi A6 for airport transfers, long-distance trips and VIP transport."
   },
   why: {
     title: "Why Inco Trans",
@@ -110,7 +110,7 @@ export const en: Dict = {
   about: {
     title: "About Inco Trans",
     body: [
-      "Inco Trans is focused on professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfers, business transport and VIP rides.",
+      "Inco Trans is focused on professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfers, long-distance trips and VIP rides.",
       "Our goal is a simple and discreet experience: fixed prices agreed upfront, professional drivers, a well-maintained fleet and clear communication."
     ],
     valuesTitle: "Our values",
@@ -165,7 +165,7 @@ export const en: Dict = {
     serviceType: "Service type",
     serviceOptionAirport: "Airport transfer",
     serviceOptionChauffeur: "Chauffeur service",
-    serviceOptionBusiness: "Business transfer",
+    serviceOptionBusiness: "Long-distance transfer",
     serviceOptionOther: "Other",
     pickup: "Pickup location",
     pickupPlaceholder: "Address, hotel or airport",
@@ -201,7 +201,7 @@ export const en: Dict = {
       learnMore: "Learn more",
       transfer: {
         title: "Book a transfer",
-        desc: "Airport, chauffeur or business transfer"
+        desc: "Airport, chauffeur or long-distance transfer"
       },
       handle: {
         title: "Let us handle everything",
@@ -297,12 +297,16 @@ export const en: Dict = {
         preferredCommunicationLabel: "Preferred communication",
         companyNameLabel: "Company name",
         messageLabel: "Notes",
-        basePriceLabel: "Chauffeur service",
+        basePriceLabel: "Airport transfer",
         waitingPriceLabel: "Waiting time ({hours}h at destination)",
         distanceOverageLabel:
           "Distance overage ({overage} km beyond {included} km)",
+        longDistancePriceLabel: "Long-distance transfer ({distance} km round trip)",
         totalEstimateLabel: "Total estimated price",
         estimateDisclaimer: "Estimated price. The final price will be confirmed by our team.",
+        billableDistanceLabel: "Billable distance",
+        billableDistanceNote:
+          "Billable distance includes the vehicle's trip from base, the passenger route and the return to base.",
         paymentCardTitle: "Payment method",
         paymentCard: "Card",
         paymentCardDesc: "Credit or debit card",
@@ -328,12 +332,23 @@ export const en: Dict = {
       countryCode: "Country code",
       companyName: "Company name",
       companyNamePlaceholder: "Company name (optional)",
+      bookingForOtherTitle: "Booking for another person",
+      bookingForOtherDesc:
+        "Enter passenger details if they differ from your contact details",
+      passengerName: "Passenger name",
+      passengerNamePlaceholder: "Enter passenger full name",
+      passengerPhone: "Passenger phone",
+      reminderTitle: "Send me a reminder before the trip",
+      reminderDesc:
+        "We will send you a reminder 5 minutes after you submit the request",
       preferredCommunication: "Preferred communication",
       preferredPhoneSms: "Phone SMS",
       preferredViberWhatsapp: "Viber/WhatsApp",
       preferredEmail: "Email",
       message: "Notes",
       messagePlaceholder: "Additional information (optional)",
+      handleMessagePlaceholder:
+        "Describe what you need and our team will prepare the best offer for you.",
       submitInquiry: "Send inquiry"
     },
     buttons: {
@@ -427,33 +442,34 @@ export const en: Dict = {
       crossLinkTitle: "See also"
     },
     business: {
-      eyebrow: "Business transfer",
-      title: "Business and VIP transport in Belgrade",
+      eyebrow: "Long-distance transfers",
+      title: "Private transfers for longer routes",
       subtitle:
-        "Discreet, punctual transfer for business clients, delegations and VIP guests. Card payment and company invoicing available.",
+        "A comfortable private transfer between cities, to destinations outside Belgrade or abroad, with a professional driver and an upfront price.",
       heroBody:
-        "Inco Trans for companies: predictable timing, professional drivers (uniformed on request), NDA-friendly discretion and invoicing on contract.",
+        "Travel between cities calmly, comfortably and without rushing. Our long-distance service is built for intercity routes, business trips and destinations beyond Belgrade or Serbia.",
       includedTitle: "What's included",
       included: [
-        "Punctual arrivals matched to your meeting schedule",
-        "Discreet driver and quiet cabin for confidential calls",
-        "Card payment or invoice on terms",
-        "Multiple vehicles for delegations on request",
-        "English-speaking driver on request"
+        "Professional driver for longer routes",
+        "Planned pickup and address-to-address drop-off",
+        "Stops along the way by agreement",
+        "Luggage assistance, bottled water and Wi-Fi on request",
+        "Fixed price agreed upfront",
+        "Mercedes E Class or Audi A6"
       ],
-      detailTitle: "Who it's for",
+      detailTitle: "When to use it",
       detailBody: [
-        "Corporate arrivals of foreign colleagues, client meetings, organised transfers for conferences and events, and personal VIP rides.",
-        "We also handle standing transport contracts with fixed per-route pricing."
+        "Book it for Novi Sad, Nis, Zlatibor, Kopaonik, border crossings, regional airports or destinations outside Serbia.",
+        "We agree the route, pickup time, stops and any waiting before the ride, so the plan and price are clear from the start."
       ],
       keywordsTitle: "Frequently searched",
       keywords: [
-        "Business transfer Belgrade",
-        "VIP transport Belgrade",
-        "Corporate transfer Serbia",
-        "Business class transfer"
+        "Long-distance transfer Belgrade",
+        "Intercity transfer Serbia",
+        "Private transfer Serbia",
+        "Transfer outside Serbia"
       ],
-      ctaText: "Request business quote",
+      ctaText: "Request long-distance quote",
       crossLinkTitle: "See also"
     }
   }

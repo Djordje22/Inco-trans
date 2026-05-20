@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PlaneLanding, CarTaxiFront, BriefcaseBusiness } from "lucide-react";
+import { PlaneLanding, CarTaxiFront, Route } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { routeMap, type Locale } from "@/lib/site-config";
@@ -9,7 +9,7 @@ import SectionHeader from "./SectionHeader";
 const ICONS: Record<ServiceKey, LucideIcon> = {
   airport: PlaneLanding,
   chauffeur: CarTaxiFront,
-  business: BriefcaseBusiness
+  business: Route
 };
 
 const ROUTE_KEYS: Record<ServiceKey, keyof typeof routeMap> = {
