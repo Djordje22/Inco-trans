@@ -1,4 +1,3 @@
-import { vehicles } from "@/lib/fleet-data";
 import { siteConfig, type Locale } from "@/lib/site-config";
 import type { BookingRequestPayload } from "@/lib/backend/payloads";
 
@@ -87,9 +86,18 @@ const formatDistance = (value: number, locale: Locale) =>
     maximumFractionDigits: 1
   }).format(value);
 
-const vehicleName = (slug?: string) => {
-  if (!slug) return "Any vehicle";
-  return vehicles.find((vehicle) => vehicle.slug === slug)?.name ?? slug;
+const roundMoney = (value: number) => Math.round(value * 100) / 100;
+
+const promoDiscountAmount = (payload: BookingRequestPayload) => {
+  if (!payload.priceEstimate || !payload.promoCode) return 0;
+  const percent = payload.promoDiscountPercent ?? 0;
+  if (percent <= 0) return 0;
+  return roundMoney(payload.priceEstimate.totalPrice * (percent / 100));
+};
+
+const totalAfterPromo = (payload: BookingRequestPayload) => {
+  const total = payload.priceEstimate?.totalPrice ?? 0;
+  return roundMoney(total - promoDiscountAmount(payload));
 };
 
 const copyForLocale = (locale: Locale) => {
@@ -116,6 +124,10 @@ const copyForLocale = (locale: Locale) => {
       flight: "Let",
       vehicle: "Vozilo",
       payment: "Plaćanje",
+      companyName: "Naziv kompanije",
+      companyVatNumber: "PIB",
+      companyAddress: "Adresa kompanije",
+      promoDiscount: "Promo popust",
       price: "Okvirna cena",
       basePrice: "Osnovna cena",
       waitingPrice: "Čekanje",
@@ -138,7 +150,7 @@ const copyForLocale = (locale: Locale) => {
         "Podsećamo vas na zakazanu Inco Trans vožnju. Ako treba da izmenite detalje, javite nam se što pre.",
       next:
         "Javićemo se što je pre moguće sa potvrdom dostupnosti i cenom. Za hitne izmene pošaljite nam WhatsApp poruku.",
-      footer: "Inco Trans | Online rezervacije uvek"
+      footer: "Inco Trans | Online rezervacije"
     };
   }
 
@@ -165,6 +177,10 @@ const copyForLocale = (locale: Locale) => {
       flight: "Рейс",
       vehicle: "Автомобиль",
       payment: "Оплата",
+      companyName: "Компания",
+      companyVatNumber: "VAT/PIB",
+      companyAddress: "Адрес компании",
+      promoDiscount: "Промокод",
       price: "Ориентировочная цена",
       basePrice: "Базовая цена",
       waitingPrice: "Ожидание",
@@ -187,7 +203,7 @@ const copyForLocale = (locale: Locale) => {
         "Напоминаем о запланированной поездке Inco Trans. Если нужно изменить детали, пожалуйста, свяжитесь с нами как можно раньше.",
       next:
         "Мы как можно скорее ответим с подтверждением доступности и цены. Для срочных изменений напишите нам в WhatsApp.",
-      footer: "Inco Trans | Онлайн-бронирование всегда"
+      footer: "Inco Trans | Онлайн-бронирование"
     };
   }
 
@@ -213,6 +229,10 @@ const copyForLocale = (locale: Locale) => {
     flight: "Flight",
     vehicle: "Vehicle",
     payment: "Payment",
+    companyName: "Company name",
+    companyVatNumber: "VAT number",
+    companyAddress: "Company address",
+    promoDiscount: "Promo discount",
     price: "Estimated price",
     basePrice: "Base price",
     waitingPrice: "Waiting time",
@@ -235,7 +255,7 @@ const copyForLocale = (locale: Locale) => {
       "This is a reminder for your scheduled Inco Trans ride. If you need to change any details, please contact us as soon as possible.",
     next:
       "We will reply as soon as possible with availability and price confirmation. For urgent changes, message us on WhatsApp.",
-    footer: "Inco Trans | Online reservations anytime"
+    footer: "Inco Trans | Online reservations"
   };
 };
 
@@ -244,6 +264,7 @@ const priceRows = (payload: BookingRequestPayload, locale: Locale) => {
   if (!estimate) return "";
 
   const copy = copyForLocale(locale);
+  const discountAmount = promoDiscountAmount(payload);
   const longDistanceLabel = `${copy.longDistanceTransfer} (${formatDistance(
     estimate.distanceKm,
     locale
@@ -278,7 +299,13 @@ const priceRows = (payload: BookingRequestPayload, locale: Locale) => {
           )} km over ${formatDistance(estimate.includedDistanceKm, locale)} km)`
         )
       : "",
-    detailRow(copy.totalPrice, formatPrice(estimate.totalPrice, locale))
+    discountAmount > 0
+      ? detailRow(
+          `${copy.promoDiscount} (${payload.promoCode})`,
+          `-${formatPrice(discountAmount, locale)}`
+        )
+      : "",
+    detailRow(copy.totalPrice, formatPrice(totalAfterPromo(payload), locale))
   ].join("");
 
   return `
@@ -294,6 +321,7 @@ const priceTextRows = (payload: BookingRequestPayload, locale: Locale) => {
   if (!estimate) return [];
 
   const copy = copyForLocale(locale);
+  const discountAmount = promoDiscountAmount(payload);
   const longDistanceLabel = `${copy.longDistanceTransfer} (${formatDistance(
     estimate.distanceKm,
     locale
@@ -322,7 +350,10 @@ const priceTextRows = (payload: BookingRequestPayload, locale: Locale) => {
           locale
         )} km over ${formatDistance(estimate.includedDistanceKm, locale)} km)`
       : "",
-    `${copy.totalPrice}: ${formatPrice(estimate.totalPrice, locale)}`
+    discountAmount > 0
+      ? `${copy.promoDiscount} (${payload.promoCode}): -${formatPrice(discountAmount, locale)}`
+      : "",
+    `${copy.totalPrice}: ${formatPrice(totalAfterPromo(payload), locale)}`
   ].filter(Boolean);
 };
 
@@ -373,8 +404,10 @@ function buildReservationReceiptEmail({
     detailRow(copy.luggage, payload.luggage ?? 0),
     detailRow(copy.wifi, yesNo(payload.wifi, copy.yes, copy.no)),
     detailRow(copy.flight, payload.flight),
-    detailRow(copy.vehicle, vehicleName(payload.vehicle)),
     detailRow(copy.payment, labelForPayment(payload.paymentMethod ?? "cash", payload.locale)),
+    detailRow(copy.companyName, payload.companyName),
+    detailRow(copy.companyVatNumber, payload.companyVatNumber),
+    detailRow(copy.companyAddress, payload.companyAddress),
     payload.bookingForOther
       ? detailRow(copy.bookingForOther, copy.yes)
       : "",
@@ -447,8 +480,12 @@ function buildReservationReceiptEmail({
     `${copy.luggage}: ${payload.luggage ?? 0}`,
     `${copy.wifi}: ${yesNo(payload.wifi, copy.yes, copy.no)}`,
     payload.flight ? `${copy.flight}: ${payload.flight}` : "",
-    `${copy.vehicle}: ${vehicleName(payload.vehicle)}`,
     `${copy.payment}: ${labelForPayment(payload.paymentMethod ?? "cash", payload.locale)}`,
+    payload.companyName ? `${copy.companyName}: ${payload.companyName}` : "",
+    payload.companyVatNumber
+      ? `${copy.companyVatNumber}: ${payload.companyVatNumber}`
+      : "",
+    payload.companyAddress ? `${copy.companyAddress}: ${payload.companyAddress}` : "",
     payload.bookingForOther ? `${copy.bookingForOther}: ${copy.yes}` : "",
     payload.bookingForOther && payload.passengerName
       ? `${copy.passengerName}: ${payload.passengerName}`
@@ -485,8 +522,7 @@ function buildReservationReminderEmail({
     detailRow(copy.service, labelForService(payload.service, payload.locale)),
     detailRow(copy.route, route),
     detailRow(copy.dateTime, formatDateTime(payload.dateTime, payload.locale)),
-    detailRow(copy.passengers, payload.passengers),
-    detailRow(copy.vehicle, vehicleName(payload.vehicle))
+    detailRow(copy.passengers, payload.passengers)
   ].join("");
 
   const html = `
@@ -526,8 +562,7 @@ function buildReservationReminderEmail({
     `${copy.service}: ${labelForService(payload.service, payload.locale)}`,
     `${copy.route}: ${route}`,
     `${copy.dateTime}: ${formatDateTime(payload.dateTime, payload.locale)}`,
-    `${copy.passengers}: ${payload.passengers}`,
-    `${copy.vehicle}: ${vehicleName(payload.vehicle)}`
+    `${copy.passengers}: ${payload.passengers}`
   ].join("\n");
 
   return {
@@ -569,7 +604,6 @@ function buildReservationAdminEmail({
     detailRow("Prtljag", payload.luggage ?? 0),
     detailRow("Wi-Fi", yesNo(payload.wifi, "Da", "Ne")),
     detailRow("Let", payload.flight),
-    detailRow("Vozilo", vehicleName(payload.vehicle)),
     detailRow("Plaćanje", labelForPayment(payload.paymentMethod ?? "cash", "sr")),
     payload.bookingForOther
       ? detailRow(copy.bookingForOther, copy.yes)
@@ -583,8 +617,14 @@ function buildReservationAdminEmail({
       : "",
     payload.reminderRequested ? detailRow(copy.reminder, copy.reminderEnabled) : "",
     detailRow(
+      "Promo popust",
+      promoDiscountAmount(payload) > 0
+        ? `${payload.promoCode} / -${formatPrice(promoDiscountAmount(payload), "sr")}`
+        : null
+    ),
+    detailRow(
       "Ukupna okvirna cena",
-      payload.priceEstimate ? formatPrice(payload.priceEstimate.totalPrice, "sr") : null
+      payload.priceEstimate ? formatPrice(totalAfterPromo(payload), "sr") : null
     ),
     detailRow(
       "Obračunska kilometraža",
@@ -618,6 +658,8 @@ function buildReservationAdminEmail({
       [payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")
     ),
     detailRow("Firma", payload.companyName),
+    detailRow("PIB", payload.companyVatNumber),
+    detailRow("Adresa kompanije", payload.companyAddress),
     detailRow("Željeni način komunikacije", payload.preferredCommunication),
     detailRow("Napomena", payload.message)
   ].join("");
@@ -671,7 +713,6 @@ function buildReservationAdminEmail({
     `Prtljag: ${payload.luggage ?? 0}`,
     `Wi-Fi: ${yesNo(payload.wifi, "Da", "Ne")}`,
     payload.flight ? `Let: ${payload.flight}` : "",
-    `Vozilo: ${vehicleName(payload.vehicle)}`,
     `Plaćanje: ${labelForPayment(payload.paymentMethod ?? "cash", "sr")}`,
     payload.bookingForOther ? `${copy.bookingForOther}: ${copy.yes}` : "",
     payload.bookingForOther && payload.passengerName
@@ -685,7 +726,10 @@ function buildReservationAdminEmail({
     payload.reminderRequested ? `${copy.reminder}: ${copy.reminderEnabled}` : "",
     ...(payload.priceEstimate
       ? [
-          `Ukupna okvirna cena: ${formatPrice(payload.priceEstimate.totalPrice, "sr")}`,
+          promoDiscountAmount(payload) > 0
+            ? `Promo popust (${payload.promoCode}): -${formatPrice(promoDiscountAmount(payload), "sr")}`
+            : "",
+          `Ukupna okvirna cena: ${formatPrice(totalAfterPromo(payload), "sr")}`,
           `Obračunska kilometraža: ${formatDistance(payload.priceEstimate.distanceKm, "sr")} km`,
           payload.priceEstimate.distanceOverageKm > 0
             ? `${payload.priceEstimate.pricingModel === "long_distance" ? "Duge relacije" : "Dodatna kilometraža"}: ${formatDistance(
@@ -705,6 +749,8 @@ function buildReservationAdminEmail({
     payload.email ? `Email: ${payload.email}` : "",
     `Telefon: ${[payload.phoneCountryCode, payload.phone].filter(Boolean).join(" ")}`,
     payload.companyName ? `Firma: ${payload.companyName}` : "",
+    payload.companyVatNumber ? `PIB: ${payload.companyVatNumber}` : "",
+    payload.companyAddress ? `Adresa kompanije: ${payload.companyAddress}` : "",
     payload.preferredCommunication
       ? `Željeni način komunikacije: ${payload.preferredCommunication}`
       : "",

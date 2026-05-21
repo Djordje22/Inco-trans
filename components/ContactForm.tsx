@@ -8,6 +8,7 @@ type SubmitState = "idle" | "submitting" | "success" | "error";
 
 export default function ContactForm({ locale }: { locale: Locale }) {
   const dict = t(locale);
+  const companyDict = dict.modal.contact;
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -24,6 +25,9 @@ export default function ContactForm({ locale }: { locale: Locale }) {
         fullName: String(form.get("fullName") ?? ""),
         email: String(form.get("email") ?? ""),
         phone: String(form.get("phone") ?? ""),
+        companyName: String(form.get("companyName") ?? ""),
+        companyVatNumber: String(form.get("companyVatNumber") ?? ""),
+        companyAddress: String(form.get("companyAddress") ?? ""),
         message: String(form.get("message") ?? "")
       })
     });
@@ -86,6 +90,60 @@ export default function ContactForm({ locale }: { locale: Locale }) {
             className="glass-input"
           />
         </div>
+        <section className="sm:col-span-2 rounded-xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+          <h3 className="font-display text-xl text-white">
+            {companyDict.companyInformationTitle}
+          </h3>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="cf-company-name"
+                className="mb-1.5 block text-xs font-medium text-white/70"
+              >
+                {companyDict.companyName}
+              </label>
+              <input
+                id="cf-company-name"
+                name="companyName"
+                type="text"
+                autoComplete="organization"
+                className="glass-input"
+                placeholder={companyDict.companyNamePlaceholder}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="cf-company-vat"
+                className="mb-1.5 block text-xs font-medium text-white/70"
+              >
+                {companyDict.companyVatNumber}
+              </label>
+              <input
+                id="cf-company-vat"
+                name="companyVatNumber"
+                type="text"
+                className="glass-input"
+                placeholder={companyDict.companyVatNumberPlaceholder}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="cf-company-address"
+                className="mb-1.5 block text-xs font-medium text-white/70"
+              >
+                {companyDict.companyAddress}
+              </label>
+              <input
+                id="cf-company-address"
+                name="companyAddress"
+                type="text"
+                autoComplete="street-address"
+                className="glass-input"
+                placeholder={companyDict.companyAddressPlaceholder}
+              />
+            </div>
+          </div>
+        </section>
         <div className="sm:col-span-2">
           <label
             htmlFor="cf-message"

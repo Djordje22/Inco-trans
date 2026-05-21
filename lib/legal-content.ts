@@ -128,7 +128,7 @@ export const privacyContent: Record<Locale, LegalPageContent> = {
       {
         title: "Podaci koje prikupljamo",
         body: [
-          "Kada pošaljete upit, možemo prikupiti ime i prezime, email, telefon, željeni način komunikacije, naziv kompanije, detalje vožnje, broj leta i napomenu.",
+          "Kada pošaljete upit, možemo prikupiti ime i prezime, email, telefon, željeni način komunikacije, podatke o kompaniji, detalje vožnje, broj leta i napomenu.",
           "Podatke koristimo isključivo da bismo odgovorili na upit, pripremili ponudu, potvrdili rezervaciju i pružili dogovorenu uslugu."
         ]
       },
@@ -164,7 +164,7 @@ export const privacyContent: Record<Locale, LegalPageContent> = {
       {
         title: "Data We Collect",
         body: [
-          "When you submit a request, we may collect your full name, email, phone number, preferred communication method, company name, trip details, flight number and notes.",
+          "When you submit a request, we may collect your full name, email, phone number, preferred communication method, company information, trip details, flight number and notes.",
           "We use this data only to answer your request, prepare an offer, confirm a booking and provide the agreed service."
         ]
       },
@@ -200,7 +200,7 @@ export const privacyContent: Record<Locale, LegalPageContent> = {
       {
         title: "Какие данные мы собираем",
         body: [
-          "При отправке запроса мы можем собирать имя и фамилию, email, телефон, предпочтительный способ связи, название компании, детали поездки, номер рейса и комментарий.",
+          "При отправке запроса мы можем собирать имя и фамилию, email, телефон, предпочтительный способ связи, данные компании, детали поездки, номер рейса и комментарий.",
           "Мы используем эти данные только для ответа на запрос, подготовки предложения, подтверждения бронирования и предоставления согласованной услуги."
         ]
       },

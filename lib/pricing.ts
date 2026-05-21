@@ -27,6 +27,7 @@ export const AIRPORT_DISTANCE_OVERAGE_RATE = 1;
 export const LONG_DISTANCE_RATE = 1;
 export const CHAUFFEUR_DISTANCE_OVERAGE_RATE = 1;
 export const CHAUFFEUR_EXTRA_HOURLY_RATE = 30;
+const CHAUFFEUR_DURATION_GRACE_MINUTES = 15;
 
 const CHAUFFEUR_TIERS = [
   { maxHours: 4, includedDistanceKm: 50, basePrice: 100 },
@@ -37,6 +38,17 @@ const CHAUFFEUR_TIERS = [
 
 const roundMoney = (value: number) => Math.round(value * 100) / 100;
 const roundDistance = (value: number) => Math.round(value * 10) / 10;
+const billableChauffeurDurationHours = (value: number | undefined) => {
+  if (!Number.isFinite(value)) return 4;
+  const durationHours = value as number;
+  const wholeHours = Math.floor(durationHours);
+  const extraMinutes = Math.round((durationHours - wholeHours) * 60);
+  const billable =
+    extraMinutes <= CHAUFFEUR_DURATION_GRACE_MINUTES
+      ? wholeHours
+      : Math.ceil(durationHours);
+  return Math.max(4, billable);
+};
 
 export function buildRoutePriceEstimate({
   distanceMeters,
@@ -56,9 +68,8 @@ export function buildRoutePriceEstimate({
     ? Math.max(0, Math.trunc(waitingHours))
     : 0;
   const model = pricingModel ?? "airport";
-  const safeChauffeurDurationHours = Number.isFinite(chauffeurDurationHours)
-    ? Math.max(1, Math.ceil(chauffeurDurationHours as number))
-    : 1;
+  const safeChauffeurDurationHours =
+    billableChauffeurDurationHours(chauffeurDurationHours);
   const chauffeurTier =
     model === "chauffeur"
       ? CHAUFFEUR_TIERS.find((tier) => safeChauffeurDurationHours <= tier.maxHours) ??

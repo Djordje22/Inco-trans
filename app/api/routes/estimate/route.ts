@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     typeof body?.waitingHours === "number" ? Math.max(0, body.waitingHours) : 0;
   const chauffeurDurationHours =
     typeof body?.chauffeurDurationHours === "number"
-      ? Math.max(1, body.chauffeurDurationHours)
+      ? Math.max(4, body.chauffeurDurationHours)
       : undefined;
   const pricingModel =
     body?.service === "business"

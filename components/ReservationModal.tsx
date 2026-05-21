@@ -10,7 +10,6 @@ import {
   useState,
   type ReactNode
 } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   X,
@@ -34,6 +33,7 @@ import {
   Minus,
   GripVertical,
   Hourglass,
+  Clock,
   Search,
   Wifi,
   Bell
@@ -63,7 +63,6 @@ import {
   MIN_LUGGAGE,
   MIN_PASSENGERS
 } from "@/lib/booking-constraints";
-import { vehicles } from "@/lib/fleet-data";
 import { siteConfig, type Locale } from "@/lib/site-config";
 import type { RoutePriceEstimate } from "@/lib/pricing";
 import WhatsAppMark from "./icons/WhatsAppMark";
@@ -354,19 +353,28 @@ function ServiceCard({
 // ---------- Progress indicator ----------
 
 function StepProgress({ steps, current }: { steps: string[]; current: number }) {
-  const progress = ((current - 1) / (steps.length - 1)) * 100;
+  const edgeOffset = 50 / steps.length;
+  const progressRatio =
+    steps.length > 1 ? (current - 1) / (steps.length - 1) : 0;
 
   return (
     <div className="pb-4">
-      <ol className="relative grid grid-cols-4">
+      <ol
+        className="relative grid"
+        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+      >
         <span
           aria-hidden="true"
-          className="absolute left-[12.5%] right-[12.5%] top-3.5 h-px bg-white/15"
+          className="absolute top-3.5 h-px bg-white/15"
+          style={{ left: `${edgeOffset}%`, right: `${edgeOffset}%` }}
         />
         <span
           aria-hidden="true"
-          className="absolute left-[12.5%] top-3.5 h-px bg-gold-400/75"
-          style={{ width: `${progress * 0.75}%` }}
+          className="absolute top-3.5 h-px bg-gold-400/75"
+          style={{
+            left: `${edgeOffset}%`,
+            width: `calc((100% - ${edgeOffset * 2}%) * ${progressRatio})`
+          }}
         />
         {steps.map((label, i) => {
           const stepNum = i + 1;
@@ -403,7 +411,7 @@ function StepProgress({ steps, current }: { steps: string[]; current: number }) 
   );
 }
 
-// ---------- Transfer flow (4 steps) ----------
+// ---------- Transfer flow (3 steps) ----------
 
 type ServiceType = "airport" | "chauffeur" | "business" | "other";
 type AirportDirection = "from" | "to" | "";
@@ -431,9 +439,12 @@ type PlaceSuggestion = {
 
 const MIN_WAITING_HOURS = 1;
 const MAX_WAITING_HOURS = 24;
-const MIN_CHAUFFEUR_DURATION_HOURS = 1;
+const MIN_CHAUFFEUR_DURATION_HOURS = 4;
+const CHAUFFEUR_DURATION_GRACE_MINUTES = 15;
 const MAX_CHAUFFEUR_DURATION_HOURS = 24;
 const STANDARD_CHAUFFEUR_DAY_HOURS = 10;
+const PROMO_CODE = "PROMO5%";
+const PROMO_DISCOUNT_PERCENT = 5;
 
 const makeStopId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -480,12 +491,13 @@ type TransferData = {
   luggage: number;
   wifi: boolean;
   flight: string;
-  vehicle: string;
   fullName: string;
   email: string;
   phoneCountryCode: string;
   phone: string;
   companyName: string;
+  companyVatNumber: string;
+  companyAddress: string;
   preferredCommunication: PreferredCommunication | "";
   paymentMethod: PaymentMethod;
   termsAccepted: boolean;
@@ -495,6 +507,9 @@ type TransferData = {
   passengerPhoneCountryCode: string;
   passengerPhone: string;
   reminderRequested: boolean;
+  promoCode: string;
+  promoCodeApplied: boolean;
+  promoCodeError: string;
 };
 
 const EMPTY: TransferData = {
@@ -515,12 +530,13 @@ const EMPTY: TransferData = {
   luggage: 0,
   wifi: true,
   flight: "",
-  vehicle: "",
   fullName: "",
   email: "",
   phoneCountryCode: "+381",
   phone: "",
   companyName: "",
+  companyVatNumber: "",
+  companyAddress: "",
   preferredCommunication: "",
   paymentMethod: "cash",
   termsAccepted: false,
@@ -529,7 +545,10 @@ const EMPTY: TransferData = {
   passengerName: "",
   passengerPhoneCountryCode: "+381",
   passengerPhone: "",
-  reminderRequested: false
+  reminderRequested: false,
+  promoCode: "",
+  promoCodeApplied: false,
+  promoCodeError: ""
 };
 
 const PHONE_COUNTRY_CODES = [
@@ -593,7 +612,7 @@ function TransferFlow({
   const dict = t(locale).modal;
   const airportName = dict.rent.airportDirection.airportName;
   const [data, setData] = useState<TransferData>(EMPTY);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [preStep, setPreStep] = useState<"service" | "direction" | null>(
     "service"
   );
@@ -614,8 +633,8 @@ function TransferFlow({
     data.destination.trim() !== "" &&
     data.dateTime.trim() !== "" &&
     (!isChauffeur ||
-      (data.dropoffDateTime.trim() !== "" && data.chauffeurDurationHours > 0));
-  const vehicleValid = data.vehicle.trim() !== "";
+      (data.dropoffDateTime.trim() !== "" &&
+        data.chauffeurDurationHours >= MIN_CHAUFFEUR_DURATION_HOURS));
   const contactValid = isContactValid(data);
 
   const applyAirportDirection = () => {
@@ -665,9 +684,8 @@ function TransferFlow({
       return;
     }
     if (step === 1 && !journeyValid) return;
-    if (step === 2 && !vehicleValid) return;
-    if (step === 3 && !contactValid) return;
-    setStep((s) => (s + 1) as 2 | 3 | 4);
+    if (step === 2 && !contactValid) return;
+    setStep((s) => (s + 1) as 2 | 3);
   };
 
   const submitRequest = async () => {
@@ -696,12 +714,13 @@ function TransferFlow({
         luggage: data.luggage,
         wifi: data.wifi,
         flight: data.flight,
-        vehicle: data.vehicle,
         fullName: data.fullName,
         email: data.email,
         phoneCountryCode: data.phoneCountryCode,
         phone: data.phone,
         companyName: data.companyName,
+        companyVatNumber: data.companyVatNumber,
+        companyAddress: data.companyAddress,
         preferredCommunication: data.preferredCommunication,
         paymentMethod: data.paymentMethod,
         message: data.message,
@@ -711,6 +730,8 @@ function TransferFlow({
         passengerPhone: data.passengerPhone,
         reminderRequested: data.reminderRequested,
         reminderMinutesBefore: 5,
+        promoCode: data.promoCodeApplied ? data.promoCode.trim() : "",
+        promoDiscountPercent: data.promoCodeApplied ? PROMO_DISCOUNT_PERCENT : 0,
         termsAccepted: data.termsAccepted,
         priceEstimate: data.routeEstimate
       })
@@ -730,7 +751,6 @@ function TransferFlow({
         <StepProgress
           steps={[
             dict.progress.journey,
-            dict.progress.vehicle,
             dict.progress.contact,
             dict.progress.review
           ]}
@@ -753,9 +773,6 @@ function TransferFlow({
           />
         ) : null}
         {preStep === null && step === 2 ? (
-          <VehicleStep locale={locale} data={data} set={set} />
-        ) : null}
-        {preStep === null && step === 3 ? (
           <ContactFields
             locale={locale}
             data={data}
@@ -763,7 +780,7 @@ function TransferFlow({
             showReminder
           />
         ) : null}
-        {preStep === null && step === 4 ? (
+        {preStep === null && step === 3 ? (
           <ReviewStep locale={locale} data={data} set={set} />
         ) : null}
       </div>
@@ -771,16 +788,15 @@ function TransferFlow({
       <FormFooter
         locale={locale}
         onBack={onPrev}
-        onNext={preStep !== null || step < 4 ? onNext : undefined}
-        onSubmit={preStep === null && step === 4 ? submitRequest : undefined}
+        onNext={preStep !== null || step < 3 ? onNext : undefined}
+        onSubmit={preStep === null && step === 3 ? submitRequest : undefined}
         nextDisabled={
           (onServiceScreen && !serviceValid) ||
           (onDirectionScreen && !directionValid) ||
           (preStep === null && step === 1 && !journeyValid) ||
-          (preStep === null && step === 2 && !vehicleValid) ||
-          (preStep === null && step === 3 && !contactValid) ||
-          (preStep === null && step === 4 && !data.termsAccepted) ||
-          (preStep === null && step === 4 && data.routeEstimateStatus === "loading") ||
+          (preStep === null && step === 2 && !contactValid) ||
+          (preStep === null && step === 3 && !data.termsAccepted) ||
+          (preStep === null && step === 3 && data.routeEstimateStatus === "loading") ||
           submitState === "submitting"
         }
       />
@@ -973,6 +989,9 @@ function JourneyStep({
   const tf = t(locale).transportForm;
   const isAirport = data.service === "airport";
   const isChauffeur = data.service === "chauffeur";
+  const isLongDistance = data.service === "business";
+  const showStops = data.service !== "other";
+  const showWaiting = isAirport || isChauffeur || isLongDistance;
   const showFlight = isAirport;
   const resetEstimate = () => {
     set("routeEstimate", undefined);
@@ -993,7 +1012,7 @@ function JourneyStep({
   };
   const setDropoffDateTime = (value: string) => {
     const duration = durationHoursBetween(data.dateTime, value);
-    if (data.dateTime && duration <= 0) {
+    if (data.dateTime && duration < MIN_CHAUFFEUR_DURATION_HOURS) {
       const nextDuration = MIN_CHAUFFEUR_DURATION_HOURS;
       set("chauffeurDurationHours", nextDuration);
       set("dropoffDateTime", addHoursToDateTime(data.dateTime, nextDuration));
@@ -1001,9 +1020,9 @@ function JourneyStep({
       return;
     }
     if (data.dateTime) {
-      const nextDuration = clampChauffeurDuration(Math.ceil(duration));
+      const nextDuration = billableChauffeurDurationHours(duration);
       set("chauffeurDurationHours", nextDuration);
-      set("dropoffDateTime", addHoursToDateTime(data.dateTime, nextDuration));
+      set("dropoffDateTime", value);
     } else {
       set("dropoffDateTime", value);
     }
@@ -1044,6 +1063,14 @@ function JourneyStep({
                 value={data.dropoffDateTime}
                 onChange={setDropoffDateTime}
                 ariaLabel={dict.chauffeurDropoffDateTime}
+                minValue={
+                  data.dateTime
+                    ? addHoursToDateTime(
+                        data.dateTime,
+                        MIN_CHAUFFEUR_DURATION_HOURS
+                      )
+                    : undefined
+                }
               />
             </Field>
             {data.dropoffDateTime ? (
@@ -1079,12 +1106,12 @@ function JourneyStep({
             }}
           />
         </Field>
-        {isAirport ? (
+        {showStops ? (
           <>
             <StopsList locale={locale} data={data} set={set} />
           </>
         ) : null}
-        {isAirport ? (
+        {showWaiting ? (
           <WaitingHoursCard locale={locale} data={data} set={set} />
         ) : null}
         <WifiToggle locale={locale} checked={data.wifi} onChange={(next) => set("wifi", next)} />
@@ -1147,106 +1174,6 @@ function JourneyStep({
   );
 }
 
-function VehicleStep({
-  locale,
-  data,
-  set
-}: {
-  locale: Locale;
-  data: TransferData;
-  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
-}) {
-  const dict = t(locale).modal.rent.vehicle;
-  const fleetDict = t(locale).fleetCard;
-
-  return (
-    <div>
-      <StepHeading
-        icon={<CarIcon />}
-        title={dict.heading}
-        subtitle={dict.subheading}
-      />
-      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-        {vehicles.map((vehicle) => {
-          const active = data.vehicle === vehicle.slug;
-          const altText =
-            locale === "sr"
-              ? `${vehicle.name} iz Inco Trans flote`
-              : locale === "ru"
-                ? `${vehicle.name} из автопарка Inco Trans`
-                : `${vehicle.name} from the Inco Trans fleet`;
-
-          return (
-            <li key={vehicle.slug}>
-              <button
-                type="button"
-                onClick={() => set("vehicle", vehicle.slug)}
-                aria-pressed={active}
-                className={
-                  "group h-full w-full overflow-hidden rounded-xl border bg-ink-900 text-left transition-colors " +
-                  (active
-                    ? "border-gold-400 shadow-gold"
-                    : "border-white/12 hover:border-white/25 hover:bg-ink-800")
-                }
-              >
-                <div className="relative aspect-[16/10] bg-ink-800">
-                  <Image
-                    src={vehicle.image}
-                    alt={altText}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 260px"
-                    className="object-cover"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink-900 to-transparent"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className={
-                      "absolute right-3 top-3 inline-flex h-5 w-5 items-center justify-center rounded-full border " +
-                      (active
-                        ? "border-gold-400 bg-gold-400"
-                        : "border-white/35 bg-ink-950/70")
-                    }
-                  >
-                    {active ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-ink-900" />
-                    ) : null}
-                  </span>
-                </div>
-
-                <div className="p-4">
-                  <h4 className="font-display text-xl text-white">
-                    {vehicle.name}
-                  </h4>
-                  <p className="mt-1 min-h-[2.5rem] text-xs leading-relaxed text-white/60">
-                    {vehicle.tagline[locale]}
-                  </p>
-                  <dl className="mt-4 flex flex-wrap gap-2 text-xs text-white/75">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-3 py-1.5">
-                      <dt>{fleetDict.passengers}</dt>
-                      <dd className="font-semibold text-white">
-                        {vehicle.passengers}
-                      </dd>
-                    </div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-3 py-1.5">
-                      <dt>{fleetDict.luggage}</dt>
-                      <dd className="font-semibold text-white">
-                        {vehicle.luggage}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
 function ReviewStep({
   locale,
   data,
@@ -1281,9 +1208,6 @@ function ReviewStep({
             : dict.airportDeparture
         })`
       : serviceLabel;
-  const vehicleLabel = data.vehicle
-    ? vehicles.find((v) => v.slug === data.vehicle)?.name ?? tf.vehicleAny
-    : tf.vehicleAny;
   const routePointKey = [
     data.pickupPlace
       ? `${data.pickupPlace.latitude},${data.pickupPlace.longitude}`
@@ -1328,7 +1252,7 @@ function ReviewStep({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         points: [DRIVER_START_PLACE, ...points, DRIVER_START_PLACE],
-        waitingHours: data.service === "airport" ? data.waitingHours : 0,
+        waitingHours: data.service === "chauffeur" ? 0 : data.waitingHours,
         chauffeurDurationHours: data.chauffeurDurationHours,
         service: data.service
       })
@@ -1419,7 +1343,7 @@ function ReviewStep({
     ...(data.service === "airport"
       ? [{ label: dict.flightLabel, value: data.flight || " " }]
       : []),
-    ...(data.service === "airport" && data.waitingHours > 0
+    ...(data.waitingHours > 0
       ? [
           {
             label: dict.waitingLabel,
@@ -1436,7 +1360,6 @@ function ReviewStep({
         ]
       : [])
   ];
-  const vehicleItems = [{ label: dict.vehicleLabel, value: vehicleLabel }];
   const contactItems = [
     { label: dict.fullNameLabel, value: data.fullName || " " },
     { label: dict.emailLabel, value: data.email || " " },
@@ -1495,6 +1418,8 @@ function ReviewStep({
         ]
       : []),
     { label: dict.companyNameLabel, value: data.companyName || " " },
+    { label: dict.companyVatNumberLabel, value: data.companyVatNumber || " " },
+    { label: dict.companyAddressLabel, value: data.companyAddress || " " },
     { label: dict.messageLabel, value: data.message || " " }
   ];
   const overageLabel = dict.distanceOverageLabel
@@ -1531,6 +1456,14 @@ function ReviewStep({
     estimate && isChauffeurEstimate
       ? buildChauffeurPricingNote(dict, estimate, locale)
       : "";
+  const promoActive =
+    data.promoCodeApplied && data.promoCode.trim().toUpperCase() === PROMO_CODE;
+  const promoDiscountAmount =
+    estimate && promoActive
+      ? roundMoney(estimate.totalPrice * (PROMO_DISCOUNT_PERCENT / 100))
+      : 0;
+  const estimatedTotal =
+    estimate ? roundMoney(estimate.totalPrice - promoDiscountAmount) : 0;
   const termsHref = legalHref(locale, "terms");
   const privacyHref = legalHref(locale, "privacy");
 
@@ -1565,7 +1498,7 @@ function ReviewStep({
 
         <ReviewCard title={dict.serviceCardTitle} items={serviceItems} />
         <ReviewCard title={dict.tripCardTitle} items={tripItems} />
-        <ReviewCard title={dict.vehicleCardTitle} items={vehicleItems} />
+        <FleetAssignmentNote dict={dict} />
         <ReviewCard title={dict.contactCardTitle} items={contactItems} />
 
         <PaymentCard
@@ -1622,6 +1555,19 @@ function ReviewStep({
                   </dd>
                 </div>
               ) : null}
+              {promoDiscountAmount > 0 ? (
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-white/55">
+                    {dict.promoDiscountLabel.replace(
+                      "{code}",
+                      data.promoCode.trim().toUpperCase()
+                    )}
+                  </dt>
+                  <dd className="text-right font-medium text-gold-200">
+                    -{formatPrice(promoDiscountAmount, locale)}
+                  </dd>
+                </div>
+              ) : null}
             </dl>
             <div className="my-3 h-px bg-white/10" />
             <div className="flex items-start justify-between gap-3">
@@ -1629,7 +1575,7 @@ function ReviewStep({
                 {dict.totalEstimateLabel}
               </span>
               <span className="text-right text-2xl font-semibold text-gold-200">
-                {formatPrice(estimate.totalPrice, locale)}
+                {formatPrice(estimatedTotal, locale)}
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-white/55">
@@ -1644,6 +1590,8 @@ function ReviewStep({
             ) : null}
           </section>
         ) : null}
+
+        <PromoCodeCard dict={dict} data={data} set={set} />
 
         <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
           <input
@@ -1701,6 +1649,93 @@ function ReviewCard({
 }
 
 type ReviewDictionary = ReturnType<typeof t>["modal"]["rent"]["review"];
+
+function FleetAssignmentNote({ dict }: { dict: ReviewDictionary }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <h4 className="text-sm font-semibold text-white">
+        {dict.assignedVehicleTitle}
+      </h4>
+      <p className="mt-2 text-sm leading-relaxed text-white/60">
+        {dict.assignedVehicleDesc}
+      </p>
+    </section>
+  );
+}
+
+function PromoCodeCard({
+  dict,
+  data,
+  set
+}: {
+  dict: ReviewDictionary;
+  data: TransferData;
+  set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
+}) {
+  const applyPromo = () => {
+    const normalized = data.promoCode.trim().toUpperCase();
+    if (!normalized) {
+      set("promoCodeApplied", false);
+      set("promoCodeError", "");
+      return;
+    }
+    if (normalized === PROMO_CODE) {
+      set("promoCode", PROMO_CODE);
+      set("promoCodeApplied", true);
+      set("promoCodeError", "");
+      return;
+    }
+    set("promoCodeApplied", false);
+    set("promoCodeError", dict.promoInvalid);
+  };
+
+  return (
+    <details className="group rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <summary className="flex cursor-pointer list-none select-none items-center gap-2 text-sm font-semibold text-white [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">{dict.promoSummary}</span>
+        <ChevronDown
+          className="h-4 w-4 text-white/50 transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <input
+          type="text"
+          className="glass-input flex-1"
+          placeholder={dict.promoPlaceholder}
+          value={data.promoCode}
+          onChange={(event) => {
+            set("promoCode", event.target.value);
+            set("promoCodeApplied", false);
+            set("promoCodeError", "");
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              applyPromo();
+            }
+          }}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          onClick={applyPromo}
+          className="btn-ghost justify-center !py-2.5 !px-4"
+        >
+          {dict.promoApply}
+        </button>
+      </div>
+      {data.promoCodeApplied ? (
+        <p className="mt-2 text-xs text-gold-300">
+          {dict.promoApplied.replace("{percent}", String(PROMO_DISCOUNT_PERCENT))}
+        </p>
+      ) : null}
+      {data.promoCodeError ? (
+        <p className="mt-2 text-xs text-red-200">{data.promoCodeError}</p>
+      ) : null}
+    </details>
+  );
+}
 
 function PaymentCard({
   dict,
@@ -1909,6 +1944,8 @@ function HandleFlow({
         phone: data.phone,
         preferredCommunication: data.preferredCommunication,
         companyName: data.companyName,
+        companyVatNumber: data.companyVatNumber,
+        companyAddress: data.companyAddress,
         message: data.message,
         bookingForOther: data.bookingForOther,
         passengerName: data.passengerName,
@@ -2048,16 +2085,45 @@ function ContactFields({
           />
         </div>
       </Field>
-      <Field label={dict.companyName}>
-        <input
-          type="text"
-          autoComplete="organization"
-          className="glass-input"
-          placeholder={dict.companyNamePlaceholder}
-          value={data.companyName}
-          onChange={(e) => set("companyName", e.target.value)}
-        />
-      </Field>
+      <section className="rounded-xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+        <h4 className="font-display text-xl text-white">
+          {dict.companyInformationTitle}
+        </h4>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Field label={dict.companyName}>
+              <input
+                type="text"
+                autoComplete="organization"
+                className="glass-input"
+                placeholder={dict.companyNamePlaceholder}
+                value={data.companyName}
+                onChange={(e) => set("companyName", e.target.value)}
+              />
+            </Field>
+          </div>
+          <Field label={dict.companyVatNumber}>
+            <input
+              type="text"
+              autoComplete="off"
+              className="glass-input"
+              placeholder={dict.companyVatNumberPlaceholder}
+              value={data.companyVatNumber}
+              onChange={(e) => set("companyVatNumber", e.target.value)}
+            />
+          </Field>
+          <Field label={dict.companyAddress}>
+            <input
+              type="text"
+              autoComplete="street-address"
+              className="glass-input"
+              placeholder={dict.companyAddressPlaceholder}
+              value={data.companyAddress}
+              onChange={(e) => set("companyAddress", e.target.value)}
+            />
+          </Field>
+        </div>
+      </section>
 
       <ToggleCard
         checked={data.bookingForOther}
@@ -2718,6 +2784,17 @@ function clampChauffeurDuration(value: number): number {
   );
 }
 
+function billableChauffeurDurationHours(durationHours: number): number {
+  if (!Number.isFinite(durationHours)) return MIN_CHAUFFEUR_DURATION_HOURS;
+  const wholeHours = Math.floor(durationHours);
+  const extraMinutes = Math.round((durationHours - wholeHours) * 60);
+  const billable =
+    extraMinutes <= CHAUFFEUR_DURATION_GRACE_MINUTES
+      ? wholeHours
+      : Math.ceil(durationHours);
+  return clampChauffeurDuration(billable);
+}
+
 function ChauffeurDurationCard({
   locale,
   data,
@@ -2746,7 +2823,7 @@ function ChauffeurDurationCard({
     <div>
       <div className="glass grid grid-cols-[auto_1fr] gap-3 rounded-xl p-4 sm:grid-cols-[auto_1fr_auto] sm:items-start">
         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-gold-300">
-          <Hourglass className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+          <Clock className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
           <h4 className="font-semibold text-sm text-white">
@@ -2766,16 +2843,12 @@ function ChauffeurDurationCard({
           >
             <Minus className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
-          <input
-            type="number"
-            min={MIN_CHAUFFEUR_DURATION_HOURS}
-            max={MAX_CHAUFFEUR_DURATION_HOURS}
-            value={hours}
-            onChange={(event) => setDuration(Number(event.target.value))}
-            aria-label={dict.chauffeurDurationTitle}
-            className="h-8 w-14 rounded-full border border-white/10 bg-white/5 px-2 text-center text-sm font-semibold tabular-nums text-white outline-none focus:border-gold-300"
-          />
-          <span className="text-sm font-semibold text-white">h</span>
+          <span
+            aria-live="polite"
+            className="min-w-[2.5rem] text-center text-sm font-semibold text-white tabular-nums"
+          >
+            {hours}h
+          </span>
           <button
             type="button"
             onClick={() => setDuration(hours + 1)}
@@ -3105,7 +3178,7 @@ function formatDateTime(iso: string, locale: Locale): string {
 }
 
 function formatPrice(value: number, locale: Locale): string {
-  const rounded = Math.round(value * 100) / 100;
+  const rounded = roundMoney(value);
   const hasDecimals = !Number.isInteger(rounded);
   const amount = new Intl.NumberFormat(bcp47(locale), {
     minimumFractionDigits: hasDecimals ? 2 : 0,
@@ -3113,6 +3186,10 @@ function formatPrice(value: number, locale: Locale): string {
   }).format(rounded);
 
   return `€${amount}`;
+}
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 function formatDistance(value: number, locale: Locale): string {

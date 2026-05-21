@@ -25,7 +25,7 @@ export const sr: Dict = {
     whatsappCta: "WhatsApp poruka"
   },
   badges: {
-    hours247: "Online rezervacije uvek",
+    hours247: "Online rezervacije",
     cashAndCard: "Gotovina i kartice",
     whatsapp: "WhatsApp rezervacija"
   },
@@ -72,7 +72,7 @@ export const sr: Dict = {
     title: "Zašto Inco Trans",
     items: [
       {
-        title: "Online rezervacije uvek",
+        title: "Online rezervacije",
         desc: "Pošaljite rezervaciju kada vam odgovara. Pozivi su dostupni od 08:00 do 22:00 po vremenu u Beogradu."
       },
       {
@@ -183,7 +183,7 @@ export const sr: Dict = {
     message: "Napomena",
     submit: "Pošalji zahtev",
     submitNote: "Zahtev je poslat. Potvrdićemo dostupnost i cenu što je pre moguće.",
-    twentyFourSeven: "Online rezervacije uvek",
+    twentyFourSeven: "Online rezervacije",
     cardAndCash: "Gotovina i kartice"
   },
   cta: {
@@ -248,7 +248,7 @@ export const sr: Dict = {
         chauffeurDurationTitle: "Trajanje",
         chauffeurDurationDesc: "{hours}h izabrano za šofer servis.",
         chauffeurStandardDayNote:
-          "Standardni dan je 10 sati. Dodatni sati se naplaćuju po satnici.",
+          "Minimum rezervacija za dan je 4 sata. Dodatni sati preko 10 se naplaćuju po satu.",
         chauffeurDurationDecreaseAria: "Smanji trajanje šofer servisa",
         chauffeurDurationIncreaseAria: "Povećaj trajanje šofer servisa",
         stopLabel: "Stajalište {n}",
@@ -260,7 +260,7 @@ export const sr: Dict = {
         wifiDesc: "Pripremamo Wi-Fi u vozilu za vožnju.",
         waitingTitle: "Sati čekanja",
         waitingDesc:
-          "Dodajte sate ako vam je potrebno da vozač sačeka na odredištu.",
+          "Dodajte sate ako vam je potrebno da vozač sačeka na mestu preuzimanja.",
         waitingDecreaseAria: "Smanji sate čekanja",
         waitingIncreaseAria: "Povećaj sate čekanja"
       },
@@ -290,6 +290,9 @@ export const sr: Dict = {
         serviceCardTitle: "Usluga",
         tripCardTitle: "Vožnja",
         vehicleCardTitle: "Vozilo",
+        assignedVehicleTitle: "Vozilo",
+        assignedVehicleDesc:
+          "Tim dodeljuje vozilo prema raspoloživosti. Možete očekivati Mercedes E klasu ili Audi A6, a više detalja možete pogledati na stranici flote.",
         contactCardTitle: "Kontakt",
         estimateCardTitle: "Okvirna cena",
         airportArrival: "Dolazak",
@@ -305,9 +308,11 @@ export const sr: Dict = {
         phoneLabel: "Telefon",
         preferredCommunicationLabel: "Željeni način komunikacije",
         companyNameLabel: "Naziv kompanije",
+        companyVatNumberLabel: "PIB",
+        companyAddressLabel: "Adresa kompanije",
         messageLabel: "Napomena",
         basePriceLabel: "Aerodromski transfer",
-        waitingPriceLabel: "Vreme čekanja ({hours}h na destinaciji)",
+        waitingPriceLabel: "Vreme čekanja ({hours}h na mestu preuzimanja)",
         distanceOverageLabel:
           "Dodatna kilometraža ({overage} km preko {included} km)",
         longDistancePriceLabel: "Duge relacije ({distance} km povratna ruta)",
@@ -315,10 +320,10 @@ export const sr: Dict = {
           "Šofer servis do {hours}h ({included} km uključeno)",
         chauffeurExtraHoursLabel: "Dodatni sati ({hours}h preko 10h)",
         chauffeurPricingNote:
-          "Šofer servis od {hours}h uključuje do {included} km. Obračunska kilometraža je {distance} km; {overageText}",
+          "Šofer servis od {hours}h uključuje do {included} km. Obračunska kilometraža je {distance} km. {overageText}",
         chauffeurOverageText:
           "{overage} km se naplaćuje €{rate}/km.",
-        chauffeurNoOverageText: "nema dodatne naplate za kilometražu.",
+        chauffeurNoOverageText: "Nema dodatne naplate za kilometražu.",
         totalEstimateLabel: "Ukupna okvirna cena",
         estimateDisclaimer: "Okvirna cena. Konačnu cenu će potvrditi naš tim.",
         billableDistanceLabel: "Obračunska kilometraža",
@@ -329,6 +334,12 @@ export const sr: Dict = {
         paymentCardDesc: "Kreditna ili debitna kartica",
         paymentCash: "Gotovina",
         paymentCashDesc: "Plaćanje vozaču pri preuzimanju",
+        promoSummary: "Imate promo kod?",
+        promoPlaceholder: "Promo kod",
+        promoApply: "Primeni",
+        promoApplied: "Promo kod je primenjen: {percent}% popusta.",
+        promoInvalid: "Promo kod nije validan.",
+        promoDiscountLabel: "Promo popust ({code})",
         termsPrefix: "Saglasan/saglasna sam",
         termsLink: "Uslovima korišćenja",
         termsMiddle: "i",
@@ -347,8 +358,13 @@ export const sr: Dict = {
       phone: "Broj telefona",
       phonePlaceholder: "XX XXX XXXX",
       countryCode: "Pozivni broj",
+      companyInformationTitle: "Podaci o kompaniji",
       companyName: "Naziv kompanije",
       companyNamePlaceholder: "Naziv kompanije (opciono)",
+      companyVatNumber: "PIB",
+      companyVatNumberPlaceholder: "PIB (opciono)",
+      companyAddress: "Adresa kompanije",
+      companyAddressPlaceholder: "Adresa kompanije (opciono)",
       bookingForOtherTitle: "Rezervišem za drugu osobu",
       bookingForOtherDesc:
         "Unesite podatke o putniku ako se razlikuju od vaših kontakt podataka",

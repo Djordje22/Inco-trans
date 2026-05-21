@@ -9,7 +9,6 @@ import {
   MIN_PASSENGERS
 } from "@/lib/booking-constraints";
 import { t } from "@/lib/i18n";
-import { vehicles } from "@/lib/fleet-data";
 import type { Locale } from "@/lib/site-config";
 
 type Props = {
@@ -20,9 +19,21 @@ type Props = {
 type ServiceType = "airport" | "chauffeur" | "business" | "other";
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
+function addHoursToDateTimeLocal(value: string, hours: number): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setHours(date.getHours() + hours);
+  const pad = (next: number) => (next < 10 ? `0${next}` : String(next));
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate()
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function QuoteForm({ locale, variant = "card" }: Props) {
   const dict = t(locale);
   const tf = dict.transportForm;
+  const companyDict = dict.modal.contact;
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [service, setService] = useState<ServiceType>("airport");
 
@@ -31,6 +42,7 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
     setSubmitState("submitting");
 
     const form = new FormData(e.currentTarget);
+    const dateTime = String(form.get("datetime") ?? "");
     const response = await fetch("/api/booking-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -40,13 +52,21 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
         service,
         pickup: String(form.get("pickup") ?? ""),
         destination: String(form.get("destination") ?? ""),
-        dateTime: String(form.get("datetime") ?? ""),
+        dateTime,
+        ...(service === "chauffeur"
+          ? {
+              dropoffDateTime: addHoursToDateTimeLocal(dateTime, 4),
+              chauffeurDurationHours: 4
+            }
+          : {}),
         passengers: Number(form.get("passengers") ?? MIN_PASSENGERS),
         luggage: Number(form.get("luggage") ?? MIN_LUGGAGE),
         flight: String(form.get("flight") ?? ""),
-        vehicle: String(form.get("vehicle") ?? ""),
         fullName: String(form.get("name") ?? ""),
         phone: String(form.get("phone") ?? ""),
+        companyName: String(form.get("companyName") ?? ""),
+        companyVatNumber: String(form.get("companyVatNumber") ?? ""),
+        companyAddress: String(form.get("companyAddress") ?? ""),
         paymentMethod: "cash"
       })
     });
@@ -236,26 +256,6 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
             <p className="mt-1 text-[11px] text-white/50">{tf.flightHint}</p>
           </div>
         ) : null}
-        <div className="sm:col-span-2">
-          <label
-            htmlFor="qf-vehicle"
-            className="mb-1.5 block text-xs font-medium text-white/70"
-          >
-            {tf.vehiclePreference}
-          </label>
-          <select
-            id="qf-vehicle"
-            name="vehicle"
-            className="glass-input appearance-none"
-            defaultValue="mercedes-e-class"
-          >
-            {vehicles.map((v) => (
-              <option key={v.slug} value={v.slug}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </div>
         <div>
           <label
             htmlFor="qf-name"
@@ -286,6 +286,60 @@ export default function QuoteForm({ locale, variant = "card" }: Props) {
             className="glass-input"
           />
         </div>
+        <section className="sm:col-span-2 rounded-xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+          <h3 className="font-display text-xl text-white">
+            {companyDict.companyInformationTitle}
+          </h3>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="qf-company-name"
+                className="mb-1.5 block text-xs font-medium text-white/70"
+              >
+                {companyDict.companyName}
+              </label>
+              <input
+                id="qf-company-name"
+                name="companyName"
+                type="text"
+                autoComplete="organization"
+                className="glass-input"
+                placeholder={companyDict.companyNamePlaceholder}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="qf-company-vat"
+                className="mb-1.5 block text-xs font-medium text-white/70"
+              >
+                {companyDict.companyVatNumber}
+              </label>
+              <input
+                id="qf-company-vat"
+                name="companyVatNumber"
+                type="text"
+                className="glass-input"
+                placeholder={companyDict.companyVatNumberPlaceholder}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="qf-company-address"
+                className="mb-1.5 block text-xs font-medium text-white/70"
+              >
+                {companyDict.companyAddress}
+              </label>
+              <input
+                id="qf-company-address"
+                name="companyAddress"
+                type="text"
+                autoComplete="street-address"
+                className="glass-input"
+                placeholder={companyDict.companyAddressPlaceholder}
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

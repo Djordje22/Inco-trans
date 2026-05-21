@@ -215,6 +215,8 @@ export type Dict = {
         serviceCardTitle: string;
         tripCardTitle: string;
         vehicleCardTitle: string;
+        assignedVehicleTitle: string;
+        assignedVehicleDesc: string;
         contactCardTitle: string;
         estimateCardTitle: string;
         airportArrival: string;
@@ -230,6 +232,8 @@ export type Dict = {
         phoneLabel: string;
         preferredCommunicationLabel: string;
         companyNameLabel: string;
+        companyVatNumberLabel: string;
+        companyAddressLabel: string;
         messageLabel: string;
         basePriceLabel: string;
         waitingPriceLabel: string;
@@ -249,6 +253,12 @@ export type Dict = {
         paymentCardDesc: string;
         paymentCash: string;
         paymentCashDesc: string;
+        promoSummary: string;
+        promoPlaceholder: string;
+        promoApply: string;
+        promoApplied: string;
+        promoInvalid: string;
+        promoDiscountLabel: string;
         termsPrefix: string;
         termsLink: string;
         termsMiddle: string;
@@ -266,8 +276,13 @@ export type Dict = {
       phone: string;
       phonePlaceholder: string;
       countryCode: string;
+      companyInformationTitle: string;
       companyName: string;
       companyNamePlaceholder: string;
+      companyVatNumber: string;
+      companyVatNumberPlaceholder: string;
+      companyAddress: string;
+      companyAddressPlaceholder: string;
       bookingForOtherTitle: string;
       bookingForOtherDesc: string;
       passengerName: string;

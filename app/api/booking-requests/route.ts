@@ -26,6 +26,14 @@ function messageWithExtras(payload: BookingRequestPayload) {
     );
   }
 
+  if (payload.companyVatNumber || payload.companyAddress) {
+    lines.push(
+      "Company information:",
+      payload.companyVatNumber ? `VAT/PIB: ${payload.companyVatNumber}` : "",
+      payload.companyAddress ? `Adresa kompanije: ${payload.companyAddress}` : ""
+    );
+  }
+
   if (payload.service === "chauffeur") {
     lines.push(
       "Šofer servis:",
@@ -34,7 +42,15 @@ function messageWithExtras(payload: BookingRequestPayload) {
     );
   }
 
-  return lines.join("\n");
+  if (payload.promoCode && (payload.promoDiscountPercent ?? 0) > 0) {
+    lines.push(
+      "Promo kod:",
+      `Kod: ${payload.promoCode}`,
+      `Popust: ${payload.promoDiscountPercent}%`
+    );
+  }
+
+  return lines.filter(Boolean).join("\n");
 }
 
 function bookingInsertPayload(id: string, payload: BookingRequestPayload) {
@@ -52,7 +68,6 @@ function bookingInsertPayload(id: string, payload: BookingRequestPayload) {
     luggage: payload.luggage ?? 0,
     wifi_requested: payload.wifi ?? true,
     flight_number: payload.flight || null,
-    vehicle_slug: payload.vehicle || null,
     full_name: payload.fullName,
     email: payload.email || null,
     phone_country_code: payload.phoneCountryCode || null,

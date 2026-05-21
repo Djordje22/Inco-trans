@@ -35,12 +35,13 @@ export type BookingRequestPayload = {
   luggage?: number;
   wifi?: boolean;
   flight?: string;
-  vehicle?: string;
   fullName: string;
   email?: string;
   phoneCountryCode?: string;
   phone: string;
   companyName?: string;
+  companyVatNumber?: string;
+  companyAddress?: string;
   preferredCommunication?: PreferredCommunication;
   paymentMethod?: PaymentMethod;
   message?: string;
@@ -50,6 +51,8 @@ export type BookingRequestPayload = {
   passengerPhone?: string;
   reminderRequested?: boolean;
   reminderMinutesBefore?: number;
+  promoCode?: string;
+  promoDiscountPercent?: number;
   termsAccepted?: boolean;
   priceEstimate?: RoutePriceEstimate;
 };
@@ -63,6 +66,8 @@ export type ContactMessagePayload = {
   phoneCountryCode?: string;
   preferredCommunication?: PreferredCommunication;
   companyName?: string;
+  companyVatNumber?: string;
+  companyAddress?: string;
   message: string;
   bookingForOther?: boolean;
   passengerName?: string;
@@ -229,7 +234,7 @@ export function validateBookingRequestPayload(
   if (!pickup || !destination || !dateTime) {
     return { ok: false, error: "Pickup, destination and date/time are required." };
   }
-  if (service === "chauffeur" && (!dropoffDateTime || chauffeurDurationHours < 1)) {
+  if (service === "chauffeur" && (!dropoffDateTime || chauffeurDurationHours < 4)) {
     return { ok: false, error: "Chauffeur service end time and duration are required." };
   }
   if (passengers < 1 || passengers > 4) {
@@ -272,17 +277,18 @@ export function validateBookingRequestPayload(
       dateTime,
       dropoffDateTime: asOptionalString(dropoffDateTime),
       chauffeurDurationHours:
-        service === "chauffeur" ? Math.max(1, chauffeurDurationHours) : undefined,
+        service === "chauffeur" ? Math.max(4, chauffeurDurationHours) : undefined,
       passengers,
       luggage,
       wifi,
       flight: asOptionalString(data.flight),
-      vehicle: asOptionalString(data.vehicle),
       fullName,
       email: asOptionalString(email),
       phoneCountryCode: asOptionalString(data.phoneCountryCode),
       phone,
       companyName: asOptionalString(data.companyName),
+      companyVatNumber: asOptionalString(data.companyVatNumber),
+      companyAddress: asOptionalString(data.companyAddress),
       preferredCommunication: preferredCommunication as PreferredCommunication,
       paymentMethod: paymentMethod as PaymentMethod,
       message: asOptionalString(data.message),
@@ -292,6 +298,8 @@ export function validateBookingRequestPayload(
       passengerPhone: asOptionalString(passengerPhone),
       reminderRequested,
       reminderMinutesBefore: Math.max(1, Math.min(24 * 60, reminderMinutesBefore)),
+      promoCode: asOptionalString(data.promoCode),
+      promoDiscountPercent: Math.max(0, Math.min(100, asNumber(data.promoDiscountPercent) ?? 0)),
       termsAccepted: Boolean(data.termsAccepted),
       priceEstimate: asOptionalPriceEstimate(data.priceEstimate)
     }
@@ -348,6 +356,8 @@ export function validateContactMessagePayload(
       phoneCountryCode: asOptionalString(data.phoneCountryCode),
       preferredCommunication: preferredCommunication as PreferredCommunication,
       companyName: asOptionalString(data.companyName),
+      companyVatNumber: asOptionalString(data.companyVatNumber),
+      companyAddress: asOptionalString(data.companyAddress),
       message,
       bookingForOther,
       passengerName: asOptionalString(passengerName),

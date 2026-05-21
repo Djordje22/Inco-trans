@@ -25,7 +25,7 @@ export const en: Dict = {
     whatsappCta: "Message on WhatsApp"
   },
   badges: {
-    hours247: "Online reservations anytime",
+    hours247: "Online reservations",
     cashAndCard: "Cash and card",
     whatsapp: "WhatsApp booking"
   },
@@ -73,7 +73,7 @@ export const en: Dict = {
     title: "Why Inco Trans",
     items: [
       {
-        title: "Online reservations anytime",
+        title: "Online reservations",
         desc: "Send a reservation whenever it suits you. Calls are available 08:00-22:00 Belgrade time."
       },
       {
@@ -184,7 +184,7 @@ export const en: Dict = {
     message: "Notes",
     submit: "Send request",
     submitNote: "Request sent. We will confirm availability and price as soon as possible.",
-    twentyFourSeven: "Online reservations anytime",
+    twentyFourSeven: "Online reservations",
     cardAndCash: "Cash and card"
   },
   cta: {
@@ -249,7 +249,7 @@ export const en: Dict = {
         chauffeurDurationTitle: "Duration",
         chauffeurDurationDesc: "{hours}h selected for chauffeur service.",
         chauffeurStandardDayNote:
-          "Standard day is 10 hours. Additional hours will be charged at the hourly rate.",
+          "Minimum daily reservation is 4 hours. Additional hours beyond 10 are charged hourly.",
         chauffeurDurationDecreaseAria: "Decrease chauffeur service duration",
         chauffeurDurationIncreaseAria: "Increase chauffeur service duration",
         stopLabel: "Stop {n}",
@@ -261,7 +261,7 @@ export const en: Dict = {
         wifiDesc: "Keep in-car Wi-Fi ready for the ride.",
         waitingTitle: "Waiting hours",
         waitingDesc:
-          "Add hours if you need the driver to wait at your destination.",
+          "Add hours if you need the driver to wait at the pickup location.",
         waitingDecreaseAria: "Decrease waiting hours",
         waitingIncreaseAria: "Increase waiting hours"
       },
@@ -291,6 +291,9 @@ export const en: Dict = {
         serviceCardTitle: "Service",
         tripCardTitle: "Trip",
         vehicleCardTitle: "Vehicle",
+        assignedVehicleTitle: "Vehicle",
+        assignedVehicleDesc:
+          "Our team assigns the vehicle based on availability. You can expect a Mercedes E Class or Audi A6, with more details available on the fleet page.",
         contactCardTitle: "Contact",
         estimateCardTitle: "Estimated price",
         airportArrival: "Arrival",
@@ -306,9 +309,11 @@ export const en: Dict = {
         phoneLabel: "Phone",
         preferredCommunicationLabel: "Preferred communication",
         companyNameLabel: "Company name",
+        companyVatNumberLabel: "VAT number",
+        companyAddressLabel: "Company address",
         messageLabel: "Notes",
         basePriceLabel: "Airport transfer",
-        waitingPriceLabel: "Waiting time ({hours}h at destination)",
+        waitingPriceLabel: "Waiting time ({hours}h at pickup location)",
         distanceOverageLabel:
           "Distance overage ({overage} km beyond {included} km)",
         longDistancePriceLabel: "Long-distance transfer ({distance} km round trip)",
@@ -316,10 +321,10 @@ export const en: Dict = {
           "Chauffeur service up to {hours}h ({included} km included)",
         chauffeurExtraHoursLabel: "Additional hours ({hours}h beyond 10h)",
         chauffeurPricingNote:
-          "{hours}h chauffeur service includes up to {included} km. Billable distance is {distance} km; {overageText}",
+          "{hours}h chauffeur service includes up to {included} km. Billable distance is {distance} km. {overageText}",
         chauffeurOverageText:
           "{overage} km is charged at €{rate}/km.",
-        chauffeurNoOverageText: "there is no additional distance charge.",
+        chauffeurNoOverageText: "There is no additional distance charge.",
         totalEstimateLabel: "Total estimated price",
         estimateDisclaimer: "Estimated price. The final price will be confirmed by our team.",
         billableDistanceLabel: "Billable distance",
@@ -330,6 +335,12 @@ export const en: Dict = {
         paymentCardDesc: "Credit or debit card",
         paymentCash: "Cash",
         paymentCashDesc: "Pay the driver at pickup",
+        promoSummary: "Have a promo code?",
+        promoPlaceholder: "Promo code",
+        promoApply: "Apply",
+        promoApplied: "Promo code applied: {percent}% off.",
+        promoInvalid: "Promo code is not valid.",
+        promoDiscountLabel: "Promo discount ({code})",
         termsPrefix: "I agree to the",
         termsLink: "Terms of Use",
         termsMiddle: "and",
@@ -348,8 +359,13 @@ export const en: Dict = {
       phone: "Phone",
       phonePlaceholder: "XX XXX XXXX",
       countryCode: "Country code",
+      companyInformationTitle: "Company Information",
       companyName: "Company name",
       companyNamePlaceholder: "Company name (optional)",
+      companyVatNumber: "VAT number",
+      companyVatNumberPlaceholder: "VAT number (optional)",
+      companyAddress: "Company address",
+      companyAddressPlaceholder: "Company address (optional)",
       bookingForOtherTitle: "Booking for another person",
       bookingForOtherDesc:
         "Enter passenger details if they differ from your contact details",

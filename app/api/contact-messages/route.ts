@@ -9,6 +9,14 @@ export const runtime = "nodejs";
 function messageWithExtras(payload: ContactMessagePayload) {
   const lines = [payload.message.trim()].filter(Boolean);
 
+  if (payload.companyVatNumber || payload.companyAddress) {
+    lines.push(
+      "Company information:",
+      payload.companyVatNumber ? `VAT/PIB: ${payload.companyVatNumber}` : "",
+      payload.companyAddress ? `Adresa kompanije: ${payload.companyAddress}` : ""
+    );
+  }
+
   if (payload.bookingForOther) {
     lines.push(
       "Rezervacija za drugu osobu:",
@@ -19,7 +27,7 @@ function messageWithExtras(payload: ContactMessagePayload) {
     );
   }
 
-  return lines.join("\n");
+  return lines.filter(Boolean).join("\n");
 }
 
 export async function POST(request: Request) {

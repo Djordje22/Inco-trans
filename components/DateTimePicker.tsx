@@ -25,6 +25,7 @@ type Props = {
   onChange: (next: string) => void;
   id?: string;
   ariaLabel?: string;
+  minValue?: string;
 };
 
 const BCP47: Record<Locale, string> = {
@@ -118,6 +119,15 @@ function parseStoredValue(
   return { date, time: `${pad(hour)}:${pad(minute)}` };
 }
 
+function storedValueToDateTime(value: string | undefined): Date | null {
+  const parsed = parseStoredValue(value ?? "");
+  if (!parsed) return null;
+  const [hours, minutes] = parsed.time.split(":").map(Number);
+  const date = new Date(parsed.date);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
 // Build a 6-row x 7-col matrix. The reference picker starts weeks on Sunday.
 function calendarCells(year: number, month: number, weekStart: number) {
   const first = new Date(year, month, 1);
@@ -163,13 +173,19 @@ export default function DateTimePicker({
   value,
   onChange,
   id,
-  ariaLabel
+  ariaLabel,
+  minValue
 }: Props) {
   const dict = t(locale).modal;
   const pickerDict = dict.dateTimePicker;
   const now = new Date();
   const today = startOfDay(now);
-  const earliestBookable = earliestBookableDateTime(now);
+  const defaultEarliestBookable = earliestBookableDateTime(now);
+  const configuredMin = storedValueToDateTime(minValue);
+  const earliestBookable =
+    configuredMin && configuredMin > defaultEarliestBookable
+      ? configuredMin
+      : defaultEarliestBookable;
   const earliestBookableDay = startOfDay(earliestBookable);
   const earliestBookableTime = `${pad(earliestBookable.getHours())}:${pad(
     earliestBookable.getMinutes()

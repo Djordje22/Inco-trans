@@ -25,7 +25,7 @@ export const ru: Dict = {
     whatsappCta: "Написать в WhatsApp"
   },
   badges: {
-    hours247: "Онлайн-бронирование всегда",
+    hours247: "Онлайн-бронирование",
     cashAndCard: "Наличные и карта",
     whatsapp: "Бронирование в WhatsApp"
   },
@@ -73,7 +73,7 @@ export const ru: Dict = {
     title: "Почему Inco Trans",
     items: [
       {
-        title: "Онлайн-бронирование всегда",
+        title: "Онлайн-бронирование",
         desc: "Отправьте заявку в удобное время. Звонки доступны с 08:00 до 22:00 по времени Белграда."
       },
       {
@@ -185,7 +185,7 @@ export const ru: Dict = {
     message: "Комментарий",
     submit: "Отправить запрос",
     submitNote: "Запрос отправлен. Мы как можно скорее подтвердим доступность и цену.",
-    twentyFourSeven: "Онлайн-бронирование всегда",
+    twentyFourSeven: "Онлайн-бронирование",
     cardAndCash: "Наличные и карта"
   },
   cta: {
@@ -250,7 +250,7 @@ export const ru: Dict = {
         chauffeurDurationTitle: "Длительность",
         chauffeurDurationDesc: "{hours} ч выбрано для шофёр-сервиса.",
         chauffeurStandardDayNote:
-          "Стандартный день — 10 часов. Дополнительные часы оплачиваются по часовому тарифу.",
+          "Минимальное бронирование на день — 4 часа. Дополнительные часы сверх 10 оплачиваются по часам.",
         chauffeurDurationDecreaseAria: "Уменьшить длительность шофёр-сервиса",
         chauffeurDurationIncreaseAria: "Увеличить длительность шофёр-сервиса",
         stopLabel: "Остановка {n}",
@@ -262,7 +262,7 @@ export const ru: Dict = {
         wifiDesc: "Подготовим Wi-Fi в автомобиле к поездке.",
         waitingTitle: "Часы ожидания",
         waitingDesc:
-          "Добавьте часы, если нужно, чтобы водитель ждал в точке назначения.",
+          "Добавьте часы, если нужно, чтобы водитель ждал в месте подачи.",
         waitingDecreaseAria: "Уменьшить часы ожидания",
         waitingIncreaseAria: "Увеличить часы ожидания"
       },
@@ -292,6 +292,9 @@ export const ru: Dict = {
         serviceCardTitle: "Услуга",
         tripCardTitle: "Поездка",
         vehicleCardTitle: "Автомобиль",
+        assignedVehicleTitle: "Автомобиль",
+        assignedVehicleDesc:
+          "Команда назначает автомобиль по доступности. Вы можете ожидать Mercedes E Class или Audi A6, подробнее можно посмотреть на странице автопарка.",
         contactCardTitle: "Контакт",
         estimateCardTitle: "Ориентировочная цена",
         airportArrival: "Прилёт",
@@ -307,9 +310,11 @@ export const ru: Dict = {
         phoneLabel: "Телефон",
         preferredCommunicationLabel: "Предпочтительный способ связи",
         companyNameLabel: "Компания",
+        companyVatNumberLabel: "VAT/PIB",
+        companyAddressLabel: "Адрес компании",
         messageLabel: "Комментарий",
         basePriceLabel: "Трансфер из аэропорта",
-        waitingPriceLabel: "Время ожидания ({hours} ч на месте назначения)",
+        waitingPriceLabel: "Время ожидания ({hours} ч в месте подачи)",
         distanceOverageLabel:
           "Дополнительный километраж ({overage} км сверх {included} км)",
         longDistancePriceLabel: "Дальняя поездка ({distance} км туда и обратно)",
@@ -317,10 +322,10 @@ export const ru: Dict = {
           "Шофёр-сервис до {hours} ч ({included} км включено)",
         chauffeurExtraHoursLabel: "Дополнительные часы ({hours} ч сверх 10 ч)",
         chauffeurPricingNote:
-          "Шофёр-сервис на {hours} ч включает до {included} км. Расчётный километраж: {distance} км; {overageText}",
+          "Шофёр-сервис на {hours} ч включает до {included} км. Расчётный километраж: {distance} км. {overageText}",
         chauffeurOverageText:
           "{overage} км оплачивается по €{rate}/км.",
-        chauffeurNoOverageText: "доплаты за километраж нет.",
+        chauffeurNoOverageText: "Доплаты за километраж нет.",
         totalEstimateLabel: "Итого ориентировочно",
         estimateDisclaimer: "Ориентировочная цена. Финальную цену подтвердит наша команда.",
         billableDistanceLabel: "Расчётный километраж",
@@ -331,6 +336,12 @@ export const ru: Dict = {
         paymentCardDesc: "Кредитная или дебетовая карта",
         paymentCash: "Наличные",
         paymentCashDesc: "Оплата водителю при подаче",
+        promoSummary: "Есть промокод?",
+        promoPlaceholder: "Промокод",
+        promoApply: "Применить",
+        promoApplied: "Промокод применён: скидка {percent}%.",
+        promoInvalid: "Промокод недействителен.",
+        promoDiscountLabel: "Промокод ({code})",
         termsPrefix: "Я согласен/согласна с",
         termsLink: "Условиями использования",
         termsMiddle: "и",
@@ -349,8 +360,13 @@ export const ru: Dict = {
       phone: "Телефон",
       phonePlaceholder: "XX XXX XXXX",
       countryCode: "Код страны",
+      companyInformationTitle: "Информация о компании",
       companyName: "Компания",
       companyNamePlaceholder: "Название компании (необязательно)",
+      companyVatNumber: "VAT/PIB",
+      companyVatNumberPlaceholder: "VAT/PIB (необязательно)",
+      companyAddress: "Адрес компании",
+      companyAddressPlaceholder: "Адрес компании (необязательно)",
       bookingForOtherTitle: "Бронирую для другого человека",
       bookingForOtherDesc:
         "Укажите данные пассажира, если они отличаются от ваших контактов",
