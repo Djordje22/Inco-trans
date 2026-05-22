@@ -120,6 +120,16 @@ export default function LoginForm({ locale, dict }: Props) {
           {dict.auth.signup}
         </Link>
       </p>
+
+      <p className="mt-6 text-center text-xs text-white/30">
+        {dict.auth.staffLoginPrompt}{" "}
+        <Link
+          href="/staff/login"
+          className="text-white/50 hover:text-white/70 underline underline-offset-2"
+        >
+          {dict.auth.staffLoginLink}
+        </Link>
+      </p>
     </form>
   );
 }

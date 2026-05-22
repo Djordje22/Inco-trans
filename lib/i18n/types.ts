@@ -350,6 +350,10 @@ export type Dict = {
     signOut: string;
     profile: string;
     history: string;
+    upcomingTitle: string;
+    pastTitle: string;
+    staffLoginPrompt: string;
+    staffLoginLink: string;
     email: string;
     password: string;
     confirmPassword: string;

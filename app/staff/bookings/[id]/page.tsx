@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getStaffSession } from "@/lib/staff/session";
+import { getStaffSession, getStaffDashboardSession } from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Booking Details — Staff", robots: "noindex" };
@@ -30,6 +30,7 @@ type BookingRow = {
   message: string | null;
   price_estimate: { totalPrice?: number; currency?: string } | null;
   status: string;
+  assigned_vehicle_id: string | null;
   created_at: string;
 };
 
@@ -44,8 +45,15 @@ const formatDate = (value: string) => {
 };
 
 export default async function StaffBookingPage({ params }: Props) {
+  // Accept either per-booking session or dashboard session
   const session = getStaffSession();
-  if (!session || session.bookingId !== params.id) {
+  const dashboardSession = getStaffDashboardSession();
+
+  if (session && session.bookingId === params.id) {
+    // OK — per-booking access
+  } else if (dashboardSession) {
+    // OK — dashboard-wide access
+  } else {
     redirect("/staff/login?error=invalid");
   }
 
@@ -71,9 +79,19 @@ export default async function StaffBookingPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-ink-950 text-white p-4 sm:p-8">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-6">
-          <h1 className="font-display text-xl font-semibold">Booking Details</h1>
-          <p className="text-sm text-white/50">ID: {b.id}</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-xl font-semibold">Booking Details</h1>
+            <p className="text-sm text-white/50">ID: {b.id}</p>
+          </div>
+          {dashboardSession && (
+            <a
+              href="/staff/dashboard"
+              className="text-sm text-gold-400 hover:text-gold-300"
+            >
+              &larr; Back to Dashboard
+            </a>
+          )}
         </div>
 
         <div className="glass rounded-2xl p-6 space-y-6">

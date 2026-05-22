@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { getStaffChallenge, setStaffSessionCookie } from "@/lib/staff/session";
+import {
+  getStaffChallenge,
+  setStaffSessionCookie,
+  setStaffDashboardCookie
+} from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -51,24 +55,16 @@ export async function POST(request: Request) {
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
-  // Rate limit check
   if (await isRateLimited(supabase, ip)) {
     return NextResponse.json({ error: "Too many attempts." }, { status: 429 });
   }
 
   const body = await request.json().catch(() => null);
-  if (!body?.email || !body?.password || !body?.bookingId) return fail();
+  if (!body?.email || !body?.password) return fail();
 
   const { email, password, bookingId } = body;
 
-  // 1. Validate challenge cookie
-  const challenge = getStaffChallenge();
-  if (!challenge || challenge.bookingId !== bookingId) {
-    await logAttempt(supabase, ip, email, false);
-    return fail();
-  }
-
-  // 2. Validate credentials (constant-time comparison)
+  // Validate credentials (constant-time comparison)
   const expectedEmail = process.env.STAFF_ACCESS_EMAIL ?? "";
   const expectedPassword = process.env.STAFF_ACCESS_PASSWORD ?? "";
 
@@ -82,10 +78,21 @@ export async function POST(request: Request) {
     return fail();
   }
 
-  // 3. Create staff session cookie, scoped to the token's expiry
-  setStaffSessionCookie(bookingId, challenge.exp);
+  // Two modes: per-booking (from email link) or dashboard (standalone login)
+  if (bookingId) {
+    // Per-booking access: validate challenge cookie
+    const challenge = getStaffChallenge();
+    if (!challenge || challenge.bookingId !== bookingId) {
+      await logAttempt(supabase, ip, email, false);
+      return fail();
+    }
+    setStaffSessionCookie(bookingId, challenge.exp);
+    await logAttempt(supabase, ip, email, true);
+    return NextResponse.json({ redirectTo: `/staff/bookings/${bookingId}` });
+  }
 
+  // Dashboard login: set dashboard-wide session cookie (12h)
+  setStaffDashboardCookie();
   await logAttempt(supabase, ip, email, true);
-
-  return NextResponse.json({ redirectTo: `/staff/bookings/${bookingId}` });
+  return NextResponse.json({ redirectTo: "/staff/dashboard" });
 }

@@ -21,11 +21,18 @@ export default function StaffLoginForm() {
     const res = await fetch("/api/staff/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, bookingId })
+      body: JSON.stringify({
+        email,
+        password,
+        ...(bookingId ? { bookingId } : {})
+      })
     });
 
     if (!res.ok) {
-      setError("Invalid credentials or expired session.");
+      const data = await res.json().catch(() => null);
+      setError(data?.error === "Too many attempts."
+        ? "Too many attempts. Please wait a few minutes."
+        : "Invalid credentials.");
       setLoading(false);
       return;
     }
@@ -36,8 +43,6 @@ export default function StaffLoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input type="hidden" name="bookingId" value={bookingId} />
-
       <div>
         <label htmlFor="staffEmail" className="block text-sm text-white/70 mb-1">
           Email
@@ -76,7 +81,7 @@ export default function StaffLoginForm() {
 
       <button
         type="submit"
-        disabled={loading || !bookingId}
+        disabled={loading}
         className="btn-gold w-full justify-center"
       >
         {loading ? "..." : "Sign in"}
