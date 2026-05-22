@@ -63,10 +63,12 @@ import {
   MIN_LUGGAGE,
   MIN_PASSENGERS
 } from "@/lib/booking-constraints";
-import { siteConfig, type Locale } from "@/lib/site-config";
+import { siteConfig, routeMap, type Locale } from "@/lib/site-config";
 import type { RoutePriceEstimate } from "@/lib/pricing";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import WhatsAppMark from "./icons/WhatsAppMark";
 import DateTimePicker from "./DateTimePicker";
+import CountryCodeSelect from "./CountryCodeSelect";
 
 // ---------- Context ----------
 
@@ -510,6 +512,7 @@ type TransferData = {
   promoCode: string;
   promoCodeApplied: boolean;
   promoCodeError: string;
+  linkProfile: boolean;
 };
 
 const EMPTY: TransferData = {
@@ -548,41 +551,10 @@ const EMPTY: TransferData = {
   reminderRequested: false,
   promoCode: "",
   promoCodeApplied: false,
-  promoCodeError: ""
+  promoCodeError: "",
+  linkProfile: false
 };
 
-const PHONE_COUNTRY_CODES = [
-  { code: "+381", flag: "🇷🇸", name: "Serbia" },
-  { code: "+1", flag: "🇺🇸", name: "United States" },
-  { code: "+44", flag: "🇬🇧", name: "United Kingdom" },
-  { code: "+49", flag: "🇩🇪", name: "Germany" },
-  { code: "+33", flag: "🇫🇷", name: "France" },
-  { code: "+39", flag: "🇮🇹", name: "Italy" },
-  { code: "+34", flag: "🇪🇸", name: "Spain" },
-  { code: "+7", flag: "🇷🇺", name: "Russia" },
-  { code: "+971", flag: "🇦🇪", name: "United Arab Emirates" },
-  { code: "+90", flag: "🇹🇷", name: "Turkey" },
-  { code: "+43", flag: "🇦🇹", name: "Austria" },
-  { code: "+41", flag: "🇨🇭", name: "Switzerland" },
-  { code: "+31", flag: "🇳🇱", name: "Netherlands" },
-  { code: "+32", flag: "🇧🇪", name: "Belgium" },
-  { code: "+30", flag: "🇬🇷", name: "Greece" },
-  { code: "+385", flag: "🇭🇷", name: "Croatia" },
-  { code: "+386", flag: "🇸🇮", name: "Slovenia" },
-  { code: "+382", flag: "🇲🇪", name: "Montenegro" },
-  { code: "+387", flag: "🇧🇦", name: "Bosnia and Herzegovina" },
-  { code: "+389", flag: "🇲🇰", name: "North Macedonia" },
-  { code: "+355", flag: "🇦🇱", name: "Albania" },
-  { code: "+359", flag: "🇧🇬", name: "Bulgaria" },
-  { code: "+40", flag: "🇷🇴", name: "Romania" },
-  { code: "+36", flag: "🇭🇺", name: "Hungary" },
-  { code: "+420", flag: "🇨🇿", name: "Czech Republic" },
-  { code: "+48", flag: "🇵🇱", name: "Poland" },
-  { code: "+61", flag: "🇦🇺", name: "Australia" },
-  { code: "+1", flag: "🇨🇦", name: "Canada" },
-  { code: "+86", flag: "🇨🇳", name: "China" },
-  { code: "+81", flag: "🇯🇵", name: "Japan" }
-];
 
 const isEmailValid = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -733,7 +705,8 @@ function TransferFlow({
         promoCode: data.promoCodeApplied ? data.promoCode.trim() : "",
         promoDiscountPercent: data.promoCodeApplied ? PROMO_DISCOUNT_PERCENT : 0,
         termsAccepted: data.termsAccepted,
-        priceEstimate: data.routeEstimate
+        priceEstimate: data.routeEstimate,
+        linkProfile: data.linkProfile
       })
     });
 
@@ -1802,113 +1775,6 @@ function PaymentCard({
   );
 }
 
-function CountryCodeSelect({
-  value,
-  onChange,
-  ariaLabel
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  ariaLabel: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const selected =
-    PHONE_COUNTRY_CODES.find((item) => item.code === value) ?? PHONE_COUNTRY_CODES[0];
-  const normalizedQuery = query.trim().toLowerCase();
-  const filtered = normalizedQuery
-    ? PHONE_COUNTRY_CODES.filter(
-        (item) =>
-          item.name.toLowerCase().includes(normalizedQuery) ||
-          item.code.includes(normalizedQuery) ||
-          item.flag.includes(normalizedQuery)
-      )
-    : PHONE_COUNTRY_CODES;
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={rootRef} className="relative w-32 shrink-0">
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((next) => !next);
-          setQuery("");
-        }}
-        className="glass-input flex w-full items-center justify-between gap-1 px-2.5 text-left"
-      >
-        <span className="min-w-0 truncate">
-          {selected.flag} {selected.code}
-        </span>
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/50" aria-hidden="true" />
-      </button>
-      {open ? (
-        <div className="absolute left-0 top-full z-50 mt-2 w-[min(90vw,22rem)] overflow-hidden rounded-xl border border-white/12 bg-ink-900 shadow-2xl">
-          <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5">
-            <Search className="h-4 w-4 shrink-0 text-white/45" aria-hidden="true" />
-            <input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search country..."
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/40"
-              autoFocus
-            />
-          </div>
-          <div role="listbox" className="max-h-80 overflow-y-auto py-1">
-            {filtered.map((item) => {
-              const active = item.code === value;
-              return (
-                <button
-                  key={`${item.name}-${item.code}`}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => {
-                    onChange(item.code);
-                    setOpen(false);
-                    setQuery("");
-                  }}
-                  className={
-                    "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors " +
-                    (active ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/[0.07]")
-                  }
-                >
-                  <span className="w-7 text-center text-sm">{active ? "✓" : item.flag}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {item.name}
-                  </span>
-                  <span className="shrink-0 text-sm font-semibold text-white/55">
-                    {item.code}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 // ---------- Let us handle flow (1 step) ----------
 
 function HandleFlow({
@@ -2020,7 +1886,47 @@ function ContactFields({
   messagePlaceholder?: string;
   showReminder?: boolean;
 }) {
+  const authDict = t(locale).auth;
   const dict = t(locale).modal.contact;
+  const [authUser, setAuthUser] = useState<{ id: string } | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setAuthUser(user ? { id: user.id } : null);
+      setAuthChecked(true);
+    });
+  }, []);
+
+  const handleLinkToggle = async (checked: boolean) => {
+    set("linkProfile", checked);
+    if (!checked || !authUser) return;
+
+    // Autofill from profile + auth user email as fallback
+    const supabase = getSupabaseBrowserClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name, email, phone_country_code, phone, company_name, company_vat_number, company_address")
+      .eq("id", authUser.id)
+      .single();
+
+    if (profile) {
+      const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
+      if (fullName) set("fullName", fullName);
+      if (profile.email) set("email", profile.email);
+      else if (user?.email) set("email", user.email);
+      if (profile.phone_country_code) set("phoneCountryCode", profile.phone_country_code);
+      if (profile.phone) set("phone", profile.phone);
+      if (profile.company_name) set("companyName", profile.company_name);
+      if (profile.company_vat_number) set("companyVatNumber", profile.company_vat_number);
+      if (profile.company_address) set("companyAddress", profile.company_address);
+    } else if (user?.email) {
+      // Profile fetch failed (columns may not exist yet) — still fill email
+      set("email", user.email);
+    }
+  };
   const communicationOptions: {
     value: PreferredCommunication;
     label: string;
@@ -2045,6 +1951,24 @@ function ContactFields({
 
   return (
     <div className="space-y-4">
+      {authChecked && (
+        authUser ? (
+          <ToggleCard
+            checked={data.linkProfile}
+            onChange={handleLinkToggle}
+            title={authDict.linkProfileToggle}
+            description={authDict.linkProfileDesc}
+          />
+        ) : (
+          <a
+            href={routeMap.login[locale]}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3 text-sm text-gold-400 hover:bg-white/5 transition-colors"
+          >
+            <UserRound className="h-4 w-4" aria-hidden="true" />
+            {authDict.linkProfileSignIn}
+          </a>
+        )
+      )}
       <Field label={dict.fullName} required>
         <input
           type="text"

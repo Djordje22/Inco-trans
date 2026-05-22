@@ -96,6 +96,36 @@ export const routeMap = {
     sr: "/politika-privatnosti",
     en: "/en/privacy",
     ru: "/ru/privacy"
+  },
+  login: {
+    sr: "/prijava",
+    en: "/en/login",
+    ru: "/ru/login"
+  },
+  signup: {
+    sr: "/registracija",
+    en: "/en/signup",
+    ru: "/ru/signup"
+  },
+  forgotPassword: {
+    sr: "/zaboravljena-lozinka",
+    en: "/en/forgot-password",
+    ru: "/ru/forgot-password"
+  },
+  resetPassword: {
+    sr: "/nova-lozinka",
+    en: "/en/reset-password",
+    ru: "/ru/reset-password"
+  },
+  profile: {
+    sr: "/profil",
+    en: "/en/profile",
+    ru: "/ru/profile"
+  },
+  bookingHistory: {
+    sr: "/istorija",
+    en: "/en/history",
+    ru: "/ru/history"
   }
 } as const;
 

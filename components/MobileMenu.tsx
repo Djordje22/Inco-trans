@@ -7,11 +7,16 @@ import {
   X,
   PlaneLanding,
   CarTaxiFront,
-  Route
+  Route,
+  User,
+  UserCircle,
+  ClipboardList,
+  LogOut
 } from "lucide-react";
 import { routeMap, type Locale } from "@/lib/site-config";
 import { t, type ServiceKey } from "@/lib/i18n";
 import { useReservation } from "./ReservationModal";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Props = {
   locale: Locale;
@@ -32,8 +37,16 @@ const SERVICE_ROUTE: Record<ServiceKey, keyof typeof routeMap> = {
 
 export default function MobileMenu({ locale, flatLinks }: Props) {
   const [open, setOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
   const { openModal } = useReservation();
   const dict = t(locale);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setLoggedIn(!!data.user);
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -139,6 +152,57 @@ export default function MobileMenu({ locale, flatLinks }: Props) {
                 </li>
               ))}
             </ul>
+
+            <div className="hairline my-5" />
+
+            {loggedIn ? (
+              <ul className="space-y-1">
+                <li>
+                  <Link
+                    href={routeMap.profile[locale]}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-white/85 hover:bg-white/5 hover:text-white"
+                  >
+                    <UserCircle className="h-4 w-4" aria-hidden="true" />
+                    {dict.auth.profile}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={routeMap.bookingHistory[locale]}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-white/85 hover:bg-white/5 hover:text-white"
+                  >
+                    <ClipboardList className="h-4 w-4" aria-hidden="true" />
+                    {dict.auth.history}
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const supabase = getSupabaseBrowserClient();
+                      await supabase.auth.signOut();
+                      setOpen(false);
+                      window.location.href = routeMap.home[locale];
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-white/85 hover:bg-white/5 hover:text-white"
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
+                    {dict.auth.signOut}
+                  </button>
+                </li>
+              </ul>
+            ) : (
+              <Link
+                href={routeMap.login[locale]}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-white/85 hover:bg-white/5 hover:text-white"
+              >
+                <User className="h-4 w-4" aria-hidden="true" />
+                {dict.auth.login}
+              </Link>
+            )}
 
             <div className="hairline my-5" />
             <button

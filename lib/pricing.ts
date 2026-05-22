@@ -23,9 +23,9 @@ export type RoutePriceEstimate = {
 export const INCLUDED_DISTANCE_KM = 25;
 export const BASE_TRANSFER_PRICE = 30;
 export const WAITING_HOURLY_RATE = 30;
-export const AIRPORT_DISTANCE_OVERAGE_RATE = 1;
-export const LONG_DISTANCE_RATE = 1;
-export const CHAUFFEUR_DISTANCE_OVERAGE_RATE = 1;
+export const AIRPORT_DISTANCE_OVERAGE_RATE = 1.15;
+export const LONG_DISTANCE_RATE = 1.15;
+export const CHAUFFEUR_DISTANCE_OVERAGE_RATE = 1.15;
 export const CHAUFFEUR_EXTRA_HOURLY_RATE = 30;
 const CHAUFFEUR_DURATION_GRACE_MINUTES = 15;
 

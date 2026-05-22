@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { validateBookingRequestPayload } from "@/lib/backend/payloads";
 import { sendReservationEmails } from "@/lib/email/reservation-receipt";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { generateStaffToken } from "@/lib/staff/token";
 import type { BookingRequestPayload } from "@/lib/backend/payloads";
 
 export const runtime = "nodejs";
@@ -53,7 +56,7 @@ function messageWithExtras(payload: BookingRequestPayload) {
   return lines.filter(Boolean).join("\n");
 }
 
-function bookingInsertPayload(id: string, payload: BookingRequestPayload) {
+function bookingInsertPayload(id: string, payload: BookingRequestPayload, userId: string | null) {
   return {
     id,
     locale: payload.locale,
@@ -73,6 +76,8 @@ function bookingInsertPayload(id: string, payload: BookingRequestPayload) {
     phone_country_code: payload.phoneCountryCode || null,
     phone: payload.phone,
     company_name: payload.companyName || null,
+    company_vat_number: payload.companyVatNumber || null,
+    company_address: payload.companyAddress || null,
     preferred_communication: payload.preferredCommunication || null,
     payment_method: payload.paymentMethod || "cash",
     pickup_place: payload.pickupPlace ?? null,
@@ -82,6 +87,7 @@ function bookingInsertPayload(id: string, payload: BookingRequestPayload) {
     price_estimate: payload.priceEstimate ?? null,
     message: messageWithExtras(payload) || null,
     terms_accepted: payload.termsAccepted ?? false,
+    user_id: userId,
     status: "new"
   };
 }
@@ -124,7 +130,34 @@ export async function POST(request: Request) {
 
   const payload = parsed.value;
   const id = randomUUID();
-  const insertPayload = bookingInsertPayload(id, payload);
+
+  // Resolve authenticated user for account-linked bookings
+  let userId: string | null = null;
+  if (payload.linkProfile) {
+    try {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const anonKey =
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      const cookieStore = cookies();
+      const userClient = createServerClient(url, anonKey!, {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet) {
+            for (const { name, value, options } of cookiesToSet) {
+              cookieStore.set(name, value, options);
+            }
+          }
+        }
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user) userId = user.id;
+    } catch {
+      // If auth check fails, proceed without linking
+    }
+  }
+
+  const insertPayload = bookingInsertPayload(id, payload, userId);
   let { error } = await supabase.from("booking_requests").insert(insertPayload);
 
   if (error?.code === "PGRST204") {
@@ -165,7 +198,25 @@ export async function POST(request: Request) {
     }
   }
 
-  const emailResult = await sendReservationEmails({ bookingId: id, payload });
+  // Generate staff access token for admin email
+  let staffAccessUrl: string | undefined;
+  try {
+    if (process.env.STAFF_ACCESS_TOKEN_SECRET) {
+      const { token, jtiHash, tokenHash, expiresAt } = generateStaffToken(id);
+      await supabase.from("staff_access_links").insert({
+        booking_request_id: id,
+        token_hash: tokenHash,
+        jti_hash: jtiHash,
+        expires_at: expiresAt.toISOString()
+      });
+      const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      staffAccessUrl = `${origin}/staff/access?token=${token}`;
+    }
+  } catch (e) {
+    console.error("Staff token generation failed:", e);
+  }
+
+  const emailResult = await sendReservationEmails({ bookingId: id, payload, staffAccessUrl });
   if (emailResult.reasons.length > 0) {
     console.error("Reservation email issue:", emailResult.reasons.join(" | "));
   }

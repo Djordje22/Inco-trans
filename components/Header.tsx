@@ -3,6 +3,7 @@ import Logo from "./Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import MobileMenu from "./MobileMenu";
 import NavServicesMenu from "./NavServicesMenu";
+import AccountMenu from "./AccountMenu";
 import { ReservationTrigger } from "./ReservationModal";
 import {
   siteConfig,
@@ -65,6 +66,9 @@ export default function Header({ locale, routeKey }: Props) {
           <ReservationTrigger className="hidden sm:inline-flex btn-gold !py-2 !px-3 text-sm">
             {dict.nav.requestQuote}
           </ReservationTrigger>
+          <div className="hidden lg:block">
+            <AccountMenu locale={locale} />
+          </div>
           <MobileMenu
             locale={locale}
             flatLinks={flatLinks}

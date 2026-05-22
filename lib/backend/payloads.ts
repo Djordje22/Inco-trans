@@ -55,6 +55,7 @@ export type BookingRequestPayload = {
   promoDiscountPercent?: number;
   termsAccepted?: boolean;
   priceEstimate?: RoutePriceEstimate;
+  linkProfile?: boolean;
 };
 
 export type ContactMessagePayload = {

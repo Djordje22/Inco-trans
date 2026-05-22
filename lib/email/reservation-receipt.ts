@@ -4,6 +4,7 @@ import type { BookingRequestPayload } from "@/lib/backend/payloads";
 type SendReservationReceiptArgs = {
   bookingId: string;
   payload: BookingRequestPayload;
+  staffAccessUrl?: string;
 };
 
 type SendReservationReceiptResult =
@@ -574,7 +575,8 @@ function buildReservationReminderEmail({
 
 function buildReservationAdminEmail({
   bookingId,
-  payload
+  payload,
+  staffAccessUrl
 }: SendReservationReceiptArgs) {
   const copy = copyForLocale("sr");
   const route = `${payload.pickup} -> ${payload.destination}`;
@@ -680,6 +682,7 @@ function buildReservationAdminEmail({
               <tr>
                 <td style="padding:28px;">
                   <p style="margin:0 0 18px;color:#374151;font-size:15px;line-height:1.7;">Novi zahtev za rezervaciju je poslat preko sajta.</p>
+                  ${staffAccessUrl ? `<p style="margin:0 0 18px;"><a href="${escapeHtml(staffAccessUrl)}" style="display:inline-block;padding:10px 20px;background:#d7b56d;color:#111;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Pregledaj rezervaciju</a></p>` : ""}
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
                     ${rows}
                   </table>
@@ -694,6 +697,7 @@ function buildReservationAdminEmail({
 
   const text = [
     "Novi zahtev za rezervaciju",
+    staffAccessUrl ? `\nPregledaj rezervaciju: ${staffAccessUrl}` : "",
     "",
     `Broj zahteva: ${bookingId}`,
     `Izvor: ${payload.source}`,
@@ -892,7 +896,8 @@ async function scheduleReservationReminderEmail({
 
 export async function sendReservationEmails({
   bookingId,
-  payload
+  payload,
+  staffAccessUrl
 }: SendReservationReceiptArgs): Promise<SendReservationEmailsResult> {
   const reasons: string[] = [];
   const receiptResult = await sendReservationReceiptEmail({ bookingId, payload });
@@ -932,7 +937,7 @@ export async function sendReservationEmails({
     };
   }
 
-  const email = buildReservationAdminEmail({ bookingId, payload });
+  const email = buildReservationAdminEmail({ bookingId, payload, staffAccessUrl: staffAccessUrl });
   const adminResult = await sendResendEmail({
     apiKey,
     from,
