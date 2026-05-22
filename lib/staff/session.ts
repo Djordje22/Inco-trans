@@ -21,17 +21,27 @@ type StaffSession = {
 };
 
 export function setStaffChallengeCookie(bookingId: string, tokenExp: number) {
+  const { name, value, options } = buildStaffChallengeCookie(bookingId, tokenExp);
+  cookies().set(name, value, options);
+}
+
+/** Build challenge cookie data without setting it - use when attaching to a NextResponse. */
+export function buildStaffChallengeCookie(bookingId: string, tokenExp: number) {
   const payload = JSON.stringify({ bookingId, exp: tokenExp });
   const sig = sign(payload);
   const value = `${Buffer.from(payload).toString("base64url")}.${sig}`;
 
-  cookies().set(CHALLENGE_COOKIE, value, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/staff",
-    maxAge: Math.max(0, tokenExp - Math.floor(Date.now() / 1000))
-  });
+  return {
+    name: CHALLENGE_COOKIE,
+    value,
+    options: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      path: "/staff",
+      maxAge: Math.max(0, tokenExp - Math.floor(Date.now() / 1000))
+    }
+  };
 }
 
 export function getStaffChallenge(): { bookingId: string; exp: number } | null {
@@ -107,18 +117,28 @@ type DashboardSession = {
 };
 
 export function setStaffDashboardCookie() {
+  const { name, value, options } = buildStaffDashboardCookie();
+  cookies().set(name, value, options);
+}
+
+/** Build dashboard cookie data without setting it - use when attaching to a NextResponse. */
+export function buildStaffDashboardCookie() {
   const exp = Math.floor(Date.now() / 1000) + DASHBOARD_EXPIRY_HOURS * 3600;
   const payload = JSON.stringify({ role: "staff", exp } satisfies DashboardSession);
   const sig = sign(payload);
   const value = `${Buffer.from(payload).toString("base64url")}.${sig}`;
 
-  cookies().set(DASHBOARD_COOKIE, value, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/staff",
-    maxAge: DASHBOARD_EXPIRY_HOURS * 3600
-  });
+  return {
+    name: DASHBOARD_COOKIE,
+    value,
+    options: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      path: "/",
+      maxAge: DASHBOARD_EXPIRY_HOURS * 3600
+    }
+  };
 }
 
 export function getStaffDashboardSession(): DashboardSession | null {
