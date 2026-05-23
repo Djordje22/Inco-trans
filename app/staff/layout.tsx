@@ -3,7 +3,7 @@ import "../globals.css";
 
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="sr" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans bg-ink-950 text-white antialiased">
         {children}
       </body>

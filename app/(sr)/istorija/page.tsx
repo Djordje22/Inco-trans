@@ -1,5 +1,6 @@
 import PageShell from "@/components/PageShell";
 import BookingHistory from "@/components/auth/BookingHistory";
+import LoyaltyProgress from "@/components/auth/LoyaltyProgress";
 import { buildMetadata } from "@/lib/metadata";
 import { t } from "@/lib/i18n";
 
@@ -23,6 +24,9 @@ export default function IstorijaPage() {
               {dict.auth.historyTitle}
             </h1>
             <p className="mt-2 text-sm text-white/60">{dict.auth.historySubtitle}</p>
+          </div>
+          <div className="mb-8">
+            <LoyaltyProgress locale={locale} dict={dict} />
           </div>
           <BookingHistory locale={locale} dict={dict} />
         </div>

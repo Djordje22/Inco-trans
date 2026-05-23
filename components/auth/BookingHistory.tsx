@@ -44,7 +44,11 @@ const serviceLabel = (service: string, locale: Locale) => {
   return labels[service]?.[locale] ?? service;
 };
 
-const statusLabel = (status: string, locale: Locale) => {
+const statusLabel = (status: string, locale: Locale, historicalSection = false) => {
+  if (historicalSection) {
+    return { sr: "Prethodno", en: "Past", ru: "Прошедшая" }[locale];
+  }
+
   const labels: Record<string, Record<Locale, string>> = {
     new: { sr: "Novo", en: "New", ru: "Новый" },
     contacted: { sr: "Kontaktirano", en: "Contacted", ru: "Связались" },
@@ -54,6 +58,11 @@ const statusLabel = (status: string, locale: Locale) => {
     archived: { sr: "Arhivirano", en: "Archived", ru: "Архивировано" }
   };
   return labels[status]?.[locale] ?? status;
+};
+
+const statusColor = (status: string, historicalSection = false) => {
+  if (historicalSection) return "bg-white/10 text-white/50";
+  return STATUS_COLORS[status] ?? "bg-white/10 text-white/50";
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -93,13 +102,14 @@ export default function BookingHistory({ locale, dict }: Props) {
         return;
       }
 
-      const { data } = await supabase
-        .from("booking_requests")
-        .select("id, service, pickup, destination, pickup_at, status, full_name, email, phone, passengers, luggage, wifi_requested, flight_number, waiting_hours, message, payment_method, price_estimate, assigned_vehicle_id, created_at")
-        .eq("user_id", user.id)
-        .order("pickup_at", { ascending: false });
+      const res = await fetch("/api/user-bookings");
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
+      const { bookings: fetched } = await res.json();
 
-      const rows = (data as BookingRow[]) ?? [];
+      const rows = (fetched as BookingRow[]) ?? [];
       setBookings(rows);
 
       // Fetch vehicle names for assigned bookings
@@ -153,6 +163,7 @@ export default function BookingHistory({ locale, dict }: Props) {
           expandedId={expandedId}
           onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
           vehicleNames={vehicleNames}
+          historicalSection={false}
         />
       )}
 
@@ -165,6 +176,7 @@ export default function BookingHistory({ locale, dict }: Props) {
           expandedId={expandedId}
           onToggle={(id) => setExpandedId(expandedId === id ? null : id)}
           vehicleNames={vehicleNames}
+          historicalSection
         />
       )}
     </div>
@@ -179,7 +191,8 @@ function BookingSection({
   dict,
   expandedId,
   onToggle,
-  vehicleNames
+  vehicleNames,
+  historicalSection
 }: {
   title: string;
   icon?: React.ReactNode;
@@ -189,6 +202,7 @@ function BookingSection({
   expandedId: string | null;
   onToggle: (id: string) => void;
   vehicleNames: Record<string, string>;
+  historicalSection: boolean;
 }) {
   return (
     <div>
@@ -214,8 +228,8 @@ function BookingSection({
                     <span className="text-sm font-medium text-white/90">
                       {serviceLabel(b.service, locale)}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[b.status] ?? "bg-white/10 text-white/50"}`}>
-                      {statusLabel(b.status, locale)}
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(b.status, historicalSection)}`}>
+                      {statusLabel(b.status, locale, historicalSection)}
                     </span>
                     {b.status === "confirmed" && vehicleName && (
                       <span className="text-xs text-green-400 inline-flex items-center gap-1">

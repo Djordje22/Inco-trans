@@ -53,6 +53,7 @@ export type BookingRequestPayload = {
   reminderMinutesBefore?: number;
   promoCode?: string;
   promoDiscountPercent?: number;
+  promoId?: string;
   termsAccepted?: boolean;
   priceEstimate?: RoutePriceEstimate;
   linkProfile?: boolean;

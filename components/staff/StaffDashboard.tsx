@@ -10,6 +10,18 @@ import {
   Send,
   CircleDollarSign
 } from "lucide-react";
+import {
+  airportDirectionLabel,
+  communicationLabel,
+  formatStaffAmount,
+  formatStaffDate,
+  paymentMethodLabel,
+  paymentStatusLabel,
+  serviceLabel,
+  statusLabel,
+  TERMINAL_STATUSES,
+  yesNoLabel
+} from "@/lib/staff/labels";
 
 type Vehicle = {
   id: string;
@@ -73,28 +85,14 @@ const PAYMENT_STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-500/20 text-red-300"
 };
 
-const serviceLabel = (service: string) => {
-  const labels: Record<string, string> = {
-    airport: "Airport transfer",
-    chauffeur: "Chauffeur service",
-    business: "Long-distance",
-    other: "Other"
+const statusBadge = (booking: Booking, historicalSection: boolean) => {
+  return {
+    label: statusLabel(booking.status, historicalSection),
+    className:
+      historicalSection && !TERMINAL_STATUSES.has(booking.status)
+        ? "bg-white/10 text-white/50"
+        : STATUS_COLORS[booking.status] ?? "bg-white/10 text-white/50"
   };
-  return labels[service] ?? service;
-};
-
-const formatDate = (value: string) => {
-  const d = new Date(value);
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(d);
-};
-
-const formatAmount = (amountMinor: number, currency: string) => {
-  const value = amountMinor / 100;
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: Number.isInteger(value) ? 0 : 2
-  }).format(value);
 };
 
 export default function StaffDashboard({ bookings: initialBookings, vehicles }: Props) {
@@ -108,6 +106,10 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
   const [paymentAmount, setPaymentAmount] = useState<Record<string, string>>({});
   const [sendingPayment, setSendingPayment] = useState<string | null>(null);
   const [paymentResult, setPaymentResult] = useState<Record<string, "success" | "error">>({});
+
+  // Complete booking state
+  const [completing, setCompleting] = useState<string | null>(null);
+  const [completeResult, setCompleteResult] = useState<Record<string, "success" | "error" | "loyalty">>({});
 
   const now = new Date();
   const upcoming = bookings.filter(
@@ -192,10 +194,45 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
     }
   };
 
+  const handleComplete = async (bookingId: string) => {
+    setCompleting(bookingId);
+    setCompleteResult((prev) => ({ ...prev, [bookingId]: undefined as any }));
+
+    try {
+      const res = await fetch("/api/staff/complete-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCompleteResult((prev) => ({
+          ...prev,
+          [bookingId]: data.loyaltyCodeGenerated ? "loyalty" : "success"
+        }));
+        setBookings((prev) =>
+          prev.map((b) => (b.id === bookingId ? { ...b, status: "completed" } : b))
+        );
+      } else {
+        const data = await res.json();
+        if (data.error === "already_completed") {
+          setCompleteResult((prev) => ({ ...prev, [bookingId]: "success" }));
+        } else {
+          setCompleteResult((prev) => ({ ...prev, [bookingId]: "error" }));
+        }
+      }
+    } catch {
+      setCompleteResult((prev) => ({ ...prev, [bookingId]: "error" }));
+    } finally {
+      setCompleting(null);
+    }
+  };
+
   return (
     <div className="space-y-10">
       <BookingSection
-        title="Active & Upcoming"
+        title="Aktivne i predstojeće"
         count={upcoming.length}
         bookings={upcoming}
         vehicles={vehicles}
@@ -216,10 +253,14 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         sendingPayment={sendingPayment}
         paymentResult={paymentResult}
         showActions
+        historicalSection={false}
+        onComplete={handleComplete}
+        completing={completing}
+        completeResult={completeResult}
       />
 
       <BookingSection
-        title="Past & Completed"
+        title="Prethodne i završene"
         count={past.length}
         bookings={past}
         vehicles={vehicles}
@@ -236,6 +277,10 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         sendingPayment={null}
         paymentResult={{}}
         showActions={false}
+        historicalSection
+        onComplete={handleComplete}
+        completing={completing}
+        completeResult={completeResult}
       />
     </div>
   );
@@ -258,7 +303,11 @@ function BookingSection({
   onSendPaymentLink,
   sendingPayment,
   paymentResult,
-  showActions
+  showActions,
+  historicalSection,
+  onComplete,
+  completing,
+  completeResult
 }: {
   title: string;
   count: number;
@@ -277,6 +326,10 @@ function BookingSection({
   sendingPayment: string | null;
   paymentResult: Record<string, "success" | "error">;
   showActions: boolean;
+  historicalSection: boolean;
+  onComplete: (bookingId: string) => void;
+  completing: string | null;
+  completeResult: Record<string, "success" | "error" | "loyalty">;
 }) {
   return (
     <div>
@@ -286,7 +339,7 @@ function BookingSection({
       </h2>
 
       {bookings.length === 0 ? (
-        <p className="text-sm text-white/40 py-4">No bookings in this section.</p>
+        <p className="text-sm text-white/40 py-4">Nema rezervacija u ovoj sekciji.</p>
       ) : (
         <div className="space-y-2">
           {bookings.map((b) => {
@@ -296,6 +349,7 @@ function BookingSection({
             const pResult = paymentResult[b.id];
             const canSendPaymentLink = isConfirmed && b.payment_status !== "paid" && b.email;
             const hasPaymentLink = !!b.payment_link_url;
+            const displayStatus = statusBadge(b, historicalSection);
 
             return (
               <div key={b.id} className="glass rounded-xl overflow-hidden">
@@ -312,21 +366,21 @@ function BookingSection({
                       <span className="text-xs text-white/50">
                         {serviceLabel(b.service)}
                       </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[b.status] ?? "bg-white/10 text-white/50"}`}>
-                        {b.status}
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${displayStatus.className}`}>
+                        {displayStatus.label}
                       </span>
                       {b.payment_status && (
                         <span className={`text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${PAYMENT_STATUS_COLORS[b.payment_status] ?? "bg-white/10 text-white/40"}`}>
                           <CreditCard className="h-3 w-3" />
-                          {b.payment_status}
+                          {paymentStatusLabel(b.payment_status)}
                           {b.payment_status === "paid" && b.payment_amount && b.payment_currency
-                            ? ` · ${formatAmount(b.payment_amount, b.payment_currency)}`
+                            ? ` · ${formatStaffAmount(b.payment_amount, b.payment_currency)}`
                             : ""}
                         </span>
                       )}
                     </div>
                     <p className="mt-0.5 text-xs text-white/40 truncate">
-                      {formatDate(b.pickup_at)} &middot; {b.pickup} &rarr; {b.destination}
+                      {formatStaffDate(b.pickup_at)} &middot; {b.pickup} &rarr; {b.destination}
                     </p>
                   </div>
                   {isOpen ? (
@@ -339,42 +393,42 @@ function BookingSection({
                 {isOpen && (
                   <div className="px-5 pb-5 pt-1 border-t border-white/5 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                      <Row label="Booking ID" value={b.id} />
-                      <Row label="Service" value={serviceLabel(b.service)} />
-                      {b.airport_direction && <Row label="Direction" value={b.airport_direction} />}
-                      <Row label="Pickup" value={b.pickup} />
-                      <Row label="Destination" value={b.destination} />
-                      <Row label="When" value={formatDate(b.pickup_at)} />
-                      <Row label="Passengers" value={String(b.passengers)} />
-                      <Row label="Luggage" value={String(b.luggage)} />
-                      <Row label="Wi-Fi" value={b.wifi_requested ? "Yes" : "No"} />
-                      {b.flight_number && <Row label="Flight" value={b.flight_number} />}
-                      {b.waiting_hours > 0 && <Row label="Waiting" value={`${b.waiting_hours}h`} />}
-                      <Row label="Name" value={b.full_name} />
+                      <Row label="ID rezervacije" value={b.id} />
+                      <Row label="Usluga" value={serviceLabel(b.service)} />
+                      {b.airport_direction && <Row label="Smer" value={airportDirectionLabel(b.airport_direction)} />}
+                      <Row label="Polazak" value={b.pickup} />
+                      <Row label="Odredište" value={b.destination} />
+                      <Row label="Vreme" value={formatStaffDate(b.pickup_at)} />
+                      <Row label="Putnici" value={String(b.passengers)} />
+                      <Row label="Prtljag" value={String(b.luggage)} />
+                      <Row label="Wi-Fi" value={yesNoLabel(b.wifi_requested)} />
+                      {b.flight_number && <Row label="Let" value={b.flight_number} />}
+                      {b.waiting_hours > 0 && <Row label="Čekanje" value={`${b.waiting_hours}h`} />}
+                      <Row label="Ime" value={b.full_name} />
                       {b.email && <Row label="Email" value={b.email} />}
-                      <Row label="Phone" value={[b.phone_country_code, b.phone].filter(Boolean).join(" ")} />
-                      {b.company_name && <Row label="Company" value={b.company_name} />}
-                      {b.preferred_communication && <Row label="Preferred" value={b.preferred_communication} />}
-                      <Row label="Payment method" value={b.payment_method} />
+                      <Row label="Telefon" value={[b.phone_country_code, b.phone].filter(Boolean).join(" ")} />
+                      {b.company_name && <Row label="Kompanija" value={b.company_name} />}
+                      {b.preferred_communication && <Row label="Preferirani kontakt" value={communicationLabel(b.preferred_communication)} />}
+                      <Row label="Način plaćanja" value={paymentMethodLabel(b.payment_method)} />
                       {b.price_estimate?.totalPrice != null && (
-                        <Row label="Estimate" value={`${b.price_estimate.totalPrice} ${b.price_estimate.currency ?? "EUR"}`} />
+                        <Row label="Procena" value={`${b.price_estimate.totalPrice} ${b.price_estimate.currency ?? "EUR"}`} />
                       )}
-                      <Row label="Created" value={formatDate(b.created_at)} />
-                      {b.assigned_vehicle_name && <Row label="Vehicle" value={b.assigned_vehicle_name} />}
+                      <Row label="Kreirano" value={formatStaffDate(b.created_at)} />
+                      {b.assigned_vehicle_name && <Row label="Vozilo" value={b.assigned_vehicle_name} />}
                       {b.payment_status && (
-                        <Row label="Payment status" value={b.payment_status} />
+                        <Row label="Status plaćanja" value={paymentStatusLabel(b.payment_status)} />
                       )}
                       {b.payment_amount != null && b.payment_currency && (
-                        <Row label="Payment amount" value={formatAmount(b.payment_amount, b.payment_currency)} />
+                        <Row label="Iznos plaćanja" value={formatStaffAmount(b.payment_amount, b.payment_currency)} />
                       )}
                       {b.paid_at && (
-                        <Row label="Paid at" value={formatDate(b.paid_at)} />
+                        <Row label="Plaćeno" value={formatStaffDate(b.paid_at)} />
                       )}
                     </div>
 
                     {b.message && (
                       <div className="text-sm">
-                        <span className="text-white/50">Notes:</span>
+                        <span className="text-white/50">Napomene:</span>
                         <p className="mt-1 text-white/70 whitespace-pre-wrap">{b.message}</p>
                       </div>
                     )}
@@ -384,7 +438,7 @@ function BookingSection({
                         href={`/staff/bookings/${b.id}`}
                         className="text-xs text-gold-400 hover:text-gold-300 inline-flex items-center gap-1"
                       >
-                        <ExternalLink className="h-3 w-3" /> Full view
+                        <ExternalLink className="h-3 w-3" /> Detaljan pregled
                       </a>
                       {b.payment_link_url && (
                         <a
@@ -393,17 +447,17 @@ function BookingSection({
                           rel="noopener noreferrer"
                           className="text-xs text-gold-400 hover:text-gold-300 inline-flex items-center gap-1"
                         >
-                          <CreditCard className="h-3 w-3" /> Payment link
+                          <CreditCard className="h-3 w-3" /> Link za plaćanje
                         </a>
                       )}
                     </div>
 
-                    {/* Vehicle assignment — for unconfirmed bookings */}
+                    {/* Dodela vozila za nepotvrđene rezervacije */}
                     {showActions && !isConfirmed && (
                       <div className="border-t border-white/5 pt-4 space-y-3">
                         <div>
                           <label htmlFor={`vehicle-${b.id}`} className="block text-xs text-white/50 mb-1.5">
-                            Assign vehicle
+                            Dodeli vozilo
                           </label>
                           <select
                             id={`vehicle-${b.id}`}
@@ -411,10 +465,10 @@ function BookingSection({
                             onChange={(e) => onVehicleChange(b.id, e.target.value)}
                             className="glass-input w-full sm:w-auto sm:min-w-[280px] text-sm"
                           >
-                            <option value="">Select vehicle...</option>
+                            <option value="">Izaberi vozilo...</option>
                             {vehicles.map((v) => (
                               <option key={v.id} value={v.id}>
-                                {v.name} ({v.passengers} pax, {v.luggage} bags)
+                                {v.name} ({v.passengers} putnika, {v.luggage} prtljag)
                               </option>
                             ))}
                           </select>
@@ -430,57 +484,85 @@ function BookingSection({
                             {confirming === b.id ? "..." : (
                               <>
                                 <Check className="h-3.5 w-3.5" />
-                                Confirm & Send Email
+                                Potvrdi i pošalji email
                               </>
                             )}
                           </button>
 
                           {cResult === "success" && (
-                            <span className="text-xs text-green-400">Confirmed! Email sent.</span>
+                            <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
                           )}
                           {cResult === "error" && (
-                            <span className="text-xs text-red-400">Failed. Try again.</span>
+                            <span className="text-xs text-red-400">Neuspešno. Pokušajte ponovo.</span>
                           )}
                         </div>
                       </div>
                     )}
 
-                    {/* Confirmed status badge */}
+                    {/* Potvrđena rezervacija */}
                     {isConfirmed && b.assigned_vehicle_name && !canSendPaymentLink && (
                       <div className="border-t border-white/5 pt-3">
                         <span className="inline-flex items-center gap-1.5 text-xs text-green-400">
                           <Check className="h-3.5 w-3.5" />
-                          Confirmed — {b.assigned_vehicle_name}
-                          {b.payment_status === "paid" && " · Paid"}
+                          Potvrđeno — {b.assigned_vehicle_name}
+                          {b.payment_status === "paid" && " · Plaćeno"}
                         </span>
                       </div>
                     )}
 
-                    {/* Payment link section — for confirmed bookings that need payment */}
+                    {/* Mark as completed button */}
+                    {b.status === "confirmed" && (
+                      <div className="border-t border-white/5 pt-3 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => onComplete(b.id)}
+                          disabled={completing === b.id}
+                          className="rounded-lg bg-green-500/20 px-4 py-2 text-sm text-green-300 hover:bg-green-500/30 transition-colors disabled:opacity-40 inline-flex items-center gap-2"
+                        >
+                          {completing === b.id ? "..." : (
+                            <>
+                              <Check className="h-3.5 w-3.5" />
+                              Označi kao završeno
+                            </>
+                          )}
+                        </button>
+                        {completeResult[b.id] === "success" && (
+                          <span className="text-xs text-green-400">Završeno!</span>
+                        )}
+                        {completeResult[b.id] === "loyalty" && (
+                          <span className="text-xs text-gold-400">Završeno! Loyalty kod je generisan.</span>
+                        )}
+                        {completeResult[b.id] === "error" && (
+                          <span className="text-xs text-red-400">Neuspešno.</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Link za plaćanje za potvrđene rezervacije */}
                     {showActions && canSendPaymentLink && (
                       <div className="border-t border-white/5 pt-4 space-y-3">
                         <div className="flex items-center gap-1.5 text-xs text-green-400 mb-2">
                           <Check className="h-3.5 w-3.5" />
-                          Confirmed — {b.assigned_vehicle_name}
+                          Potvrđeno — {b.assigned_vehicle_name}
                         </div>
 
                         {hasPaymentLink && b.payment_status === "pending" ? (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-xs text-yellow-300">
                               <CircleDollarSign className="h-3.5 w-3.5" />
-                              Payment link sent — {b.payment_amount && b.payment_currency
-                                ? formatAmount(b.payment_amount, b.payment_currency)
-                                : ""} — awaiting payment
+                              Link za plaćanje je poslat — {b.payment_amount && b.payment_currency
+                                ? formatStaffAmount(b.payment_amount, b.payment_currency)
+                                : ""} — čeka se uplata
                             </div>
                             <div className="flex items-center gap-3">
-                              <span className="text-xs text-white/40">Resend with new amount:</span>
+                              <span className="text-xs text-white/40">Pošalji ponovo sa novim iznosom:</span>
                             </div>
                           </div>
                         ) : null}
 
                         <div className="flex items-center gap-2 flex-wrap">
                           <label htmlFor={`amount-${b.id}`} className="text-xs text-white/50">
-                            Final price (EUR):
+                            Konačna cena (EUR):
                           </label>
                           <input
                             id={`amount-${b.id}`}
@@ -505,17 +587,17 @@ function BookingSection({
                             {sendingPayment === b.id ? "..." : (
                               <>
                                 <Send className="h-3.5 w-3.5" />
-                                Send Payment Link
+                                Pošalji link za plaćanje
                               </>
                             )}
                           </button>
                         </div>
 
                         {pResult === "success" && (
-                          <span className="text-xs text-green-400">Payment link sent to customer!</span>
+                          <span className="text-xs text-green-400">Link za plaćanje je poslat klijentu!</span>
                         )}
                         {pResult === "error" && (
-                          <span className="text-xs text-red-400">Failed to send payment link. Try again.</span>
+                          <span className="text-xs text-red-400">Slanje linka nije uspelo. Pokušajte ponovo.</span>
                         )}
                       </div>
                     )}

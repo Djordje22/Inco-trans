@@ -10,17 +10,17 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const session = getStaffDashboardSession();
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
-    return NextResponse.json({ error: "Backend not configured." }, { status: 503 });
+    return NextResponse.json({ error: "Sistem nije podešen." }, { status: 503 });
   }
 
   const body = await request.json().catch(() => null);
   if (!body?.bookingId || !body?.amount) {
-    return NextResponse.json({ error: "Missing bookingId or amount." }, { status: 400 });
+    return NextResponse.json({ error: "Nedostaje ID rezervacije ili iznos." }, { status: 400 });
   }
 
   const { bookingId, amount } = body;
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   // amount is in EUR (e.g. 30 for €30), convert to minor units (cents)
   const amountMinor = Math.round(amount * 100);
   if (amountMinor <= 0) {
-    return NextResponse.json({ error: "Amount must be positive." }, { status: 400 });
+    return NextResponse.json({ error: "Iznos mora biti veći od nule." }, { status: 400 });
   }
 
   // Fetch booking
@@ -40,24 +40,24 @@ export async function POST(request: Request) {
     .single();
 
   if (!booking) {
-    return NextResponse.json({ error: "Booking not found." }, { status: 404 });
+    return NextResponse.json({ error: "Rezervacija nije pronađena." }, { status: 404 });
   }
 
   if (!booking.email) {
-    return NextResponse.json({ error: "Booking has no customer email." }, { status: 400 });
+    return NextResponse.json({ error: "Rezervacija nema email adresu klijenta." }, { status: 400 });
   }
 
   // Only allow payment links for confirmed bookings
   if (booking.status !== "confirmed") {
     return NextResponse.json(
-      { error: "Booking must be confirmed before sending a payment link." },
+      { error: "Rezervacija mora biti potvrđena pre slanja linka za plaćanje." },
       { status: 400 }
     );
   }
 
   // Don't allow re-sending if already paid
   if (booking.payment_status === "paid") {
-    return NextResponse.json({ error: "Booking is already paid." }, { status: 400 });
+    return NextResponse.json({ error: "Rezervacija je već plaćena." }, { status: 400 });
   }
 
   const locale = (booking.locale as Locale) || "en";
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error("Payment link update failed:", updateError);
-    return NextResponse.json({ error: "Failed to save payment link." }, { status: 500 });
+    return NextResponse.json({ error: "Čuvanje linka za plaćanje nije uspelo." }, { status: 500 });
   }
 
   // Send payment link email to customer

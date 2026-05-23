@@ -88,6 +88,7 @@ function bookingInsertPayload(id: string, payload: BookingRequestPayload, userId
     message: messageWithExtras(payload) || null,
     terms_accepted: payload.termsAccepted ?? false,
     user_id: userId,
+    promo_code_id: payload.promoId || null,
     status: "new"
   };
 }
@@ -102,6 +103,7 @@ function legacyBookingInsertPayload(
     route_distance_meters,
     route_duration_seconds,
     price_estimate,
+    promo_code_id,
     ...legacyPayload
   } = payload;
   void wifi_requested;
@@ -110,6 +112,7 @@ function legacyBookingInsertPayload(
   void route_distance_meters;
   void route_duration_seconds;
   void price_estimate;
+  void promo_code_id;
   return legacyPayload;
 }
 
@@ -131,29 +134,49 @@ export async function POST(request: Request) {
   const payload = parsed.value;
   const id = randomUUID();
 
-  // Resolve authenticated user for account-linked bookings
+  // Resolve authenticated user – always link booking to account if logged in
   let userId: string | null = null;
-  if (payload.linkProfile) {
-    try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const anonKey =
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-      const cookieStore = cookies();
-      const userClient = createServerClient(url, anonKey!, {
-        cookies: {
-          getAll() { return cookieStore.getAll(); },
-          setAll(cookiesToSet) {
-            for (const { name, value, options } of cookiesToSet) {
-              cookieStore.set(name, value, options);
-            }
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const anonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    const cookieStore = cookies();
+    const userClient = createServerClient(url, anonKey!, {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
           }
         }
-      });
-      const { data: { user } } = await userClient.auth.getUser();
-      if (user) userId = user.id;
-    } catch {
-      // If auth check fails, proceed without linking
+      }
+    });
+    const { data: { user } } = await userClient.auth.getUser();
+    if (user) userId = user.id;
+  } catch {
+    // If auth check fails, proceed without linking
+  }
+
+  // Server-side promo code re-validation before insert
+  if (payload.promoId) {
+    const { data: promo } = await supabase
+      .from("promo_codes")
+      .select("id, owner_id, status, promo_type")
+      .eq("id", payload.promoId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!promo || (userId && promo.owner_id !== userId)) {
+      // Invalid or not owned — strip promo from payload
+      payload.promoId = undefined;
+      payload.promoCode = undefined;
+      payload.promoDiscountPercent = undefined;
+    } else if (promo.promo_type === "loyalty_free_ride" && payload.service === "chauffeur") {
+      // Loyalty code not valid for chauffeur
+      payload.promoId = undefined;
+      payload.promoCode = undefined;
+      payload.promoDiscountPercent = undefined;
     }
   }
 
@@ -177,6 +200,19 @@ export async function POST(request: Request) {
       { error: "Unable to save booking request." },
       { status: 500 }
     );
+  }
+
+  // Redeem promo code on successful booking insert
+  if (payload.promoId) {
+    await supabase
+      .from("promo_codes")
+      .update({
+        status: "redeemed",
+        redeemed_at: new Date().toISOString(),
+        booking_request_id: id
+      })
+      .eq("id", payload.promoId)
+      .eq("status", "active");
   }
 
   const stops = payload.stops ?? [];

@@ -445,8 +445,7 @@ const MIN_CHAUFFEUR_DURATION_HOURS = 4;
 const CHAUFFEUR_DURATION_GRACE_MINUTES = 15;
 const MAX_CHAUFFEUR_DURATION_HOURS = 24;
 const STANDARD_CHAUFFEUR_DAY_HOURS = 10;
-const PROMO_CODE = "PROMO5%";
-const PROMO_DISCOUNT_PERCENT = 5;
+// Promo codes are validated server-side via /api/promo/validate
 
 const makeStopId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -512,6 +511,11 @@ type TransferData = {
   promoCode: string;
   promoCodeApplied: boolean;
   promoCodeError: string;
+  promoDiscountPercent: number;
+  promoId: string;
+  promoType: string;
+  loyaltyOverageKm: number;
+  loyaltyOveragePrice: number;
   linkProfile: boolean;
 };
 
@@ -552,6 +556,11 @@ const EMPTY: TransferData = {
   promoCode: "",
   promoCodeApplied: false,
   promoCodeError: "",
+  promoDiscountPercent: 0,
+  promoId: "",
+  promoType: "",
+  loyaltyOverageKm: 0,
+  loyaltyOveragePrice: 0,
   linkProfile: false
 };
 
@@ -703,7 +712,8 @@ function TransferFlow({
         reminderRequested: data.reminderRequested,
         reminderMinutesBefore: 5,
         promoCode: data.promoCodeApplied ? data.promoCode.trim() : "",
-        promoDiscountPercent: data.promoCodeApplied ? PROMO_DISCOUNT_PERCENT : 0,
+        promoDiscountPercent: data.promoCodeApplied ? data.promoDiscountPercent : 0,
+        promoId: data.promoCodeApplied ? data.promoId : "",
         termsAccepted: data.termsAccepted,
         priceEstimate: data.routeEstimate,
         linkProfile: data.linkProfile
@@ -1429,14 +1439,19 @@ function ReviewStep({
     estimate && isChauffeurEstimate
       ? buildChauffeurPricingNote(dict, estimate, locale)
       : "";
-  const promoActive =
-    data.promoCodeApplied && data.promoCode.trim().toUpperCase() === PROMO_CODE;
+  const promoActive = data.promoCodeApplied && data.promoDiscountPercent > 0;
+  const isLoyaltyCode = promoActive && data.promoType === "loyalty_free_ride";
   const promoDiscountAmount =
-    estimate && promoActive
-      ? roundMoney(estimate.totalPrice * (PROMO_DISCOUNT_PERCENT / 100))
+    estimate && promoActive && !isLoyaltyCode
+      ? roundMoney(estimate.totalPrice * (data.promoDiscountPercent / 100))
       : 0;
-  const estimatedTotal =
-    estimate ? roundMoney(estimate.totalPrice - promoDiscountAmount) : 0;
+  // For loyalty: final price = overage price + waiting price (waiting from estimate)
+  const loyaltyTotal = isLoyaltyCode && estimate
+    ? roundMoney(data.loyaltyOveragePrice + (estimate.waitingPrice ?? 0))
+    : 0;
+  const estimatedTotal = isLoyaltyCode
+    ? loyaltyTotal
+    : estimate ? roundMoney(estimate.totalPrice - promoDiscountAmount) : 0;
   const termsHref = legalHref(locale, "terms");
   const privacyHref = legalHref(locale, "privacy");
 
@@ -1528,7 +1543,7 @@ function ReviewStep({
                   </dd>
                 </div>
               ) : null}
-              {promoDiscountAmount > 0 ? (
+              {promoDiscountAmount > 0 && !isLoyaltyCode ? (
                 <div className="flex items-start justify-between gap-3">
                   <dt className="text-white/55">
                     {dict.promoDiscountLabel.replace(
@@ -1540,6 +1555,28 @@ function ReviewStep({
                     -{formatPrice(promoDiscountAmount, locale)}
                   </dd>
                 </div>
+              ) : null}
+              {isLoyaltyCode ? (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-gold-300">
+                      {locale === "sr" ? "Loyalty vožnja do 25km" : locale === "ru" ? "Поездка лояльности до 25 км" : "Loyalty ride up to 25km"}
+                    </dt>
+                    <dd className="text-right font-medium text-gold-200">
+                      {formatPrice(0, locale)}
+                    </dd>
+                  </div>
+                  {data.loyaltyOverageKm > 0 ? (
+                    <div className="flex items-start justify-between gap-3">
+                      <dt className="text-white/55">
+                        {(locale === "sr" ? "Dodatna kilometraža" : locale === "ru" ? "Дополнительное расстояние" : "Additional distance") + ` (${data.loyaltyOverageKm} km × €1.15)`}
+                      </dt>
+                      <dd className="text-right font-medium text-white">
+                        {formatPrice(data.loyaltyOveragePrice, locale)}
+                      </dd>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
             </dl>
             <div className="my-3 h-px bg-white/10" />
@@ -1645,21 +1682,52 @@ function PromoCodeCard({
   data: TransferData;
   set: <K extends keyof TransferData>(k: K, v: TransferData[K]) => void;
 }) {
-  const applyPromo = () => {
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const applyPromo = async () => {
     const normalized = data.promoCode.trim().toUpperCase();
     if (!normalized) {
       set("promoCodeApplied", false);
       set("promoCodeError", "");
       return;
     }
-    if (normalized === PROMO_CODE) {
-      set("promoCode", PROMO_CODE);
-      set("promoCodeApplied", true);
-      set("promoCodeError", "");
-      return;
+
+    setPromoLoading(true);
+    try {
+      const res = await fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: normalized,
+          service: data.service,
+          distanceMeters: data.routeEstimate?.distanceMeters ?? 0,
+          waitingHours: data.waitingHours
+        })
+      });
+      const result = await res.json();
+
+      if (result.valid) {
+        set("promoCode", result.code);
+        set("promoCodeApplied", true);
+        set("promoDiscountPercent", result.discountPercent);
+        set("promoId", result.promoId);
+        set("promoType", result.promoType ?? "referral_percent");
+        set("loyaltyOverageKm", result.loyaltyOverageKm ?? 0);
+        set("loyaltyOveragePrice", result.loyaltyOveragePrice ?? 0);
+        set("promoCodeError", "");
+      } else {
+        set("promoCodeApplied", false);
+        set("promoCodeError",
+          result.error === "not_for_chauffeur"
+            ? (dict as any).notForChauffeur ?? dict.promoInvalid
+            : dict.promoInvalid
+        );
+      }
+    } catch {
+      set("promoCodeApplied", false);
+      set("promoCodeError", dict.promoInvalid);
     }
-    set("promoCodeApplied", false);
-    set("promoCodeError", dict.promoInvalid);
+    setPromoLoading(false);
   };
 
   return (
@@ -1693,14 +1761,15 @@ function PromoCodeCard({
         <button
           type="button"
           onClick={applyPromo}
+          disabled={promoLoading}
           className="btn-ghost justify-center !py-2.5 !px-4"
         >
-          {dict.promoApply}
+          {promoLoading ? "..." : dict.promoApply}
         </button>
       </div>
       {data.promoCodeApplied ? (
         <p className="mt-2 text-xs text-gold-300">
-          {dict.promoApplied.replace("{percent}", String(PROMO_DISCOUNT_PERCENT))}
+          {dict.promoApplied.replace("{percent}", String(data.promoDiscountPercent))}
         </p>
       ) : null}
       {data.promoCodeError ? (

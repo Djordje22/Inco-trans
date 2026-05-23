@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { getStaffDashboardSession } from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import StaffDashboard from "@/components/staff/StaffDashboard";
+import ReferralVerifications from "@/components/staff/ReferralVerifications";
 
-export const metadata = { title: "Staff Dashboard — Inco Trans", robots: "noindex" };
+export const metadata = { title: "Administracija — Inco Trans", robots: "noindex" };
 export const dynamic = "force-dynamic";
 
 export default async function StaffDashboardPage() {
@@ -41,11 +42,16 @@ export default async function StaffDashboardPage() {
     <div className="min-h-screen bg-ink-950 text-white p-4 sm:p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
-          <h1 className="font-display text-2xl font-semibold">Staff Dashboard</h1>
+          <h1 className="font-display text-2xl font-semibold">Administracija</h1>
           <p className="mt-1 text-sm text-white/50">
-            Manage booking requests, assign vehicles, and confirm rides.
+            Upravljanje zahtevima za rezervacije, dodela vozila i potvrda vožnji.
           </p>
         </div>
+
+        <section className="mb-10">
+          <h2 className="font-display text-lg font-semibold mb-4 text-white/80">Referral potvrde</h2>
+          <ReferralVerifications />
+        </section>
 
         <StaffDashboard
           bookings={mappedBookings}

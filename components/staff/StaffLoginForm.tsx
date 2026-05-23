@@ -10,7 +10,7 @@ export default function StaffLoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(urlError === "invalid" ? "Invalid or expired access link." : "");
+  const [error, setError] = useState(urlError === "invalid" ? "Neispravan ili istekao link za pristup." : "");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,10 +29,10 @@ export default function StaffLoginForm() {
     });
 
     if (!res.ok) {
-      const data = await res.json().catch(() => null);
-      setError(data?.error === "Too many attempts."
-        ? "Too many attempts. Please wait a few minutes."
-        : "Invalid credentials.");
+      await res.json().catch(() => null);
+      setError(res.status === 429
+        ? "Previše pokušaja. Sačekajte nekoliko minuta."
+        : "Neispravni podaci za prijavu.");
       setLoading(false);
       return;
     }
@@ -60,7 +60,7 @@ export default function StaffLoginForm() {
 
       <div>
         <label htmlFor="staffPassword" className="block text-sm text-white/70 mb-1">
-          Password
+          Lozinka
         </label>
         <input
           id="staffPassword"
@@ -84,7 +84,7 @@ export default function StaffLoginForm() {
         disabled={loading}
         className="btn-gold w-full justify-center"
       >
-        {loading ? "..." : "Sign in"}
+        {loading ? "..." : "Prijavi se"}
       </button>
     </form>
   );

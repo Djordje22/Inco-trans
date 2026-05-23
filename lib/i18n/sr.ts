@@ -15,11 +15,11 @@ export const sr: Dict = {
     businessTransfer: "Duge relacije"
   },
   hero: {
-    eyebrow: "Beograd, Srbija",
-    title1: "Privatni transferi",
-    title2: "sa beogradskim potpisom",
+    eyebrow: "",
+    title1: "Vaš privatni",
+    title2: "transfer.",
     subtitle:
-      "Profesionalni vozači, fiksne cene unapred i diskretna usluga. Aerodromski transferi, duge relacije i VIP prevoz širom Srbije i regiona.",
+      "Profesionalni vozači i diskretna usluga širom Srbije i regiona",
     ctaPrimary: "Rezerviši transfer",
     ctaSecondary: "Pogledaj flotu",
     whatsappCta: "WhatsApp poruka"
@@ -570,5 +570,51 @@ export const sr: Dict = {
     bookingDestination: "Odredište",
     bookingStatus: "Status",
     bookingDetails: "Detalji"
+  },
+  referral: {
+    cardTitle: "Pozovite prijatelja",
+    cardDescription: "Podelite link sa prijateljem i oboje dobijate 5% popusta na sledeću vožnju.",
+    yourLink: "Vaš referral link",
+    copied: "Kopirano!",
+    promoCodes: "Vaši promo kodovi",
+    noPromos: "Još nemate promo kodove. Pozovite prijatelja da biste dobili svoj!",
+    promoActive: "Aktivan",
+    promoRedeemed: "Iskorišćen",
+    verifyPhoneTitle: "Potvrdite broj telefona",
+    verifyPhoneDescription: "Pošaljite WhatsApp poruku sa kodom da aktivirate 5% referral popust za vas i osobu koja vas je pozvala.",
+    phonePlaceholder: "Broj telefona",
+    sendWhatsApp: "Pošalji WhatsApp poruku",
+    verificationSent: "Zahtev je poslat. Admin će proveriti i potvrditi vaš broj.",
+    verificationPending: "Čeka se potvrda vašeg broja telefona.",
+    verificationApproved: "Vaš broj je potvrđen! Promo kod je spreman.",
+    verificationRejected: "Zahtev za potvrdu broja je odbijen.",
+    alreadyVerified: "Vaš broj je već potvrđen.",
+    phoneAlreadyUsed: "Ovaj broj telefona je već iskorišćen za referral.",
+    referralPending: "Na čekanju",
+    referralQualified: "Kvalifikovan",
+    staffVerificationTitle: "Referral potvrde",
+    staffVerificationEmpty: "Nema zahteva za potvrdu.",
+    staffApprove: "Potvrdi",
+    staffReject: "Odbij",
+    staffPhoneLabel: "Telefon",
+    staffCodeLabel: "Verifikacioni kod",
+    staffUserLabel: "Korisnik",
+    staffReferrerLabel: "Pozvan od",
+    staffPhoneAlreadyUsed: "Ovaj broj je već korišćen za referral nagradu."
+  },
+  loyalty: {
+    title: "Loyalty program",
+    description: "Za svaku 5. završenu vožnju dobijate besplatan transfer do 25km za aerodromski servis ili duge relacije.",
+    progressLabel: "Vaš napredak",
+    step: "vožnja",
+    nextReward: "Još {remaining} do besplatne vožnje!",
+    rewardReady: "Besplatan transfer je spreman!",
+    freeRideCode: "Vaš loyalty kod",
+    freeRideLabel: "Loyalty vožnja do 25km",
+    overageLabel: "Dodatna kilometraža ({km} km × 1,15 €/km)",
+    notForChauffeur: "Loyalty kod ne važi za šofer servis.",
+    completedRides: "Završenih vožnji: {count}",
+    staffMarkCompleted: "Završeno",
+    staffAlreadyCompleted: "Već završeno"
   }
 };

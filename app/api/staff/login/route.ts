@@ -54,12 +54,12 @@ async function isRateLimited(ip: string): Promise<boolean> {
 
 export async function POST(request: Request) {
   const fail = () =>
-    NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+    NextResponse.json({ error: "Neispravni podaci za prijavu." }, { status: 401 });
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
   if (await isRateLimited(ip)) {
-    return NextResponse.json({ error: "Too many attempts." }, { status: 429 });
+    return NextResponse.json({ error: "Previše pokušaja." }, { status: 429 });
   }
 
   const body = await request.json().catch(() => null);

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Clock, CreditCard } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { type Locale } from "@/lib/site-config";
 import { ReservationTrigger } from "./ReservationModal";
@@ -36,33 +35,22 @@ export default function Hero({ locale }: { locale: Locale }) {
 
       <div className="container-tight min-h-[calc(100svh-5rem)] pt-14 pb-16 sm:pt-20 sm:pb-24 md:pt-28 md:pb-32 flex items-center justify-center">
         <div className="animate-fade-up mx-auto max-w-5xl text-center">
-            <span className="eyebrow">{dict.hero.eyebrow}</span>
             <h1
               id="hero-title"
-              className="mt-4 font-display text-4xl sm:text-6xl md:text-7xl leading-tight"
+              className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] font-black uppercase tracking-tight"
             >
               <span className="block text-white">{dict.hero.title1}</span>
               <span className="block bg-gradient-to-r from-gold-300 via-gold-400 to-gold-200 bg-clip-text text-transparent">
                 {dict.hero.title2}
               </span>
             </h1>
-            <p className="mt-5 mx-auto max-w-2xl text-base sm:text-lg text-white/75">
-              {dict.hero.subtitle}
-            </p>
-            <ul className="mt-7 flex flex-wrap justify-center gap-2 text-[11px] uppercase tracking-widest text-white/70">
-              <li className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/5 px-2.5 py-1">
-                <Clock className="h-3.5 w-3.5 text-gold-300" aria-hidden="true" />
-                {dict.badges.hours247}
-              </li>
-              <li className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/5 px-2.5 py-1">
-                <CreditCard
-                  className="h-3.5 w-3.5 text-gold-300"
-                  aria-hidden="true"
-                />
-                {dict.badges.cashAndCard}
-              </li>
-            </ul>
-            <div className="mt-9 flex justify-center">
+            <div className="mt-8 mx-auto max-w-xl">
+              <p className="text-sm sm:text-base uppercase tracking-[0.2em] text-white/60">
+                {dict.hero.subtitle}
+              </p>
+              <div className="mt-4 mx-auto w-16 border-t border-white/20" aria-hidden="true" />
+            </div>
+            <div className="mt-10 flex justify-center">
               <ReservationTrigger className="btn-gold !px-8 !py-4 text-base sm:text-lg">
                 {dict.hero.ctaPrimary}
               </ReservationTrigger>

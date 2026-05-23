@@ -15,11 +15,11 @@ export const en: Dict = {
     businessTransfer: "Long-distance transfers"
   },
   hero: {
-    eyebrow: "Belgrade, Serbia",
-    title1: "Private transfers",
-    title2: "with a Belgrade touch",
+    eyebrow: "",
+    title1: "Your private",
+    title2: "transfer.",
     subtitle:
-      "Professional drivers, fixed prices agreed upfront and discreet service. Airport transfers, long-distance trips and VIP transport across Serbia and the region.",
+      "Professional drivers and discreet service across Serbia and the region",
     ctaPrimary: "Book transfer",
     ctaSecondary: "Browse fleet",
     whatsappCta: "Message on WhatsApp"
@@ -571,5 +571,51 @@ export const en: Dict = {
     bookingDestination: "Destination",
     bookingStatus: "Status",
     bookingDetails: "Details"
+  },
+  referral: {
+    cardTitle: "Invite a friend",
+    cardDescription: "Share your link with a friend and both of you get 5% off your next ride.",
+    yourLink: "Your referral link",
+    copied: "Copied!",
+    promoCodes: "Your promo codes",
+    noPromos: "No promo codes yet. Invite a friend to earn yours!",
+    promoActive: "Active",
+    promoRedeemed: "Redeemed",
+    verifyPhoneTitle: "Verify your phone number",
+    verifyPhoneDescription: "Send a WhatsApp message with the code to activate 5% referral discount for you and the person who invited you.",
+    phonePlaceholder: "Phone number",
+    sendWhatsApp: "Send WhatsApp message",
+    verificationSent: "Request sent. An admin will review and confirm your number.",
+    verificationPending: "Waiting for your phone number to be verified.",
+    verificationApproved: "Your number is verified! Promo code is ready.",
+    verificationRejected: "Phone verification request was rejected.",
+    alreadyVerified: "Your number is already verified.",
+    phoneAlreadyUsed: "This phone number has already been used for a referral.",
+    referralPending: "Pending",
+    referralQualified: "Qualified",
+    staffVerificationTitle: "Referral verifications",
+    staffVerificationEmpty: "No verification requests.",
+    staffApprove: "Approve",
+    staffReject: "Reject",
+    staffPhoneLabel: "Phone",
+    staffCodeLabel: "Verification code",
+    staffUserLabel: "User",
+    staffReferrerLabel: "Invited by",
+    staffPhoneAlreadyUsed: "This number was already used for a referral reward."
+  },
+  loyalty: {
+    title: "Loyalty program",
+    description: "Every 5th completed ride earns you a free transfer up to 25km for airport or long-distance service.",
+    progressLabel: "Your progress",
+    step: "ride",
+    nextReward: "{remaining} more to your free ride!",
+    rewardReady: "Free transfer is ready!",
+    freeRideCode: "Your loyalty code",
+    freeRideLabel: "Loyalty ride up to 25km",
+    overageLabel: "Additional distance ({km} km × €1.15/km)",
+    notForChauffeur: "Loyalty code cannot be used for chauffeur service.",
+    completedRides: "Completed rides: {count}",
+    staffMarkCompleted: "Completed",
+    staffAlreadyCompleted: "Already completed"
   }
 };

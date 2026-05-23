@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabaseAdminClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -35,6 +36,42 @@ export async function GET(request: Request) {
   if (error) {
     console.error("Auth callback error:", error.message);
     return NextResponse.redirect(`${origin}/prijava?error=auth_failed`);
+  }
+
+  // Check for referral code in user metadata and create referral record
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const refCode = user?.user_metadata?.referral_code;
+    if (user && refCode) {
+      const admin = getSupabaseAdminClient();
+      if (admin) {
+        // Find the referrer by their referral_code
+        const { data: referrer } = await admin
+          .from("profiles")
+          .select("id")
+          .eq("referral_code", refCode)
+          .maybeSingle();
+
+        if (referrer && referrer.id !== user.id) {
+          // Check if referral already exists for this referred user
+          const { data: existing } = await admin
+            .from("referrals")
+            .select("id")
+            .eq("referred_id", user.id)
+            .maybeSingle();
+
+          if (!existing) {
+            await admin.from("referrals").insert({
+              referrer_id: referrer.id,
+              referred_id: user.id,
+              status: "pending_whatsapp_phone"
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Referral linking failed:", e);
   }
 
   return NextResponse.redirect(`${origin}${next}`);

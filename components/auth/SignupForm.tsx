@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
@@ -39,6 +39,14 @@ export default function SignupForm({ locale, dict }: Props) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
+
+  // Capture ?ref= param from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) setReferralCode(ref);
+  }, []);
 
   const passwordIssues = password ? validatePassword(password) : [];
   const passwordsMatch = password === confirmPassword;
@@ -66,7 +74,8 @@ export default function SignupForm({ locale, dict }: Props) {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           first_name: firstName.trim(),
-          last_name: lastName.trim()
+          last_name: lastName.trim(),
+          ...(referralCode ? { referral_code: referralCode } : {})
         }
       }
     });

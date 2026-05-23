@@ -8,17 +8,17 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const session = getStaffDashboardSession();
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
-    return NextResponse.json({ error: "Backend not configured." }, { status: 503 });
+    return NextResponse.json({ error: "Sistem nije podešen." }, { status: 503 });
   }
 
   const body = await request.json().catch(() => null);
   if (!body?.bookingId || !body?.vehicleId) {
-    return NextResponse.json({ error: "Missing bookingId or vehicleId." }, { status: 400 });
+    return NextResponse.json({ error: "Nedostaje ID rezervacije ili ID vozila." }, { status: 400 });
   }
 
   const { bookingId, vehicleId } = body;
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!vehicle) {
-    return NextResponse.json({ error: "Vehicle not found." }, { status: 404 });
+    return NextResponse.json({ error: "Vozilo nije pronađeno." }, { status: 404 });
   }
 
   // Update booking: assign vehicle and set status to confirmed
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error("Booking confirm update failed:", updateError);
-    return NextResponse.json({ error: "Failed to update booking." }, { status: 500 });
+    return NextResponse.json({ error: "Ažuriranje rezervacije nije uspelo." }, { status: 500 });
   }
 
   // Fetch the booking for the confirmation email
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     .single();
 
   if (!booking) {
-    return NextResponse.json({ error: "Booking not found." }, { status: 404 });
+    return NextResponse.json({ error: "Rezervacija nije pronađena." }, { status: 404 });
   }
 
   // Send confirmation email to the customer

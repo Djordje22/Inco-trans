@@ -1,8 +1,17 @@
 import { redirect } from "next/navigation";
 import { getStaffSession, getStaffDashboardSession } from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import {
+  airportDirectionLabel,
+  communicationLabel,
+  formatStaffDate,
+  paymentMethodLabel,
+  serviceLabel,
+  statusLabel,
+  yesNoLabel
+} from "@/lib/staff/labels";
 
-export const metadata = { title: "Booking Details — Staff", robots: "noindex" };
+export const metadata = { title: "Detalji rezervacije — Administracija", robots: "noindex" };
 
 type Props = {
   params: { id: string };
@@ -37,11 +46,6 @@ type BookingRow = {
 type StopRow = {
   position: number;
   value: string;
-};
-
-const formatDate = (value: string) => {
-  const d = new Date(value);
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(d);
 };
 
 export default async function StaffBookingPage({ params }: Props) {
@@ -81,7 +85,7 @@ export default async function StaffBookingPage({ params }: Props) {
       <div className="mx-auto max-w-2xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="font-display text-xl font-semibold">Booking Details</h1>
+            <h1 className="font-display text-xl font-semibold">Detalji rezervacije</h1>
             <p className="text-sm text-white/50">ID: {b.id}</p>
           </div>
           {dashboardSession && (
@@ -89,57 +93,57 @@ export default async function StaffBookingPage({ params }: Props) {
               href="/staff/dashboard"
               className="text-sm text-gold-400 hover:text-gold-300"
             >
-              &larr; Back to Dashboard
+              &larr; Nazad na administraciju
             </a>
           )}
         </div>
 
         <div className="glass rounded-2xl p-6 space-y-6">
-          <Section title="Service">
-            <Row label="Type" value={b.service} />
+          <Section title="Usluga">
+            <Row label="Tip" value={serviceLabel(b.service)} />
             {b.airport_direction && (
-              <Row label="Direction" value={b.airport_direction} />
+              <Row label="Smer" value={airportDirectionLabel(b.airport_direction)} />
             )}
-            <Row label="Status" value={b.status} />
-            <Row label="Created" value={formatDate(b.created_at)} />
+            <Row label="Status" value={statusLabel(b.status, new Date(b.pickup_at) < new Date())} />
+            <Row label="Kreirano" value={formatStaffDate(b.created_at)} />
           </Section>
 
-          <Section title="Trip">
-            <Row label="Pickup" value={b.pickup} />
-            <Row label="Destination" value={b.destination} />
+          <Section title="Vožnja">
+            <Row label="Polazak" value={b.pickup} />
+            <Row label="Odredište" value={b.destination} />
             {(stops as StopRow[] | null)?.map((s) => (
-              <Row key={s.position} label={`Stop ${s.position}`} value={s.value} />
+              <Row key={s.position} label={`Stanica ${s.position}`} value={s.value} />
             ))}
-            <Row label="When" value={formatDate(b.pickup_at)} />
-            <Row label="Passengers" value={String(b.passengers)} />
-            <Row label="Luggage" value={String(b.luggage)} />
-            {b.flight_number && <Row label="Flight" value={b.flight_number} />}
-            {b.waiting_hours > 0 && <Row label="Waiting" value={`${b.waiting_hours}h`} />}
-            <Row label="Wi-Fi" value={b.wifi_requested ? "Yes" : "No"} />
+            <Row label="Vreme" value={formatStaffDate(b.pickup_at)} />
+            <Row label="Putnici" value={String(b.passengers)} />
+            <Row label="Prtljag" value={String(b.luggage)} />
+            {b.flight_number && <Row label="Let" value={b.flight_number} />}
+            {b.waiting_hours > 0 && <Row label="Čekanje" value={`${b.waiting_hours}h`} />}
+            <Row label="Wi-Fi" value={yesNoLabel(b.wifi_requested)} />
           </Section>
 
-          <Section title="Contact">
-            <Row label="Name" value={b.full_name} />
+          <Section title="Kontakt">
+            <Row label="Ime" value={b.full_name} />
             {b.email && <Row label="Email" value={b.email} />}
-            <Row label="Phone" value={[b.phone_country_code, b.phone].filter(Boolean).join(" ")} />
-            {b.company_name && <Row label="Company" value={b.company_name} />}
+            <Row label="Telefon" value={[b.phone_country_code, b.phone].filter(Boolean).join(" ")} />
+            {b.company_name && <Row label="Kompanija" value={b.company_name} />}
             {b.preferred_communication && (
-              <Row label="Preferred" value={b.preferred_communication} />
+              <Row label="Preferirani kontakt" value={communicationLabel(b.preferred_communication)} />
             )}
           </Section>
 
-          <Section title="Payment">
-            <Row label="Method" value={b.payment_method} />
+          <Section title="Plaćanje">
+            <Row label="Način plaćanja" value={paymentMethodLabel(b.payment_method)} />
             {b.price_estimate?.totalPrice != null && (
               <Row
-                label="Estimate"
+                label="Procena"
                 value={`${b.price_estimate.totalPrice} ${b.price_estimate.currency ?? "EUR"}`}
               />
             )}
           </Section>
 
           {b.message && (
-            <Section title="Notes">
+            <Section title="Napomene">
               <p className="text-sm text-white/80 whitespace-pre-wrap">{b.message}</p>
             </Section>
           )}

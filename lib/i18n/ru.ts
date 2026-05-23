@@ -15,11 +15,11 @@ export const ru: Dict = {
     businessTransfer: "Дальние поездки"
   },
   hero: {
-    eyebrow: "Белград, Сербия",
-    title1: "Частные трансферы",
-    title2: "с белградским подходом",
+    eyebrow: "",
+    title1: "Ваш приватный",
+    title2: "трансфер.",
     subtitle:
-      "Профессиональные водители, фиксированная цена заранее, конфиденциальность. Трансферы из аэропорта, дальние поездки и VIP-перевозки по Сербии и региону.",
+      "Профессиональные водители и конфиденциальный сервис по Сербии и региону",
     ctaPrimary: "Заказать трансфер",
     ctaSecondary: "Наш автопарк",
     whatsappCta: "Написать в WhatsApp"
@@ -572,5 +572,51 @@ export const ru: Dict = {
     bookingDestination: "Место назначения",
     bookingStatus: "Статус",
     bookingDetails: "Подробности"
+  },
+  referral: {
+    cardTitle: "Пригласите друга",
+    cardDescription: "Поделитесь ссылкой с другом, и оба получите скидку 5% на следующую поездку.",
+    yourLink: "Ваша реферальная ссылка",
+    copied: "Скопировано!",
+    promoCodes: "Ваши промокоды",
+    noPromos: "Промокодов пока нет. Пригласите друга, чтобы получить свой!",
+    promoActive: "Активен",
+    promoRedeemed: "Использован",
+    verifyPhoneTitle: "Подтвердите номер телефона",
+    verifyPhoneDescription: "Отправьте сообщение в WhatsApp с кодом, чтобы активировать скидку 5% для вас и пригласившего вас.",
+    phonePlaceholder: "Номер телефона",
+    sendWhatsApp: "Отправить сообщение в WhatsApp",
+    verificationSent: "Запрос отправлен. Администратор проверит и подтвердит ваш номер.",
+    verificationPending: "Ожидание подтверждения вашего номера телефона.",
+    verificationApproved: "Ваш номер подтверждён! Промокод готов.",
+    verificationRejected: "Запрос на подтверждение номера отклонён.",
+    alreadyVerified: "Ваш номер уже подтверждён.",
+    phoneAlreadyUsed: "Этот номер телефона уже использовался для реферала.",
+    referralPending: "Ожидание",
+    referralQualified: "Подтверждён",
+    staffVerificationTitle: "Реферальные подтверждения",
+    staffVerificationEmpty: "Нет запросов на подтверждение.",
+    staffApprove: "Подтвердить",
+    staffReject: "Отклонить",
+    staffPhoneLabel: "Телефон",
+    staffCodeLabel: "Код верификации",
+    staffUserLabel: "Пользователь",
+    staffReferrerLabel: "Приглашён",
+    staffPhoneAlreadyUsed: "Этот номер уже использовался для реферальной награды."
+  },
+  loyalty: {
+    title: "Программа лояльности",
+    description: "Каждая 5-я завершённая поездка даёт бесплатный трансфер до 25 км для аэропорта или дальних поездок.",
+    progressLabel: "Ваш прогресс",
+    step: "поездка",
+    nextReward: "Ещё {remaining} до бесплатной поездки!",
+    rewardReady: "Бесплатный трансфер готов!",
+    freeRideCode: "Ваш код лояльности",
+    freeRideLabel: "Поездка лояльности до 25 км",
+    overageLabel: "Дополнительное расстояние ({km} км × €1,15/км)",
+    notForChauffeur: "Код лояльности не действует для шофёр-сервиса.",
+    completedRides: "Завершённых поездок: {count}",
+    staffMarkCompleted: "Завершено",
+    staffAlreadyCompleted: "Уже завершено"
   }
 };
