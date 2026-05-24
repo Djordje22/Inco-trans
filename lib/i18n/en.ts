@@ -384,7 +384,7 @@ export const en: Dict = {
       passengerPhone: "Passenger phone",
       reminderTitle: "Send me a reminder before the trip",
       reminderDesc:
-        "We will send you a reminder 5 minutes after you submit the request",
+        "We will send you a reminder 24h before your reservation",
       preferredCommunication: "Preferred communication",
       preferredPhoneSms: "Phone SMS",
       preferredViberWhatsapp: "Viber/WhatsApp",

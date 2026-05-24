@@ -724,7 +724,7 @@ function TransferFlow({
         passengerPhoneCountryCode: data.passengerPhoneCountryCode,
         passengerPhone: data.passengerPhone,
         reminderRequested: data.reminderRequested,
-        reminderMinutesBefore: 5,
+        reminderMinutesBefore: 1440,
         promoCode: data.promoCodeApplied ? data.promoCode.trim() : "",
         promoDiscountPercent: data.promoCodeApplied ? data.promoDiscountPercent : 0,
         promoId: data.promoCodeApplied ? data.promoId : "",
@@ -774,7 +774,10 @@ function TransferFlow({
             locale={locale}
             data={data}
             set={set}
-            showReminder
+            showReminder={
+              !!data.dateTime &&
+              new Date(data.dateTime).getTime() - Date.now() > 24 * 60 * 60 * 1000
+            }
           />
         ) : null}
         {preStep === null && step === 3 ? (
@@ -1135,15 +1138,14 @@ function JourneyStep({
               max={MAX_PASSENGERS}
               className="glass-input"
               value={data.passengers}
-              onChange={(e) =>
-                set(
-                  "passengers",
-                  clampBookingCount(
-                    Number(e.target.value),
-                    MIN_PASSENGERS,
-                    MAX_PASSENGERS
-                  )
-                )
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") { set("passengers", "" as any); return; }
+                const n = Number(raw);
+                if (Number.isFinite(n) && n >= 0 && n <= MAX_PASSENGERS) set("passengers", n);
+              }}
+              onBlur={() =>
+                set("passengers", clampBookingCount(Number(data.passengers) || MIN_PASSENGERS, MIN_PASSENGERS, MAX_PASSENGERS))
               }
               required
             />
@@ -1155,15 +1157,14 @@ function JourneyStep({
               max={MAX_LUGGAGE}
               className="glass-input"
               value={data.luggage}
-              onChange={(e) =>
-                set(
-                  "luggage",
-                  clampBookingCount(
-                    Number(e.target.value),
-                    MIN_LUGGAGE,
-                    MAX_LUGGAGE
-                  )
-                )
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") { set("luggage", "" as any); return; }
+                const n = Number(raw);
+                if (Number.isFinite(n) && n >= 0 && n <= MAX_LUGGAGE) set("luggage", n);
+              }}
+              onBlur={() =>
+                set("luggage", clampBookingCount(Number(data.luggage) || MIN_LUGGAGE, MIN_LUGGAGE, MAX_LUGGAGE))
               }
               required
             />

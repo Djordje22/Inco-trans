@@ -126,11 +126,13 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
     setConfirming(bookingId);
     setConfirmResult((prev) => ({ ...prev, [bookingId]: undefined as any }));
 
+    const finalPrice = paymentAmount[bookingId] ? parseFloat(paymentAmount[bookingId]) : undefined;
+
     try {
       const res = await fetch("/api/staff/confirm-booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId, vehicleId })
+        body: JSON.stringify({ bookingId, vehicleId, finalPrice })
       });
 
       if (res.ok) {
@@ -452,7 +454,7 @@ function BookingSection({
                       )}
                     </div>
 
-                    {/* Dodela vozila za nepotvrđene rezervacije */}
+                    {/* Dodela vozila i cena za nepotvrđene rezervacije */}
                     {showActions && !isConfirmed && (
                       <div className="border-t border-white/5 pt-4 space-y-3">
                         <div>
@@ -474,38 +476,83 @@ function BookingSection({
                           </select>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => onConfirm(b.id)}
-                            disabled={!selectedVehicle[b.id] || confirming === b.id}
-                            className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
-                          >
-                            {confirming === b.id ? "..." : (
-                              <>
-                                <Check className="h-3.5 w-3.5" />
-                                Potvrdi i pošalji email
-                              </>
-                            )}
-                          </button>
-
-                          {cResult === "success" && (
-                            <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
-                          )}
-                          {cResult === "error" && (
-                            <span className="text-xs text-red-400">Neuspešno. Pokušajte ponovo.</span>
-                          )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <label htmlFor={`amount-${b.id}`} className="text-xs text-white/50">
+                            Konačna cena (EUR):
+                          </label>
+                          <input
+                            id={`amount-${b.id}`}
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            placeholder={b.price_estimate?.totalPrice ? String(b.price_estimate.totalPrice) : ""}
+                            value={paymentAmount[b.id] ?? ""}
+                            onChange={(e) => onPaymentAmountChange(b.id, e.target.value)}
+                            className="glass-input w-28 text-sm"
+                          />
                         </div>
+
+                        {b.payment_method === "card" && b.email ? (
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => onSendPaymentLink(b.id)}
+                              disabled={
+                                !selectedVehicle[b.id] ||
+                                !paymentAmount[b.id] ||
+                                parseFloat(paymentAmount[b.id]) <= 0 ||
+                                sendingPayment === b.id
+                              }
+                              className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
+                            >
+                              {sendingPayment === b.id ? "..." : (
+                                <>
+                                  <Send className="h-3.5 w-3.5" />
+                                  Pošalji link za plaćanje
+                                </>
+                              )}
+                            </button>
+                            {pResult === "success" && (
+                              <span className="text-xs text-green-400">Link za plaćanje je poslat!</span>
+                            )}
+                            {pResult === "error" && (
+                              <span className="text-xs text-red-400">Neuspešno.</span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => onConfirm(b.id)}
+                              disabled={!selectedVehicle[b.id] || confirming === b.id}
+                              className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
+                            >
+                              {confirming === b.id ? "..." : (
+                                <>
+                                  <Check className="h-3.5 w-3.5" />
+                                  Potvrdi i pošalji email
+                                </>
+                              )}
+                            </button>
+                            {cResult === "success" && (
+                              <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
+                            )}
+                            {cResult === "error" && (
+                              <span className="text-xs text-red-400">Neuspešno.</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {/* Potvrđena rezervacija */}
-                    {isConfirmed && b.assigned_vehicle_name && !canSendPaymentLink && (
+                    {isConfirmed && b.assigned_vehicle_name && (
                       <div className="border-t border-white/5 pt-3">
                         <span className="inline-flex items-center gap-1.5 text-xs text-green-400">
                           <Check className="h-3.5 w-3.5" />
                           Potvrđeno — {b.assigned_vehicle_name}
                           {b.payment_status === "paid" && " · Plaćeno"}
+                          {hasPaymentLink && b.payment_status === "pending" && " · Čeka se uplata"}
                         </span>
                       </div>
                     )}
@@ -534,70 +581,6 @@ function BookingSection({
                         )}
                         {completeResult[b.id] === "error" && (
                           <span className="text-xs text-red-400">Neuspešno.</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Link za plaćanje za potvrđene rezervacije */}
-                    {showActions && canSendPaymentLink && (
-                      <div className="border-t border-white/5 pt-4 space-y-3">
-                        <div className="flex items-center gap-1.5 text-xs text-green-400 mb-2">
-                          <Check className="h-3.5 w-3.5" />
-                          Potvrđeno — {b.assigned_vehicle_name}
-                        </div>
-
-                        {hasPaymentLink && b.payment_status === "pending" ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-xs text-yellow-300">
-                              <CircleDollarSign className="h-3.5 w-3.5" />
-                              Link za plaćanje je poslat — {b.payment_amount && b.payment_currency
-                                ? formatStaffAmount(b.payment_amount, b.payment_currency)
-                                : ""} — čeka se uplata
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-white/40">Pošalji ponovo sa novim iznosom:</span>
-                            </div>
-                          </div>
-                        ) : null}
-
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <label htmlFor={`amount-${b.id}`} className="text-xs text-white/50">
-                            Konačna cena (EUR):
-                          </label>
-                          <input
-                            id={`amount-${b.id}`}
-                            type="number"
-                            step="0.01"
-                            min="1"
-                            placeholder={b.price_estimate?.totalPrice ? String(b.price_estimate.totalPrice) : "0.00"}
-                            value={paymentAmount[b.id] ?? ""}
-                            onChange={(e) => onPaymentAmountChange(b.id, e.target.value)}
-                            className="glass-input w-28 text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => onSendPaymentLink(b.id)}
-                            disabled={
-                              !paymentAmount[b.id] ||
-                              parseFloat(paymentAmount[b.id]) <= 0 ||
-                              sendingPayment === b.id
-                            }
-                            className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
-                          >
-                            {sendingPayment === b.id ? "..." : (
-                              <>
-                                <Send className="h-3.5 w-3.5" />
-                                Pošalji link za plaćanje
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        {pResult === "success" && (
-                          <span className="text-xs text-green-400">Link za plaćanje je poslat klijentu!</span>
-                        )}
-                        {pResult === "error" && (
-                          <span className="text-xs text-red-400">Slanje linka nije uspelo. Pokušajte ponovo.</span>
                         )}
                       </div>
                     )}

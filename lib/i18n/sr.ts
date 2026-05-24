@@ -383,7 +383,7 @@ export const sr: Dict = {
       passengerPhone: "Telefon putnika",
       reminderTitle: "Pošaljite mi podsetnik pre putovanja",
       reminderDesc:
-        "Poslaćemo vam podsetnik 5 minuta nakon slanja zahteva",
+        "Poslaćemo vam podsetnik 24h pred vašu rezervaciju",
       preferredCommunication: "Željeni način komunikacije",
       preferredPhoneSms: "Telefon SMS",
       preferredViberWhatsapp: "Viber/WhatsApp",

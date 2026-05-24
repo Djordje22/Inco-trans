@@ -846,11 +846,16 @@ export async function sendReservationReceiptEmail({
 }
 
 function reminderScheduledAt(payload: BookingRequestPayload): string | null {
-  const minutesAfterSubmit = payload.reminderMinutesBefore ?? 5;
-  const scheduledAt = new Date(Date.now() + minutesAfterSubmit * 60 * 1000);
-  const maximum = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  if (!payload.dateTime) return null;
+  const pickupTime = new Date(payload.dateTime).getTime();
+  const reminderMinutes = payload.reminderMinutesBefore ?? 1440;
+  const scheduledAt = new Date(pickupTime - reminderMinutes * 60 * 1000);
 
+  // Don't schedule if the reminder time is in the past or more than 30 days out
+  if (scheduledAt.getTime() <= Date.now()) return null;
+  const maximum = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   if (scheduledAt > maximum) return null;
+
   return scheduledAt.toISOString();
 }
 

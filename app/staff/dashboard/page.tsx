@@ -3,6 +3,7 @@ import { getStaffDashboardSession } from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import StaffDashboard from "@/components/staff/StaffDashboard";
 import ReferralVerifications from "@/components/staff/ReferralVerifications";
+import StaffLogoutButton from "@/components/staff/StaffLogoutButton";
 
 export const metadata = { title: "Administracija — Inco Trans", robots: "noindex" };
 export const dynamic = "force-dynamic";
@@ -41,11 +42,14 @@ export default async function StaffDashboardPage() {
   return (
     <div className="min-h-screen bg-ink-950 text-white p-4 sm:p-8">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-8">
-          <h1 className="font-display text-2xl font-semibold">Administracija</h1>
-          <p className="mt-1 text-sm text-white/50">
-            Upravljanje zahtevima za rezervacije, dodela vozila i potvrda vožnji.
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-semibold">Administracija</h1>
+            <p className="mt-1 text-sm text-white/50">
+              Upravljanje zahtevima za rezervacije, dodela vozila i potvrda vožnji.
+            </p>
+          </div>
+          <StaffLogoutButton />
         </div>
 
         <section className="mb-10">

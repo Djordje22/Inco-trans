@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Nedostaje ID rezervacije ili ID vozila." }, { status: 400 });
   }
 
-  const { bookingId, vehicleId } = body;
+  const { bookingId, vehicleId, finalPrice } = body;
 
   // Fetch the vehicle
   const { data: vehicle } = await supabase
@@ -34,13 +34,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Vozilo nije pronađeno." }, { status: 404 });
   }
 
-  // Update booking: assign vehicle and set status to confirmed
+  // Build update payload
+  const updatePayload: Record<string, unknown> = {
+    assigned_vehicle_id: vehicleId,
+    status: "confirmed"
+  };
+
+  // If admin set a final price, update the price_estimate
+  if (finalPrice && finalPrice > 0) {
+    // First fetch current booking to get existing estimate structure
+    const { data: current } = await supabase
+      .from("booking_requests")
+      .select("price_estimate")
+      .eq("id", bookingId)
+      .single();
+
+    const existingEstimate = (current?.price_estimate as Record<string, unknown>) ?? {};
+    updatePayload.price_estimate = {
+      ...existingEstimate,
+      totalPrice: finalPrice,
+      currency: (existingEstimate.currency as string) ?? "EUR"
+    };
+  }
+
+  // Update booking: assign vehicle, set status, and optionally update price
   const { error: updateError } = await supabase
     .from("booking_requests")
-    .update({
-      assigned_vehicle_id: vehicleId,
-      status: "confirmed"
-    })
+    .update(updatePayload)
     .eq("id", bookingId);
 
   if (updateError) {
