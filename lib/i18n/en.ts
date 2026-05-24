@@ -87,6 +87,14 @@ export const en: Dict = {
       {
         title: "Pay how you prefer",
         desc: "Cash and card accepted. Invoicing available for companies."
+      },
+      {
+        title: "Loyalty program",
+        desc: "Every 5th completed ride earns a free transfer up to 25km. Sign up and track your progress."
+      },
+      {
+        title: "Invite a friend",
+        desc: "Share your referral link and both of you get 5% off your next ride."
       }
     ]
   },
@@ -118,7 +126,9 @@ export const en: Dict = {
       "Punctuality and reliability",
       "Professional, discreet chauffeurs",
       "Fixed, transparent pricing",
-      "Online reservations with call support from 08:00 to 22:00"
+      "Online reservations with call support from 08:00 to 22:00",
+      "Loyalty program: every 5th ride is free (up to 25km)",
+      "Referral discount: invite a friend and both get 5% off"
     ]
   },
   contact: {
@@ -426,7 +436,7 @@ export const en: Dict = {
         "Flight tracking and adjusted pickup time",
         "Meet-and-greet with a name sign in arrivals",
         "Luggage assistance",
-        "Bottled water and Wi-Fi on request",
+        "Bottled water and Wi-Fi included",
         "Fixed price agreed upfront",
         "Mercedes E Class or Audi A6"
       ],
@@ -487,7 +497,7 @@ export const en: Dict = {
         "Professional driver for longer routes",
         "Planned pickup and address-to-address drop-off",
         "Stops along the way by agreement",
-        "Luggage assistance, bottled water and Wi-Fi on request",
+        "Luggage assistance, bottled water and Wi-Fi included",
         "Fixed price agreed upfront",
         "Mercedes E Class or Audi A6"
       ],

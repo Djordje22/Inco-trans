@@ -1,10 +1,10 @@
-import { Clock, Tag, UserRound, CreditCard } from "lucide-react";
+import { Clock, Tag, UserRound, CreditCard, Trophy, Gift } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n";
 import type { Locale } from "@/lib/site-config";
 import SectionHeader from "./SectionHeader";
 
-const ICONS: LucideIcon[] = [Clock, Tag, UserRound, CreditCard];
+const ICONS: LucideIcon[] = [Clock, Tag, UserRound, CreditCard, Trophy, Gift];
 
 export default function WhyUs({ locale }: { locale: Locale }) {
   const dict = t(locale);
@@ -22,7 +22,7 @@ export default function WhyUs({ locale }: { locale: Locale }) {
           {dict.why.title}
         </h2>
 
-        <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {dict.why.items.map((item, i) => {
             const Icon = ICONS[i];
             return (

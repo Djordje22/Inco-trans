@@ -86,6 +86,14 @@ export const sr: Dict = {
       {
         title: "Plaćanje kako vama odgovara",
         desc: "Prihvatamo gotovinu i kartice. Fakturisanje za firme."
+      },
+      {
+        title: "Loyalty program",
+        desc: "Svaka 5. završena vožnja donosi besplatan transfer do 25km. Registrujte se i pratite napredak."
+      },
+      {
+        title: "Pozovite prijatelja",
+        desc: "Podelite referral link i oboje dobijate 5% popusta na sledeću vožnju."
       }
     ]
   },
@@ -117,7 +125,9 @@ export const sr: Dict = {
       "Tačnost i pouzdanost",
       "Profesionalni i diskretni vozači",
       "Fiksne, transparentne cene",
-      "Online rezervacije i pozivi od 08:00 do 22:00"
+      "Online rezervacije i pozivi od 08:00 do 22:00",
+      "Loyalty program: svaka 5. vožnja je besplatna (do 25km)",
+      "Referral popust: pozovite prijatelja i oboje dobijate 5%"
     ]
   },
   contact: {
@@ -425,7 +435,7 @@ export const sr: Dict = {
         "Praćenje broja leta i prilagođavanje vremena dočeka",
         "Doček u dolaznom delu sa imenom putnika",
         "Pomoć oko prtljaga",
-        "Voda i Wi-Fi na zahtev",
+        "Voda i Wi-Fi uključeni",
         "Fiksna cena dogovorena unapred",
         "Mercedes E klasa ili Audi A6"
       ],
@@ -486,7 +496,7 @@ export const sr: Dict = {
         "Profesionalni vozač za duže rute",
         "Planirano preuzimanje i dolazak na adresu",
         "Pauze tokom puta po dogovoru",
-        "Pomoć oko prtljaga, voda i Wi-Fi na zahtev",
+        "Pomoć oko prtljaga, voda i Wi-Fi uključeni",
         "Fiksna cena dogovorena unapred",
         "Mercedes E klasa ili Audi A6"
       ],
@@ -604,7 +614,7 @@ export const sr: Dict = {
   },
   loyalty: {
     title: "Loyalty program",
-    description: "Za svaku 5. završenu vožnju dobijate besplatan transfer do 25km za aerodromski servis ili duge relacije.",
+    description: "Za svaku 5. završenu vožnju dobijate besplatan transfer do 25km za aerodromski transfer ili duge relacije.",
     progressLabel: "Vaš napredak",
     step: "vožnja",
     nextReward: "Još {remaining} do besplatne vožnje!",

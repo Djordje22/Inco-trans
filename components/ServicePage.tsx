@@ -69,25 +69,11 @@ export default function ServicePage({ locale, service }: Props) {
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <ReservationTrigger>{page.ctaText}</ReservationTrigger>
+              <ReservationTrigger service={service}>{page.ctaText}</ReservationTrigger>
             </div>
           </div>
 
           <aside className="space-y-4">
-            <div className="glass rounded-2xl p-6">
-              <h2 className="eyebrow">{page.keywordsTitle}</h2>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {page.keywords.map((k) => (
-                  <li
-                    key={k}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] text-white/75"
-                  >
-                    {k}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
             <div className="glass rounded-2xl p-6">
               <h2 className="eyebrow">{page.crossLinkTitle}</h2>
               <ul className="mt-3 space-y-2 text-sm">

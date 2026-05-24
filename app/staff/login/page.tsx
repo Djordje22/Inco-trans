@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import StaffLoginForm from "@/components/staff/StaffLoginForm";
 
 export const metadata = { title: "Prijava za administraciju", robots: "noindex" };
@@ -17,6 +18,11 @@ export default function StaffLoginPage() {
           <Suspense fallback={<div className="py-4 text-center text-white/50">...</div>}>
             <StaffLoginForm />
           </Suspense>
+        </div>
+        <div className="mt-4 text-center">
+          <Link href="/" className="text-sm text-white/40 hover:text-white/70 transition-colors">
+            &larr; Nazad na sajt
+          </Link>
         </div>
       </div>
     </div>

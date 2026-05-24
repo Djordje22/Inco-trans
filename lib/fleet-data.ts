@@ -33,19 +33,19 @@ export const vehicles: Vehicle[] = [
       sr: [
         "Profesionalni šofer",
         "Kožna sedišta i klima",
-        "Voda i Wi-Fi na zahtev",
+        "Voda i Wi-Fi uključeni",
         "Diskretan i tih enterijer"
       ],
       en: [
         "Professional chauffeur",
         "Leather seats and climate control",
-        "Bottled water and Wi-Fi on request",
+        "Bottled water and Wi-Fi included",
         "Discreet, quiet cabin"
       ],
       ru: [
         "Профессиональный шофёр",
         "Кожаный салон и климат-контроль",
-        "Вода и Wi-Fi по запросу",
+        "Вода и Wi-Fi включены",
         "Тихий, комфортный салон"
       ]
     }
@@ -68,19 +68,19 @@ export const vehicles: Vehicle[] = [
         "Profesionalni šofer",
         "Udobna limuzina za aerodromske transfere",
         "Kožna sedišta i klima",
-        "Voda i Wi-Fi na zahtev"
+        "Voda i Wi-Fi uključeni"
       ],
       en: [
         "Professional chauffeur",
         "Comfortable sedan for airport transfers",
         "Leather seats and climate control",
-        "Bottled water and Wi-Fi on request"
+        "Bottled water and Wi-Fi included"
       ],
       ru: [
         "Профессиональный шофёр",
         "Комфортный седан для трансферов из аэропорта",
         "Кожаный салон и климат-контроль",
-        "Вода и Wi-Fi по запросу"
+        "Вода и Wi-Fi включены"
       ]
     }
   }

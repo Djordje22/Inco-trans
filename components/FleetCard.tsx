@@ -26,7 +26,7 @@ export default function FleetCard({ vehicle, locale }: Props) {
           alt={altText}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover"
+          className="object-cover object-[center_60%]"
         />
       </div>
 

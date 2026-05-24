@@ -36,7 +36,9 @@ import {
   Clock,
   Search,
   Wifi,
-  Bell
+  Bell,
+  CarTaxiFront,
+  Route as RouteIcon
 } from "lucide-react";
 import {
   DndContext,
@@ -78,7 +80,7 @@ type SubmitState = "idle" | "submitting" | "error";
 type Ctx = {
   open: boolean;
   flow: FlowKind;
-  openModal: () => void;
+  openModal: (initialService?: ServiceType) => void;
   closeModal: () => void;
 };
 
@@ -98,17 +100,19 @@ type TriggerProps = {
   className?: string;
   children: ReactNode;
   variant?: "gold" | "ghost";
+  service?: ServiceType;
 };
 
 export function ReservationTrigger({
   className,
   children,
-  variant
+  variant,
+  service
 }: TriggerProps) {
   const { openModal } = useReservation();
   const cls = className ?? (variant === "ghost" ? "btn-ghost" : "btn-gold");
   return (
-    <button type="button" onClick={openModal} className={cls}>
+    <button type="button" onClick={() => openModal(service)} className={cls}>
       {children}
     </button>
   );
@@ -127,11 +131,13 @@ export default function ReservationModalProvider({
 }: ProviderProps) {
   const [open, setOpen] = useState(false);
   const [flow, setFlow] = useState<FlowKind>("choose");
+  const initialServiceRef = useRef<ServiceType | undefined>(undefined);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  const openModal = useCallback(() => {
+  const openModal = useCallback((initialService?: ServiceType) => {
     previousFocusRef.current = (document.activeElement as HTMLElement) || null;
-    setFlow("choose");
+    initialServiceRef.current = initialService;
+    setFlow(initialService ? "transfer" : "choose");
     setOpen(true);
   }, []);
 
@@ -169,7 +175,7 @@ export default function ReservationModalProvider({
     <ReservationContext.Provider value={ctxValue}>
       {children}
       {open ? (
-        <ModalShell locale={locale} flow={flow} setFlow={setFlow} onClose={closeModal} />
+        <ModalShell locale={locale} flow={flow} setFlow={setFlow} onClose={closeModal} initialService={initialServiceRef.current} />
       ) : null}
     </ReservationContext.Provider>
   );
@@ -182,9 +188,10 @@ type ShellProps = {
   flow: FlowKind;
   setFlow: (f: FlowKind) => void;
   onClose: () => void;
+  initialService?: ServiceType;
 };
 
-function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
+function ModalShell({ locale, flow, setFlow, onClose, initialService }: ShellProps) {
   const dict = t(locale).modal;
   const titleId = "reservation-modal-title";
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -232,7 +239,7 @@ function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
         </header>
 
         <div
-          className="overflow-y-auto px-5 py-6 sm:px-6 sm:py-7"
+          className="overflow-y-auto overflow-x-hidden px-5 py-6 sm:px-6 sm:py-7 break-words"
           style={{ maxHeight: "calc(92vh - 64px)" }}
         >
           {flow === "choose" ? (
@@ -243,6 +250,7 @@ function ModalShell({ locale, flow, setFlow, onClose }: ShellProps) {
               locale={locale}
               onBack={() => setFlow("choose")}
               onDone={() => setFlow("success")}
+              initialService={initialService}
             />
           ) : null}
           {flow === "handle" ? (
@@ -415,7 +423,7 @@ function StepProgress({ steps, current }: { steps: string[]; current: number }) 
 
 // ---------- Transfer flow (3 steps) ----------
 
-type ServiceType = "airport" | "chauffeur" | "business" | "other";
+export type ServiceType = "airport" | "chauffeur" | "business" | "other";
 type AirportDirection = "from" | "to" | "";
 type PreferredCommunication = "phone_sms" | "viber_whatsapp" | "email";
 type PaymentMethod = "card" | "cash";
@@ -584,18 +592,24 @@ const isContactValid = (
 function TransferFlow({
   locale,
   onBack,
-  onDone
+  onDone,
+  initialService
 }: {
   locale: Locale;
   onBack: () => void;
   onDone: () => void;
+  initialService?: ServiceType;
 }) {
   const dict = t(locale).modal;
   const airportName = dict.rent.airportDirection.airportName;
-  const [data, setData] = useState<TransferData>(EMPTY);
+  const [data, setData] = useState<TransferData>(() =>
+    initialService ? { ...EMPTY, service: initialService } : EMPTY
+  );
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [preStep, setPreStep] = useState<"service" | "direction" | null>(
-    "service"
+    initialService
+      ? initialService === "airport" ? "direction" : null
+      : "service"
   );
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
 
@@ -806,6 +820,12 @@ function ServiceStep({
 }) {
   const dict = t(locale).modal.rent.service;
   const tf = t(locale).transportForm;
+  const ServiceIcons: Record<ServiceType, typeof PlaneLanding> = {
+    airport: PlaneLanding,
+    chauffeur: CarTaxiFront,
+    business: RouteIcon,
+    other: HelpCircle
+  };
   const options: { value: ServiceType; label: string; desc: string }[] = [
     {
       value: "airport",
@@ -846,6 +866,7 @@ function ServiceStep({
       <ul className="mt-5 space-y-2.5">
         {options.map((opt) => {
           const active = data.service === opt.value;
+          const SvcIcon = ServiceIcons[opt.value];
           return (
             <li key={opt.value}>
               <button
@@ -853,17 +874,25 @@ function ServiceStep({
                 onClick={() => set("service", opt.value)}
                 aria-pressed={active}
                 className={
-                  "w-full text-left rounded-xl border px-4 py-3 transition-colors " +
+                  "w-full text-left rounded-xl border px-4 py-3 transition-colors flex items-center gap-3 " +
                   (active
                     ? "border-gold-400 bg-gold-400/10"
                     : "border-white/10 bg-white/5 hover:bg-white/10")
                 }
               >
-                <span className="block text-sm font-semibold text-white">
-                  {opt.label}
+                <span className={
+                  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg " +
+                  (active ? "bg-gold-400/20 text-gold-300" : "bg-white/5 text-white/50 ring-1 ring-white/10")
+                }>
+                  <SvcIcon className="h-4 w-4" />
                 </span>
-                <span className="mt-0.5 block text-xs text-white/60">
-                  {opt.desc}
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-white">
+                    {opt.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-white/60">
+                    {opt.desc}
+                  </span>
                 </span>
               </button>
             </li>
@@ -1648,7 +1677,7 @@ function ReviewCard({
         {items.map((item) => (
           <div key={item.label} className="flex items-start justify-between gap-3">
             <dt className="text-white/55">{item.label}</dt>
-            <dd className="max-w-[60%] text-right font-medium text-white">
+            <dd className="max-w-[60%] text-right font-medium text-white break-all">
               {item.value}
             </dd>
           </div>

@@ -14,18 +14,18 @@ export const siteConfig = {
     en: "Inco Trans provides professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfer, long-distance transfers and VIP transport. Online reservations are always available, with calls from 08:00 to 22:00 Belgrade time.",
     ru: "Inco Trans предлагает профессиональный шофёр-сервис и люкс-трансфер в Белграде и Сербии: трансфер из аэропорта, дальние поездки и VIP-перевозки. Онлайн-бронирование доступно всегда, звонки принимаем с 08:00 до 22:00 по времени Белграда."
   },
-  url: "https://incotrans.netlify.app",
-  domain: "incotrans.netlify.app",
+  url: "https://inco-trans.com",
+  domain: "inco-trans.com",
   defaultLocale: "sr" as const,
   locales: ["sr", "en", "ru"] as const,
 
-  // Phone number is +381 62 864 3221.
+  // Phone number is +381 69 3711 206.
   contact: {
-    phone: "+381 62 864 3221",
-    phoneHref: "tel:+381628643221",
-    whatsapp: "+381 62 864 3221",
+    phone: "+381 69 3711 206",
+    phoneHref: "tel:+381693711206",
+    whatsapp: "+381 69 3711 206",
     whatsappHref:
-      "https://api.whatsapp.com/send/?phone=381628643221&text&type=phone_number&app_absent=0",
+      "https://api.whatsapp.com/send/?phone=381693711206&text&type=phone_number&app_absent=0",
     email: "reservations@inco-trans.com",
     emailHref: "mailto:reservations@inco-trans.com",
     address: "Belgrade, Serbia",

@@ -20,7 +20,7 @@ type ReferralData = {
   promoCodes: { id: string; code: string; discountPercent: number; status: string; redeemedAt: string | null; createdAt: string }[];
 };
 
-const WHATSAPP_NUMBER = "381628643221";
+const WHATSAPP_NUMBER = "381693711206";
 
 export default function ReferralCard({ locale, dict }: Props) {
   const [data, setData] = useState<ReferralData | null>(null);

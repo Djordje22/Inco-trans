@@ -34,12 +34,6 @@ export default function KontaktPage() {
               <h2 className="eyebrow">{dict.footer.contact}</h2>
               <ul className="mt-3 space-y-3 text-sm">
                 <li>
-                  <span className="text-white/55 mr-2">
-                    {dict.contact.whatsappLabel}:
-                  </span>
-                  <span className="text-white/90">{siteConfig.contact.whatsapp}</span>
-                </li>
-                <li>
                   <span className="text-white/55 mr-2">Tel:</span>
                   <span className="text-white/90">{siteConfig.contact.phone}</span>
                 </li>
@@ -48,10 +42,8 @@ export default function KontaktPage() {
                   <span className="text-white/90">{siteConfig.contact.email}</span>
                 </li>
                 <li>
-                  <span className="text-white/55 mr-2">
-                    {dict.contact.addressLabel}:
-                  </span>
-                  <span className="text-white/90">{siteConfig.contact.address}</span>
+                  <span className="text-white/55 mr-2">Lokacija:</span>
+                  <span className="text-white/90">Beograd, Srbija</span>
                 </li>
                 <li>
                   <span className="text-white/55 mr-2">

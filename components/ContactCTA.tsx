@@ -1,13 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Mail, Phone } from "lucide-react";
 import { routeMap, siteConfig, type Locale } from "@/lib/site-config";
 import { t } from "@/lib/i18n";
 import { ReservationTrigger } from "./ReservationModal";
 import WhatsAppMark from "./icons/WhatsAppMark";
-
-const CTA_IMAGE =
-  "https://images.unsplash.com/photo-1741088996480-5e4158b56396?auto=format&fit=crop&w=2200&q=80";
 
 export default function ContactCTA({ locale }: { locale: Locale }) {
   const dict = t(locale);
@@ -23,16 +19,7 @@ export default function ContactCTA({ locale }: { locale: Locale }) {
       className="container-tight py-16 sm:py-20"
       aria-labelledby="cta-title"
     >
-      <div className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-ink-900">
-        <Image
-          src={CTA_IMAGE}
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 1120px"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-black/70" aria-hidden="true" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/80" aria-hidden="true" />
+      <div className="relative isolate overflow-hidden rounded-3xl border border-white/10 bg-ink-900/80">
 
         <div className="relative grid gap-10 p-6 sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:p-14">
           <div className="space-y-3">
@@ -62,7 +49,7 @@ export default function ContactCTA({ locale }: { locale: Locale }) {
                   {whatsappLabel}
                 </span>
                 <span className="mt-1 block text-base font-semibold">
-                  {siteConfig.contact.whatsapp}
+                  {locale === "sr" ? "Pošaljite poruku" : locale === "ru" ? "Отправить сообщение" : "Send a message"}
                 </span>
               </span>
             </a>
