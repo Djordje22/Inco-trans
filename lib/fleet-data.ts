@@ -24,10 +24,9 @@ export const vehicles: Vehicle[] = [
       en: "Executive sedan for chauffeur service and transfers",
       ru: "Бизнес-седан для шофёр-сервиса и трансферов"
     },
-    image:
-      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1600&q=80",
+    image: "/fleet/mercedes-e-class.jpg",
     passengers: 4,
-    luggage: 3,
+    luggage: 4,
     transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },
     fuel: { sr: "Dizel", en: "Diesel", ru: "Дизель" },
     comfort: {
@@ -59,8 +58,7 @@ export const vehicles: Vehicle[] = [
       en: "Premium sedan for airport transfers and longer rides",
       ru: "Премиальный седан для трансферов из аэропорта и дальних поездок"
     },
-    image:
-      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1600&q=80",
+    image: "/fleet/audi-a6.jpeg",
     passengers: 4,
     luggage: 4,
     transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },
@@ -90,8 +88,8 @@ export const vehicles: Vehicle[] = [
 
 export function pricePlaceholder(locale: Locale): string {
   return locale === "sr"
-    ? "Cena na upit"
+    ? "od 30€"
     : locale === "ru"
-      ? "Цена по запросу"
-      : "Price on request";
+      ? "от 30€"
+      : "from €30";
 }

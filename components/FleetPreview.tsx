@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { vehicles } from "@/lib/fleet-data";
-import { routeMap, type Locale } from "@/lib/site-config";
+import { type Locale } from "@/lib/site-config";
 import { t } from "@/lib/i18n";
 import FleetCard from "./FleetCard";
 import SectionHeader from "./SectionHeader";
@@ -21,12 +20,6 @@ export default function FleetPreview({ locale }: { locale: Locale }) {
         <h2 id="fleet-preview-title" className="sr-only">
           {dict.fleetPreview.title}
         </h2>
-        <Link
-          href={routeMap.fleet[locale]}
-          className="self-start md:self-auto inline-flex items-center gap-1 text-sm text-gold-300 hover:text-gold-200"
-        >
-          {dict.fleetPreview.viewAll} →
-        </Link>
       </div>
 
       <div className="mt-10 grid gap-6 md:grid-cols-2">

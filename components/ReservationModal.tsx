@@ -2337,10 +2337,10 @@ function PhonePanel({
           </span>
           <span className="flex-1">
             <span className="block text-[11px] uppercase tracking-widest text-gold-200/80">
-              {dict.phonePanel.whatsappCta}
+              WhatsApp
             </span>
             <span className="block font-semibold text-white">
-              {siteConfig.contact.whatsapp}
+              {locale === "sr" ? "Pošaljite poruku" : locale === "ru" ? "Отправить сообщение" : "Send a message"}
             </span>
           </span>
           <ChevronRight className="text-white/55" />

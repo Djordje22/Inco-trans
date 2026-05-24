@@ -19,15 +19,15 @@ export const siteConfig = {
   defaultLocale: "sr" as const,
   locales: ["sr", "en", "ru"] as const,
 
-  // Phone number is +381 65 283 3289 (national: 065 28 33 289).
+  // Phone number is +381 62 864 3221.
   contact: {
-    phone: "+381 65 283 3289",
-    phoneHref: "tel:+381652833289",
-    whatsapp: "+381 65 283 3289",
+    phone: "+381 62 864 3221",
+    phoneHref: "tel:+381628643221",
+    whatsapp: "+381 62 864 3221",
     whatsappHref:
-      "https://api.whatsapp.com/send/?phone=381652833289&text&type=phone_number&app_absent=0",
-    email: "dorde.bojovic@rechargeapps",
-    emailHref: "mailto:dorde.bojovic@rechargeapps",
+      "https://api.whatsapp.com/send/?phone=381628643221&text&type=phone_number&app_absent=0",
+    email: "reservations@inco-trans.com",
+    emailHref: "mailto:reservations@inco-trans.com",
     address: "Belgrade, Serbia",
     city: "Beograd",
     country: "RS",

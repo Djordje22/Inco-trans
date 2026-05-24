@@ -80,7 +80,7 @@ export default function Footer({ locale }: Props) {
                 className="hover:text-white"
               >
                 <WhatsAppMark className="mr-2 inline h-4 w-4 align-[-2px]" />
-                {siteConfig.contact.whatsapp}
+                {locale === "sr" ? "Pošaljite poruku" : locale === "ru" ? "Отправить сообщение" : "Send a message"}
               </a>
             </li>
             <li>

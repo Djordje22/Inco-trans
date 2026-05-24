@@ -60,7 +60,7 @@ export const ru: Dict = {
     luggage: "багаж",
     transmission: "коробка",
     fuel: "топливо",
-    pricePlaceholder: "Цена по запросу",
+    pricePlaceholder: "от 30€",
     reserve: "Забронировать",
     whatsappBook: "WhatsApp"
   },

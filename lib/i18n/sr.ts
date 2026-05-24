@@ -59,7 +59,7 @@ export const sr: Dict = {
     luggage: "prtljag",
     transmission: "menjač",
     fuel: "gorivo",
-    pricePlaceholder: "Cena na upit",
+    pricePlaceholder: "od 30€",
     reserve: "Rezerviši",
     whatsappBook: "WhatsApp"
   },

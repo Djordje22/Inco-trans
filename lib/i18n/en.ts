@@ -60,7 +60,7 @@ export const en: Dict = {
     luggage: "luggage",
     transmission: "transmission",
     fuel: "fuel",
-    pricePlaceholder: "Price on request",
+    pricePlaceholder: "from €30",
     reserve: "Reserve",
     whatsappBook: "WhatsApp"
   },
