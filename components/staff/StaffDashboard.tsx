@@ -101,6 +101,7 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
   const [selectedVehicle, setSelectedVehicle] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState<string | null>(null);
   const [confirmResult, setConfirmResult] = useState<Record<string, "success" | "error">>({});
+  const [confirmMessage, setConfirmMessage] = useState<Record<string, string>>({});
 
   // Payment link state
   const [paymentAmount, setPaymentAmount] = useState<Record<string, string>>({});
@@ -125,6 +126,7 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
 
     setConfirming(bookingId);
     setConfirmResult((prev) => ({ ...prev, [bookingId]: undefined as any }));
+    setConfirmMessage((prev) => ({ ...prev, [bookingId]: "" }));
 
     const finalPrice = paymentAmount[bookingId] ? parseFloat(paymentAmount[bookingId]) : undefined;
 
@@ -139,6 +141,15 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         const data = await res.json();
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "success" }));
         const vehicle = vehicles.find((v) => v.id === vehicleId);
+
+        // Show payment link error if card payment but link creation failed
+        if (data.paymentLinkError) {
+          setConfirmMessage((prev) => ({
+            ...prev,
+            [bookingId]: `Potvrđeno, ali link za plaćanje nije kreiran: ${data.paymentLinkError}`
+          }));
+        }
+
         setBookings((prev) =>
           prev.map((b) => {
             if (b.id !== bookingId) return b;
@@ -259,6 +270,7 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         onConfirm={handleConfirm}
         confirming={confirming}
         confirmResult={confirmResult}
+        confirmMessage={confirmMessage}
         paymentAmount={paymentAmount}
         onPaymentAmountChange={(bookingId, val) =>
           setPaymentAmount((prev) => ({ ...prev, [bookingId]: val }))
@@ -285,6 +297,7 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         onConfirm={() => {}}
         confirming={null}
         confirmResult={confirmResult}
+        confirmMessage={{}}
         paymentAmount={{}}
         onPaymentAmountChange={() => {}}
         onSendPaymentLink={() => {}}
@@ -312,6 +325,7 @@ function BookingSection({
   onConfirm,
   confirming,
   confirmResult,
+  confirmMessage,
   paymentAmount,
   onPaymentAmountChange,
   onSendPaymentLink,
@@ -334,6 +348,7 @@ function BookingSection({
   onConfirm: (bookingId: string) => void;
   confirming: string | null;
   confirmResult: Record<string, "success" | "error">;
+  confirmMessage: Record<string, string>;
   paymentAmount: Record<string, string>;
   onPaymentAmountChange: (bookingId: string, value: string) => void;
   onSendPaymentLink: (bookingId: string) => void;
@@ -522,10 +537,13 @@ function BookingSection({
                               </>
                             )}
                           </button>
-                          {cResult === "success" && (
+                          {cResult === "success" && !confirmMessage[b.id] && (
                             <span className="text-xs text-green-400">
                               {b.payment_method === "card" ? "Potvrđeno! Email sa linkom za plaćanje je poslat." : "Potvrđeno! Email je poslat."}
                             </span>
+                          )}
+                          {cResult === "success" && confirmMessage[b.id] && (
+                            <span className="text-xs text-yellow-400">{confirmMessage[b.id]}</span>
                           )}
                           {cResult === "error" && (
                             <span className="text-xs text-red-400">Neuspešno.</span>
