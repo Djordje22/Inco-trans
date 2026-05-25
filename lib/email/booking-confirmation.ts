@@ -24,6 +24,7 @@ type SendConfirmationArgs = {
   bookingId: string;
   booking: BookingRow;
   vehicleName: string;
+  paymentUrl?: string;
 };
 
 type SendResult = { sent: true } | { sent: false; reason: string };
@@ -91,6 +92,9 @@ const copyForLocale = (locale: Locale) => {
       yes: "Da",
       no: "Ne",
       next: "Vozač će vas sačekati na dogovorenom mestu. Za izmene ili pitanja, pošaljite nam WhatsApp poruku.",
+      payButton: "Platite sada",
+      payNote: "Link za plaćanje važi 7 dana. Plaćanje je obezbeđeno preko Adyen-a.",
+      payIntro: "Molimo izvršite plaćanje putem linka ispod kako biste finalizovali rezervaciju.",
       footer: "Inco Trans | Online rezervacije"
     };
   }
@@ -114,6 +118,9 @@ const copyForLocale = (locale: Locale) => {
       yes: "Да",
       no: "Нет",
       next: "Водитель будет ждать вас в условленном месте. Для изменений или вопросов напишите нам в WhatsApp.",
+      payButton: "Оплатить",
+      payNote: "Ссылка для оплаты действует 7 дней. Оплата защищена через Adyen.",
+      payIntro: "Пожалуйста, оплатите по ссылке ниже для завершения бронирования.",
       footer: "Inco Trans | Онлайн-бронирование"
     };
   }
@@ -136,6 +143,9 @@ const copyForLocale = (locale: Locale) => {
     yes: "Yes",
     no: "No",
     next: "Your driver will be waiting at the agreed location. For changes or questions, message us on WhatsApp.",
+    payButton: "Pay now",
+    payNote: "The payment link is valid for 7 days. Payment is secured via Adyen.",
+    payIntro: "Please complete the payment below to finalize your booking.",
     footer: "Inco Trans | Online reservations"
   };
 };
@@ -147,7 +157,7 @@ const paymentLabel = (method: string, locale: Locale) => {
   return locale === "sr" ? "Gotovina" : locale === "ru" ? "Наличные" : "Cash";
 };
 
-function buildConfirmationEmail({ bookingId, booking, vehicleName }: SendConfirmationArgs) {
+function buildConfirmationEmail({ bookingId, booking, vehicleName, paymentUrl }: SendConfirmationArgs) {
   const locale = (booking.locale as Locale) || "en";
   const copy = copyForLocale(locale);
   const route = `${booking.pickup} → ${booking.destination}`;
@@ -188,6 +198,13 @@ function buildConfirmationEmail({ bookingId, booking, vehicleName }: SendConfirm
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #ece7dd;border-bottom:1px solid #ece7dd;">
                     ${rows}
                   </table>
+                  ${paymentUrl ? `
+                  <p style="margin:22px 0 12px;color:#374151;font-size:14px;line-height:1.7;">${escapeHtml(copy.payIntro)}</p>
+                  <div style="text-align:center;margin:20px 0;">
+                    <a href="${escapeHtml(paymentUrl)}" style="display:inline-block;padding:14px 32px;background:#d7b56d;color:#111;text-decoration:none;border-radius:10px;font-size:16px;font-weight:700;">${escapeHtml(copy.payButton)}</a>
+                  </div>
+                  <p style="margin:0 0 16px;color:#6b7280;font-size:12px;text-align:center;">${escapeHtml(copy.payNote)}</p>
+                  ` : ""}
                   <p style="margin:22px 0 0;color:#374151;font-size:14px;line-height:1.7;">${escapeHtml(copy.next)}</p>
                 </td>
               </tr>
@@ -221,6 +238,9 @@ function buildConfirmationEmail({ bookingId, booking, vehicleName }: SendConfirm
     booking.price_estimate?.totalPrice != null
       ? `${copy.price}: ${formatPrice(booking.price_estimate.totalPrice, locale)}`
       : "",
+    ...(paymentUrl
+      ? ["", copy.payIntro, "", `${copy.payButton}: ${paymentUrl}`, "", copy.payNote]
+      : []),
     "",
     copy.next
   ].filter(Boolean).join("\n");

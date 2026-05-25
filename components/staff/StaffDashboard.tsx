@@ -136,14 +136,26 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
       });
 
       if (res.ok) {
+        const data = await res.json();
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "success" }));
         const vehicle = vehicles.find((v) => v.id === vehicleId);
         setBookings((prev) =>
-          prev.map((b) =>
-            b.id === bookingId
-              ? { ...b, status: "confirmed", assigned_vehicle_id: vehicleId, assigned_vehicle_name: vehicle?.name }
-              : b
-          )
+          prev.map((b) => {
+            if (b.id !== bookingId) return b;
+            const updated: Booking = {
+              ...b,
+              status: "confirmed",
+              assigned_vehicle_id: vehicleId,
+              assigned_vehicle_name: vehicle?.name
+            };
+            if (data.paymentLinkUrl) {
+              updated.payment_status = "pending";
+              updated.payment_amount = finalPrice ? Math.round(finalPrice * 100) : b.payment_amount;
+              updated.payment_currency = "EUR";
+              updated.payment_link_url = data.paymentLinkUrl;
+            }
+            return updated;
+          })
         );
       } else {
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "error" }));
@@ -351,7 +363,6 @@ function BookingSection({
             const cResult = confirmResult[b.id];
             const pResult = paymentResult[b.id];
             const hasPaymentLink = !!b.payment_link_url;
-            const needsPaymentLink = isConfirmed && b.payment_method === "card" && !hasPaymentLink && b.payment_status !== "paid" && b.email;
             const displayStatus = statusBadge(b, historicalSection);
 
             return (
@@ -508,54 +519,11 @@ function BookingSection({
                             )}
                           </button>
                           {cResult === "success" && (
-                            <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
+                            <span className="text-xs text-green-400">
+                              {b.payment_method === "card" ? "Potvrđeno! Email sa linkom za plaćanje je poslat." : "Potvrđeno! Email je poslat."}
+                            </span>
                           )}
                           {cResult === "error" && (
-                            <span className="text-xs text-red-400">Neuspešno.</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Potvrđena rezervacija — pošalji link za plaćanje (samo kartice) */}
-                    {showActions && needsPaymentLink && (
-                      <div className="border-t border-white/5 pt-4 space-y-3">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <label htmlFor={`pay-amount-${b.id}`} className="text-xs text-white/50">
-                            Iznos za plaćanje (EUR):
-                          </label>
-                          <input
-                            id={`pay-amount-${b.id}`}
-                            type="number"
-                            step="0.01"
-                            min="1"
-                            placeholder={b.price_estimate?.totalPrice ? String(b.price_estimate.totalPrice) : ""}
-                            value={paymentAmount[b.id] ?? ""}
-                            onChange={(e) => onPaymentAmountChange(b.id, e.target.value)}
-                            className="glass-input w-28 text-sm"
-                          />
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => onSendPaymentLink(b.id)}
-                            disabled={
-                              sendingPayment === b.id ||
-                              (!paymentAmount[b.id] && !b.price_estimate?.totalPrice)
-                            }
-                            className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
-                          >
-                            {sendingPayment === b.id ? "..." : (
-                              <>
-                                <Send className="h-3.5 w-3.5" />
-                                Pošalji link za plaćanje
-                              </>
-                            )}
-                          </button>
-                          {pResult === "success" && (
-                            <span className="text-xs text-green-400">Link za plaćanje je poslat!</span>
-                          )}
-                          {pResult === "error" && (
                             <span className="text-xs text-red-400">Neuspešno.</span>
                           )}
                         </div>
