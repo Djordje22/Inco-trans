@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getStaffDashboardSession } from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { sendBookingConfirmationEmail } from "@/lib/email/booking-confirmation";
+import { createPaymentLink } from "@/lib/adyen/client";
 
 export const runtime = "nodejs";
 
@@ -79,13 +80,49 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Rezervacija nije pronađena." }, { status: 404 });
   }
 
-  // Send confirmation email to the customer
+  // For card payments, create an Adyen payment link
+  let paymentLinkUrl: string | null = null;
+  if (booking.payment_method === "card" && booking.email && finalPrice && finalPrice > 0) {
+    const amountInCents = Math.round(finalPrice * 100);
+    const currency = "EUR";
+
+    const linkResult = await createPaymentLink({
+      reference: bookingId,
+      amountValue: amountInCents,
+      currency,
+      shopperEmail: booking.email,
+      description: `Inco Trans: ${booking.pickup} → ${booking.destination}`,
+      returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://inco-trans.com"}/booking/success`
+    });
+
+    if (linkResult.ok) {
+      paymentLinkUrl = linkResult.url;
+
+      // Store payment info in the booking
+      await supabase
+        .from("booking_requests")
+        .update({
+          payment_provider: "adyen",
+          payment_provider_ref: linkResult.id,
+          payment_link_url: linkResult.url,
+          payment_status: "pending",
+          payment_amount: amountInCents,
+          payment_currency: currency
+        })
+        .eq("id", bookingId);
+    } else {
+      console.error("Adyen payment link creation failed:", linkResult.error);
+    }
+  }
+
+  // Send confirmation email to the customer (with payment link for card payments)
   let emailSent = false;
   if (booking.email) {
     const result = await sendBookingConfirmationEmail({
       bookingId,
       booking,
-      vehicleName: vehicle.name
+      vehicleName: vehicle.name,
+      paymentUrl: paymentLinkUrl ?? undefined
     });
     emailSent = result.sent;
     if (!result.sent) {
@@ -93,5 +130,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, emailSent });
+  return NextResponse.json({ ok: true, emailSent, paymentLinkUrl });
 }

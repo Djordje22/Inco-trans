@@ -136,14 +136,26 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
       });
 
       if (res.ok) {
+        const data = await res.json();
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "success" }));
         const vehicle = vehicles.find((v) => v.id === vehicleId);
         setBookings((prev) =>
-          prev.map((b) =>
-            b.id === bookingId
-              ? { ...b, status: "confirmed", assigned_vehicle_id: vehicleId, assigned_vehicle_name: vehicle?.name }
-              : b
-          )
+          prev.map((b) => {
+            if (b.id !== bookingId) return b;
+            const updated: Booking = {
+              ...b,
+              status: "confirmed",
+              assigned_vehicle_id: vehicleId,
+              assigned_vehicle_name: vehicle?.name
+            };
+            if (data.paymentLinkUrl) {
+              updated.payment_status = "pending";
+              updated.payment_amount = finalPrice ? Math.round(finalPrice * 100) : null;
+              updated.payment_currency = "EUR";
+              updated.payment_link_url = data.paymentLinkUrl;
+            }
+            return updated;
+          })
         );
       } else {
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "error" }));
@@ -492,56 +504,33 @@ function BookingSection({
                           />
                         </div>
 
-                        {b.payment_method === "card" && b.email ? (
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => onSendPaymentLink(b.id)}
-                              disabled={
-                                !selectedVehicle[b.id] ||
-                                !paymentAmount[b.id] ||
-                                parseFloat(paymentAmount[b.id]) <= 0 ||
-                                sendingPayment === b.id
-                              }
-                              className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
-                            >
-                              {sendingPayment === b.id ? "..." : (
-                                <>
-                                  <Send className="h-3.5 w-3.5" />
-                                  Pošalji link za plaćanje
-                                </>
-                              )}
-                            </button>
-                            {pResult === "success" && (
-                              <span className="text-xs text-green-400">Link za plaćanje je poslat!</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => onConfirm(b.id)}
+                            disabled={
+                              !selectedVehicle[b.id] ||
+                              confirming === b.id ||
+                              (b.payment_method === "card" && (!paymentAmount[b.id] || parseFloat(paymentAmount[b.id]) <= 0))
+                            }
+                            className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
+                          >
+                            {confirming === b.id ? "..." : (
+                              <>
+                                <Check className="h-3.5 w-3.5" />
+                                Potvrdi i pošalji email
+                              </>
                             )}
-                            {pResult === "error" && (
-                              <span className="text-xs text-red-400">Neuspešno.</span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => onConfirm(b.id)}
-                              disabled={!selectedVehicle[b.id] || confirming === b.id}
-                              className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
-                            >
-                              {confirming === b.id ? "..." : (
-                                <>
-                                  <Check className="h-3.5 w-3.5" />
-                                  Potvrdi i pošalji email
-                                </>
-                              )}
-                            </button>
-                            {cResult === "success" && (
-                              <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
-                            )}
-                            {cResult === "error" && (
-                              <span className="text-xs text-red-400">Neuspešno.</span>
-                            )}
-                          </div>
-                        )}
+                          </button>
+                          {cResult === "success" && (
+                            <span className="text-xs text-green-400">
+                              {b.payment_method === "card" ? "Potvrđeno! Email sa linkom za plaćanje je poslat." : "Potvrđeno! Email je poslat."}
+                            </span>
+                          )}
+                          {cResult === "error" && (
+                            <span className="text-xs text-red-400">Neuspešno.</span>
+                          )}
+                        </div>
                       </div>
                     )}
 
