@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getStaffDashboardSession } from "@/lib/staff/session";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { sendBookingConfirmationEmail } from "@/lib/email/booking-confirmation";
-import { createPaymentLink } from "@/lib/adyen/client";
 
 export const runtime = "nodejs";
 
@@ -80,59 +79,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Rezervacija nije pronađena." }, { status: 404 });
   }
 
-  // For card payments, create an Adyen payment link
-  let paymentLinkUrl: string | null = null;
-  let paymentLinkError: string | null = null;
-  const cardPrice = finalPrice && finalPrice > 0
-    ? finalPrice
-    : (booking.price_estimate as any)?.totalPrice ?? 0;
-
-  if (booking.payment_method === "card" && booking.email) {
-    if (cardPrice <= 0) {
-      paymentLinkError = "Cena nije postavljena — unesite konačnu cenu za kartično plaćanje.";
-    } else {
-      const amountInCents = Math.round(cardPrice * 100);
-      const currency = "EUR";
-
-      const linkResult = await createPaymentLink({
-        reference: bookingId,
-        amountValue: amountInCents,
-        currency,
-        shopperEmail: booking.email,
-        description: `Inco Trans: ${booking.pickup} → ${booking.destination}`,
-        returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://inco-trans.com"}/booking/success`
-      });
-
-      if (linkResult.ok) {
-        paymentLinkUrl = linkResult.url;
-
-        // Store payment info in the booking
-        await supabase
-          .from("booking_requests")
-          .update({
-            payment_provider: "adyen",
-            payment_provider_ref: linkResult.id,
-            payment_link_url: linkResult.url,
-            payment_status: "pending",
-            payment_amount: amountInCents,
-            payment_currency: currency
-          })
-          .eq("id", bookingId);
-      } else {
-        paymentLinkError = linkResult.error;
-        console.error("Adyen payment link creation failed:", linkResult.error);
-      }
-    }
-  }
-
-  // Send confirmation email to the customer (with payment link for card payments)
+  // Send confirmation email to the customer
   let emailSent = false;
   if (booking.email) {
     const result = await sendBookingConfirmationEmail({
       bookingId,
       booking,
-      vehicleName: vehicle.name,
-      paymentUrl: paymentLinkUrl ?? undefined
+      vehicleName: vehicle.name
     });
     emailSent = result.sent;
     if (!result.sent) {
@@ -140,5 +93,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, emailSent, paymentLinkUrl, paymentLinkError });
+  return NextResponse.json({ ok: true, emailSent });
 }

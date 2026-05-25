@@ -101,7 +101,6 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
   const [selectedVehicle, setSelectedVehicle] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState<string | null>(null);
   const [confirmResult, setConfirmResult] = useState<Record<string, "success" | "error">>({});
-  const [confirmMessage, setConfirmMessage] = useState<Record<string, string>>({});
 
   // Payment link state
   const [paymentAmount, setPaymentAmount] = useState<Record<string, string>>({});
@@ -126,7 +125,6 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
 
     setConfirming(bookingId);
     setConfirmResult((prev) => ({ ...prev, [bookingId]: undefined as any }));
-    setConfirmMessage((prev) => ({ ...prev, [bookingId]: "" }));
 
     const finalPrice = paymentAmount[bookingId] ? parseFloat(paymentAmount[bookingId]) : undefined;
 
@@ -138,35 +136,14 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
       });
 
       if (res.ok) {
-        const data = await res.json();
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "success" }));
         const vehicle = vehicles.find((v) => v.id === vehicleId);
-
-        // Show payment link error if card payment but link creation failed
-        if (data.paymentLinkError) {
-          setConfirmMessage((prev) => ({
-            ...prev,
-            [bookingId]: `Potvrđeno, ali link za plaćanje nije kreiran: ${data.paymentLinkError}`
-          }));
-        }
-
         setBookings((prev) =>
-          prev.map((b) => {
-            if (b.id !== bookingId) return b;
-            const updated: Booking = {
-              ...b,
-              status: "confirmed",
-              assigned_vehicle_id: vehicleId,
-              assigned_vehicle_name: vehicle?.name
-            };
-            if (data.paymentLinkUrl) {
-              updated.payment_status = "pending";
-              updated.payment_amount = finalPrice ? Math.round(finalPrice * 100) : null;
-              updated.payment_currency = "EUR";
-              updated.payment_link_url = data.paymentLinkUrl;
-            }
-            return updated;
-          })
+          prev.map((b) =>
+            b.id === bookingId
+              ? { ...b, status: "confirmed", assigned_vehicle_id: vehicleId, assigned_vehicle_name: vehicle?.name }
+              : b
+          )
         );
       } else {
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "error" }));
@@ -179,8 +156,9 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
   };
 
   const handleSendPaymentLink = async (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
     const amountStr = paymentAmount[bookingId];
-    const amount = parseFloat(amountStr);
+    const amount = amountStr ? parseFloat(amountStr) : booking?.price_estimate?.totalPrice;
     if (!amount || amount <= 0) return;
 
     setSendingPayment(bookingId);
@@ -270,7 +248,6 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         onConfirm={handleConfirm}
         confirming={confirming}
         confirmResult={confirmResult}
-        confirmMessage={confirmMessage}
         paymentAmount={paymentAmount}
         onPaymentAmountChange={(bookingId, val) =>
           setPaymentAmount((prev) => ({ ...prev, [bookingId]: val }))
@@ -297,7 +274,6 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
         onConfirm={() => {}}
         confirming={null}
         confirmResult={confirmResult}
-        confirmMessage={{}}
         paymentAmount={{}}
         onPaymentAmountChange={() => {}}
         onSendPaymentLink={() => {}}
@@ -325,7 +301,6 @@ function BookingSection({
   onConfirm,
   confirming,
   confirmResult,
-  confirmMessage,
   paymentAmount,
   onPaymentAmountChange,
   onSendPaymentLink,
@@ -348,7 +323,6 @@ function BookingSection({
   onConfirm: (bookingId: string) => void;
   confirming: string | null;
   confirmResult: Record<string, "success" | "error">;
-  confirmMessage: Record<string, string>;
   paymentAmount: Record<string, string>;
   onPaymentAmountChange: (bookingId: string, value: string) => void;
   onSendPaymentLink: (bookingId: string) => void;
@@ -376,8 +350,8 @@ function BookingSection({
             const isConfirmed = b.status === "confirmed" || b.status === "completed";
             const cResult = confirmResult[b.id];
             const pResult = paymentResult[b.id];
-            const canSendPaymentLink = isConfirmed && b.payment_status !== "paid" && b.email;
             const hasPaymentLink = !!b.payment_link_url;
+            const needsPaymentLink = isConfirmed && b.payment_method === "card" && !hasPaymentLink && b.payment_status !== "paid" && b.email;
             const displayStatus = statusBadge(b, historicalSection);
 
             return (
@@ -523,11 +497,7 @@ function BookingSection({
                           <button
                             type="button"
                             onClick={() => onConfirm(b.id)}
-                            disabled={
-                              !selectedVehicle[b.id] ||
-                              confirming === b.id ||
-                              (b.payment_method === "card" && !paymentAmount[b.id] && !b.price_estimate?.totalPrice)
-                            }
+                            disabled={!selectedVehicle[b.id] || confirming === b.id}
                             className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
                           >
                             {confirming === b.id ? "..." : (
@@ -537,15 +507,55 @@ function BookingSection({
                               </>
                             )}
                           </button>
-                          {cResult === "success" && !confirmMessage[b.id] && (
-                            <span className="text-xs text-green-400">
-                              {b.payment_method === "card" ? "Potvrđeno! Email sa linkom za plaćanje je poslat." : "Potvrđeno! Email je poslat."}
-                            </span>
-                          )}
-                          {cResult === "success" && confirmMessage[b.id] && (
-                            <span className="text-xs text-yellow-400">{confirmMessage[b.id]}</span>
+                          {cResult === "success" && (
+                            <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
                           )}
                           {cResult === "error" && (
+                            <span className="text-xs text-red-400">Neuspešno.</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Potvrđena rezervacija — pošalji link za plaćanje (samo kartice) */}
+                    {showActions && needsPaymentLink && (
+                      <div className="border-t border-white/5 pt-4 space-y-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <label htmlFor={`pay-amount-${b.id}`} className="text-xs text-white/50">
+                            Iznos za plaćanje (EUR):
+                          </label>
+                          <input
+                            id={`pay-amount-${b.id}`}
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            placeholder={b.price_estimate?.totalPrice ? String(b.price_estimate.totalPrice) : ""}
+                            value={paymentAmount[b.id] ?? ""}
+                            onChange={(e) => onPaymentAmountChange(b.id, e.target.value)}
+                            className="glass-input w-28 text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => onSendPaymentLink(b.id)}
+                            disabled={
+                              sendingPayment === b.id ||
+                              (!paymentAmount[b.id] && !b.price_estimate?.totalPrice)
+                            }
+                            className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
+                          >
+                            {sendingPayment === b.id ? "..." : (
+                              <>
+                                <Send className="h-3.5 w-3.5" />
+                                Pošalji link za plaćanje
+                              </>
+                            )}
+                          </button>
+                          {pResult === "success" && (
+                            <span className="text-xs text-green-400">Link za plaćanje je poslat!</span>
+                          )}
+                          {pResult === "error" && (
                             <span className="text-xs text-red-400">Neuspešno.</span>
                           )}
                         </div>

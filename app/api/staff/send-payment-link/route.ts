@@ -19,18 +19,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body?.bookingId || !body?.amount) {
-    return NextResponse.json({ error: "Nedostaje ID rezervacije ili iznos." }, { status: 400 });
+  if (!body?.bookingId) {
+    return NextResponse.json({ error: "Nedostaje ID rezervacije." }, { status: 400 });
   }
 
-  const { bookingId, amount } = body;
+  const { bookingId } = body;
   const currency = body.currency ?? "EUR";
-
-  // amount is in EUR (e.g. 30 for €30), convert to minor units (cents)
-  const amountMinor = Math.round(amount * 100);
-  if (amountMinor <= 0) {
-    return NextResponse.json({ error: "Iznos mora biti veći od nule." }, { status: 400 });
-  }
 
   // Fetch booking
   const { data: booking } = await supabase
@@ -42,6 +36,15 @@ export async function POST(request: Request) {
   if (!booking) {
     return NextResponse.json({ error: "Rezervacija nije pronađena." }, { status: 404 });
   }
+
+  // Use provided amount, or fall back to booking's price estimate
+  const amount = body.amount || (booking.price_estimate as any)?.totalPrice;
+  if (!amount || amount <= 0) {
+    return NextResponse.json({ error: "Iznos mora biti veći od nule." }, { status: 400 });
+  }
+
+  // amount is in EUR (e.g. 30 for €30), convert to minor units (cents)
+  const amountMinor = Math.round(amount * 100);
 
   if (!booking.email) {
     return NextResponse.json({ error: "Rezervacija nema email adresu klijenta." }, { status: 400 });
