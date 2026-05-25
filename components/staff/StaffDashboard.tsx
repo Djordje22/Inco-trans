@@ -511,7 +511,7 @@ function BookingSection({
                             disabled={
                               !selectedVehicle[b.id] ||
                               confirming === b.id ||
-                              (b.payment_method === "card" && (!paymentAmount[b.id] || parseFloat(paymentAmount[b.id]) <= 0))
+                              (b.payment_method === "card" && !paymentAmount[b.id] && !b.price_estimate?.totalPrice)
                             }
                             className="btn-gold text-sm px-4 py-2 inline-flex items-center gap-2 disabled:opacity-40"
                           >

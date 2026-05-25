@@ -82,8 +82,11 @@ export async function POST(request: Request) {
 
   // For card payments, create an Adyen payment link
   let paymentLinkUrl: string | null = null;
-  if (booking.payment_method === "card" && booking.email && finalPrice && finalPrice > 0) {
-    const amountInCents = Math.round(finalPrice * 100);
+  const cardPrice = finalPrice && finalPrice > 0
+    ? finalPrice
+    : (booking.price_estimate as any)?.totalPrice ?? 0;
+  if (booking.payment_method === "card" && booking.email && cardPrice > 0) {
+    const amountInCents = Math.round(cardPrice * 100);
     const currency = "EUR";
 
     const linkResult = await createPaymentLink({
