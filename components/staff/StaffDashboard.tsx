@@ -136,26 +136,14 @@ export default function StaffDashboard({ bookings: initialBookings, vehicles }: 
       });
 
       if (res.ok) {
-        const data = await res.json();
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "success" }));
         const vehicle = vehicles.find((v) => v.id === vehicleId);
         setBookings((prev) =>
-          prev.map((b) => {
-            if (b.id !== bookingId) return b;
-            const updated: Booking = {
-              ...b,
-              status: "confirmed",
-              assigned_vehicle_id: vehicleId,
-              assigned_vehicle_name: vehicle?.name
-            };
-            if (data.paymentLinkUrl) {
-              updated.payment_status = "pending";
-              updated.payment_amount = finalPrice ? Math.round(finalPrice * 100) : b.payment_amount;
-              updated.payment_currency = "EUR";
-              updated.payment_link_url = data.paymentLinkUrl;
-            }
-            return updated;
-          })
+          prev.map((b) =>
+            b.id === bookingId
+              ? { ...b, status: "confirmed", assigned_vehicle_id: vehicleId, assigned_vehicle_name: vehicle?.name }
+              : b
+          )
         );
       } else {
         setConfirmResult((prev) => ({ ...prev, [bookingId]: "error" }));
@@ -519,9 +507,7 @@ function BookingSection({
                             )}
                           </button>
                           {cResult === "success" && (
-                            <span className="text-xs text-green-400">
-                              {b.payment_method === "card" ? "Potvrđeno! Email sa linkom za plaćanje je poslat." : "Potvrđeno! Email je poslat."}
-                            </span>
+                            <span className="text-xs text-green-400">Potvrđeno! Email je poslat.</span>
                           )}
                           {cResult === "error" && (
                             <span className="text-xs text-red-400">Neuspešno.</span>

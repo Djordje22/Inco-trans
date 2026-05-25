@@ -1836,9 +1836,7 @@ function PaymentCard({
       value: "card",
       title: dict.paymentCard,
       desc: dict.paymentCardDesc,
-      icon: <CreditCard className="h-4 w-4" aria-hidden="true" />,
-      disabled: true,
-      badge: dict.paymentCardSoon
+      icon: <CreditCard className="h-4 w-4" aria-hidden="true" />
     }
   ];
 
@@ -1849,33 +1847,25 @@ function PaymentCard({
       </h4>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {methods.map((method) => {
-          const active = !method.disabled && selected === method.value;
+          const active = selected === method.value;
           return (
             <button
               key={method.value}
               type="button"
               aria-pressed={active}
-              disabled={method.disabled}
-              onClick={() => !method.disabled && onSelect(method.value)}
+              onClick={() => onSelect(method.value)}
               className={
                 "rounded-xl border px-3.5 py-3 text-left transition-colors " +
-                (method.disabled
-                  ? "border-white/5 bg-white/[0.02] text-white/30 cursor-not-allowed"
-                  : active
-                    ? "border-white/85 bg-white/8 text-white"
-                    : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/8")
+                (active
+                  ? "border-white/85 bg-white/8 text-white"
+                  : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/8")
               }
             >
               <span className="flex items-center gap-2 text-sm font-semibold">
-                <span className={method.disabled ? "text-white/20" : "text-white/70"}>{method.icon}</span>
+                <span className="text-white/70">{method.icon}</span>
                 {method.title}
-                {method.badge && (
-                  <span className="ml-auto rounded-full bg-gold-400/15 px-2 py-0.5 text-[10px] font-medium text-gold-400">
-                    {method.badge}
-                  </span>
-                )}
               </span>
-              <span className={"mt-1 block text-xs leading-relaxed " + (method.disabled ? "text-white/25" : "text-white/45")}>
+              <span className="mt-1 block text-xs leading-relaxed text-white/45">
                 {method.desc}
               </span>
             </button>
