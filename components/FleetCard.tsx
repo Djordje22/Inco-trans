@@ -20,13 +20,14 @@ export default function FleetCard({ vehicle, locale }: Props) {
 
   return (
     <article className="glass rounded-2xl overflow-hidden flex flex-col">
-      <div className="relative aspect-[16/10] bg-ink-800">
+      <div className="relative bg-ink-800">
         <Image
           src={vehicle.image}
           alt={altText}
-          fill
+          width={900}
+          height={1200}
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover object-[center_60%]"
+          className="w-full h-auto"
         />
       </div>
 
