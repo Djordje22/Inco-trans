@@ -24,7 +24,7 @@ export const vehicles: Vehicle[] = [
       en: "Executive sedan for chauffeur service and transfers",
       ru: "Бизнес-седан для шофёр-сервиса и трансферов"
     },
-    image: "/fleet/airport-audi.jpg",
+    image: "/fleet/mercedes-e-class-airport.jpg",
     passengers: 4,
     luggage: 4,
     transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },
@@ -58,7 +58,7 @@ export const vehicles: Vehicle[] = [
       en: "Premium sedan for airport transfers and longer rides",
       ru: "Премиальный седан для трансферов из аэропорта и дальних поездок"
     },
-    image: "/fleet/airport-audi.jpg",
+    image: "/fleet/audi-a6-airport.jpg",
     passengers: 4,
     luggage: 4,
     transmission: { sr: "Automatik", en: "Automatic", ru: "Автомат" },

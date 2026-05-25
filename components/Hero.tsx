@@ -3,8 +3,7 @@ import { t } from "@/lib/i18n";
 import { type Locale } from "@/lib/site-config";
 import { ReservationTrigger } from "./ReservationModal";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2400&q=80";
+const HERO_IMAGE = "/home.jpg";
 
 export default function Hero({ locale }: { locale: Locale }) {
   const dict = t(locale);
