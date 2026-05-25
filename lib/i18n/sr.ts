@@ -342,6 +342,7 @@ export const sr: Dict = {
         paymentCardTitle: "Način plaćanja",
         paymentCard: "Kartica",
         paymentCardDesc: "Kreditna ili debitna kartica",
+        paymentCardSoon: "Uskoro",
         paymentCash: "Gotovina",
         paymentCashDesc: "Plaćanje vozaču pri preuzimanju",
         promoSummary: "Imate promo kod?",

@@ -251,6 +251,7 @@ export type Dict = {
         paymentCardTitle: string;
         paymentCard: string;
         paymentCardDesc: string;
+        paymentCardSoon: string;
         paymentCash: string;
         paymentCashDesc: string;
         promoSummary: string;

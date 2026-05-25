@@ -343,6 +343,7 @@ export const en: Dict = {
         paymentCardTitle: "Payment method",
         paymentCard: "Card",
         paymentCardDesc: "Credit or debit card",
+        paymentCardSoon: "Coming soon",
         paymentCash: "Cash",
         paymentCashDesc: "Pay the driver at pickup",
         promoSummary: "Have a promo code?",

@@ -344,6 +344,7 @@ export const ru: Dict = {
         paymentCardTitle: "Способ оплаты",
         paymentCard: "Карта",
         paymentCardDesc: "Кредитная или дебетовая карта",
+        paymentCardSoon: "Скоро",
         paymentCash: "Наличные",
         paymentCashDesc: "Оплата водителю при подаче",
         promoSummary: "Есть промокод?",
