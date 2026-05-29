@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -10,6 +10,7 @@ import {
   Send,
   CircleDollarSign
 } from "lucide-react";
+import Pagination from "@/components/Pagination";
 import {
   airportDirectionLabel,
   communicationLabel,
@@ -334,6 +335,37 @@ function BookingSection({
   completing: string | null;
   completeResult: Record<string, "success" | "error" | "loyalty">;
 }) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, sortOrder, pageSize]);
+
+  const filtered = useMemo(() => {
+    let result = bookings;
+
+    if (statusFilter !== "all") {
+      if (statusFilter === "prethodno") {
+        result = result.filter((b) => !TERMINAL_STATUSES.has(b.status));
+      } else {
+        result = result.filter((b) => b.status === statusFilter);
+      }
+    }
+
+    return [...result].sort((a, b) => {
+      const da = new Date(a.pickup_at).getTime();
+      const db = new Date(b.pickup_at).getTime();
+      return sortOrder === "newest" ? db - da : da - db;
+    });
+  }, [bookings, statusFilter, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   return (
     <div>
       <h2 className="font-display text-lg font-semibold mb-3">
@@ -341,11 +373,41 @@ function BookingSection({
         <span className="text-sm font-normal text-white/40">({count})</span>
       </h2>
 
-      {bookings.length === 0 ? (
+      {bookings.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <label className="text-white/50 text-xs">Sortiraj:</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+              className="glass-input text-xs py-1 px-2 w-auto"
+            >
+              <option value="newest">Najnovije</option>
+              <option value="oldest">Najstarije</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-white/50 text-xs">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="glass-input text-xs py-1 px-2 w-auto"
+            >
+              <option value="all">Sve</option>
+              <option value="new">Novo</option>
+              <option value="confirmed">Potvrđeno</option>
+              <option value="completed">Završeno</option>
+              <option value="prethodno">Prethodno</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {paged.length === 0 ? (
         <p className="text-sm text-white/40 py-4">Nema rezervacija u ovoj sekciji.</p>
       ) : (
         <div className="space-y-2">
-          {bookings.map((b) => {
+          {paged.map((b) => {
             const isOpen = expandedId === b.id;
             const isConfirmed = b.status === "confirmed" || b.status === "completed";
             const cResult = confirmResult[b.id];
@@ -561,6 +623,16 @@ function BookingSection({
             );
           })}
         </div>
+      )}
+
+      {filtered.length > 0 && (
+        <Pagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       )}
     </div>
   );

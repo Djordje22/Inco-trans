@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Check, Clock, Car } from "lucide-react";
+import Pagination from "@/components/Pagination";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Dict } from "@/lib/i18n";
 import type { Locale } from "@/lib/site-config";
@@ -73,6 +74,26 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-500/20 text-red-300",
   archived: "bg-white/5 text-white/30"
 };
+
+const TERMINAL_STATUSES = new Set(["completed", "cancelled", "archived"]);
+
+const filterLabels = (locale: Locale) => ({
+  sort: { sr: "Sortiraj", en: "Sort", ru: "Сортировка" }[locale],
+  newest: { sr: "Najnovije", en: "Newest", ru: "Новые" }[locale],
+  oldest: { sr: "Najstarije", en: "Oldest", ru: "Старые" }[locale],
+  status: { sr: "Status", en: "Status", ru: "Статус" }[locale],
+  all: { sr: "Sve", en: "All", ru: "Все" }[locale],
+  new: { sr: "Novo", en: "New", ru: "Новый" }[locale],
+  confirmed: { sr: "Potvrđeno", en: "Confirmed", ru: "Подтверждено" }[locale],
+  completed: { sr: "Završeno", en: "Completed", ru: "Завершено" }[locale],
+  past: { sr: "Prethodno", en: "Past", ru: "Прошедшая" }[locale]
+});
+
+const paginationLabels = (locale: Locale) => ({
+  show: { sr: "Prikaži", en: "Show", ru: "Показать" }[locale],
+  page: { sr: "Strana", en: "Page", ru: "Страница" }[locale],
+  of: { sr: "od", en: "of", ru: "из" }[locale]
+});
 
 const formatDate = (value: string, locale: Locale) => {
   const d = new Date(value);
@@ -204,6 +225,40 @@ function BookingSection({
   vehicleNames: Record<string, string>;
   historicalSection: boolean;
 }) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const fl = filterLabels(locale);
+  const pl = paginationLabels(locale);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, sortOrder, pageSize]);
+
+  const filtered = useMemo(() => {
+    let result = bookings;
+
+    if (statusFilter !== "all") {
+      if (statusFilter === "prethodno") {
+        result = result.filter((b) => !TERMINAL_STATUSES.has(b.status));
+      } else {
+        result = result.filter((b) => b.status === statusFilter);
+      }
+    }
+
+    return [...result].sort((a, b) => {
+      const da = new Date(a.pickup_at).getTime();
+      const db = new Date(b.pickup_at).getTime();
+      return sortOrder === "newest" ? db - da : da - db;
+    });
+  }, [bookings, statusFilter, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   return (
     <div>
       <h2 className="flex items-center gap-2 text-sm font-semibold text-white/70 uppercase tracking-wider mb-3">
@@ -211,8 +266,46 @@ function BookingSection({
         {title}
         <span className="text-white/30 font-normal normal-case">({bookings.length})</span>
       </h2>
+
+      {bookings.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <label className="text-white/50 text-xs">{fl.sort}:</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest")}
+              className="glass-input text-xs py-1 px-2 w-auto"
+            >
+              <option value="newest">{fl.newest}</option>
+              <option value="oldest">{fl.oldest}</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-white/50 text-xs">{fl.status}:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="glass-input text-xs py-1 px-2 w-auto"
+            >
+              <option value="all">{fl.all}</option>
+              <option value="new">{fl.new}</option>
+              <option value="confirmed">{fl.confirmed}</option>
+              <option value="completed">{fl.completed}</option>
+              <option value="prethodno">{fl.past}</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {paged.length === 0 ? (
+        <p className="text-sm text-white/40 py-4">
+          {bookings.length === 0
+            ? dict.auth.noBookings
+            : { sr: "Nema rezervacija za izabrani filter.", en: "No bookings match the selected filter.", ru: "Нет бронирований для выбранного фильтра." }[locale]}
+        </p>
+      ) : (
       <div className="space-y-3">
-        {bookings.map((b) => {
+        {paged.map((b) => {
           const isOpen = expandedId === b.id;
           const vehicleName = b.assigned_vehicle_id ? vehicleNames[b.assigned_vehicle_id] : null;
 
@@ -282,6 +375,18 @@ function BookingSection({
           );
         })}
       </div>
+      )}
+
+      {filtered.length > 0 && (
+        <Pagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          labels={pl}
+        />
+      )}
     </div>
   );
 }
