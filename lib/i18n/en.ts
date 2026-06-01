@@ -257,7 +257,7 @@ export const en: Dict = {
         chauffeurPickupDateTime: "Pickup Date & Time (start time)",
         chauffeurDropoffDateTime: "Drop-off Date & Time (end time)",
         chauffeurDurationTitle: "Duration",
-        chauffeurDurationDesc: "{hours}h selected for chauffeur service.",
+        chauffeurDurationDesc: "{hours} selected for chauffeur service.",
         chauffeurStandardDayNote:
           "Minimum daily reservation is 4 hours. Additional hours beyond 10 are charged hourly.",
         chauffeurDurationDecreaseAria: "Decrease chauffeur service duration",

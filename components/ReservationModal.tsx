@@ -451,7 +451,7 @@ const MIN_WAITING_HOURS = 1;
 const MAX_WAITING_HOURS = 24;
 const MIN_CHAUFFEUR_DURATION_HOURS = 4;
 const CHAUFFEUR_DURATION_GRACE_MINUTES = 15;
-const MAX_CHAUFFEUR_DURATION_HOURS = 24;
+const MAX_CHAUFFEUR_DURATION_HOURS = 9999;
 const STANDARD_CHAUFFEUR_DAY_HOURS = 10;
 // Promo codes are validated server-side via /api/promo/validate
 
@@ -2855,7 +2855,12 @@ function ChauffeurDurationCard({
             {dict.chauffeurDurationTitle}
           </h4>
           <p className="mt-0.5 text-xs leading-relaxed text-white/55">
-            {dict.chauffeurDurationDesc.replace("{hours}", String(hours))}
+            {dict.chauffeurDurationDesc.replace(
+              "{hours}",
+              hours >= 24
+                ? `${Math.floor(hours / 24)}d ${hours % 24}h`
+                : `${hours}h`
+            )}
           </p>
         </div>
         <div className="col-span-2 flex items-center justify-end gap-2 shrink-0 sm:col-span-1">
@@ -2872,7 +2877,9 @@ function ChauffeurDurationCard({
             aria-live="polite"
             className="min-w-[2.5rem] text-center text-sm font-semibold text-white tabular-nums"
           >
-            {hours}h
+            {hours >= 24
+              ? `${Math.floor(hours / 24)}d ${hours % 24}h`
+              : `${hours}h`}
           </span>
           <button
             type="button"

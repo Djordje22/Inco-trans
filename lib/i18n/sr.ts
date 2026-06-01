@@ -256,7 +256,7 @@ export const sr: Dict = {
         chauffeurPickupDateTime: "Datum i vreme (početno vreme)",
         chauffeurDropoffDateTime: "Datum i vreme do kada traje",
         chauffeurDurationTitle: "Trajanje",
-        chauffeurDurationDesc: "{hours}h izabrano za šofer servis.",
+        chauffeurDurationDesc: "{hours} izabrano za šofer servis.",
         chauffeurStandardDayNote:
           "Minimum rezervacija za dan je 4 sata. Dodatni sati preko 10 se naplaćuju po satu.",
         chauffeurDurationDecreaseAria: "Smanji trajanje šofer servisa",

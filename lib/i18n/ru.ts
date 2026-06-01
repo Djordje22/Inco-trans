@@ -258,7 +258,7 @@ export const ru: Dict = {
         chauffeurPickupDateTime: "Дата и время подачи (начало)",
         chauffeurDropoffDateTime: "Дата и время окончания",
         chauffeurDurationTitle: "Длительность",
-        chauffeurDurationDesc: "{hours} ч выбрано для шофёр-сервиса.",
+        chauffeurDurationDesc: "{hours} выбрано для шофёр-сервиса.",
         chauffeurStandardDayNote:
           "Минимальное бронирование на день — 4 часа. Дополнительные часы сверх 10 оплачиваются по часам.",
         chauffeurDurationDecreaseAria: "Уменьшить длительность шофёр-сервиса",
