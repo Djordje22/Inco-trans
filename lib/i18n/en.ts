@@ -32,7 +32,7 @@ export const en: Dict = {
   services: {
     title: "Our services",
     subtitle:
-      "Pick the service that fits your trip. We reply with a fixed price as soon as possible.",
+      "Pick the service that fits your trip. We reply with an estimated price as soon as possible.",
     learnMore: "Learn more",
     items: {
       airport: {
@@ -77,8 +77,8 @@ export const en: Dict = {
         desc: "Send a reservation whenever it suits you. Calls are available 08:00-22:00 Belgrade time."
       },
       {
-        title: "Fixed prices upfront",
-        desc: "Price agreed before the trip, no hidden fees or surcharges."
+        title: "Estimated prices upfront",
+        desc: "You get an estimated price before the trip, no hidden fees or surcharges."
       },
       {
         title: "Professional chauffeurs",
@@ -106,8 +106,8 @@ export const en: Dict = {
         desc: "Website form or WhatsApp message. We reply as soon as possible."
       },
       {
-        title: "2. Confirmation and fixed price",
-        desc: "We send the assigned vehicle, the driver's name and a fixed price."
+        title: "2. Confirmation and estimated price",
+        desc: "We send the assigned vehicle, the driver's name and an estimated price."
       },
       {
         title: "3. Transfer",
@@ -119,13 +119,13 @@ export const en: Dict = {
     title: "About Inco Trans",
     body: [
       "Inco Trans is focused on professional chauffeur service and luxury transfer in Belgrade and Serbia: airport transfers, long-distance trips and VIP rides.",
-      "Our goal is a simple and discreet experience: fixed prices agreed upfront, professional drivers, a well-maintained fleet and clear communication."
+      "Our goal is a simple and discreet experience: estimated prices agreed upfront, professional drivers, a well-maintained fleet and clear communication."
     ],
     valuesTitle: "Our values",
     values: [
       "Punctuality and reliability",
       "Professional, discreet chauffeurs",
-      "Fixed, transparent pricing",
+      "Estimated, transparent pricing",
       "Online reservations with call support from 08:00 to 22:00",
       "Loyalty program: every 5th ride is free (up to 25km)",
       "Referral discount: invite a friend and both get 5% off"
@@ -161,11 +161,11 @@ export const en: Dict = {
   quotePage: {
     title: "Book a transfer",
     subtitle:
-      "Send a short request. We reply with the assigned vehicle, the driver's name and a fixed price.",
+      "Send a short request. We reply with the assigned vehicle, the driver's name and an estimated price.",
     detailsTitle: "Booking details",
     notes: [
       "Payment in cash or by card.",
-      "Fixed price agreed before the trip.",
+      "Estimated price agreed before the trip.",
       "Online reservations are open anytime. Calls are available 08:00-22:00 Belgrade time."
     ]
   },
@@ -437,7 +437,7 @@ export const en: Dict = {
         "Meet-and-greet with a name sign in arrivals",
         "Luggage assistance",
         "Bottled water and Wi-Fi included",
-        "Fixed price agreed upfront",
+        "Estimated price agreed upfront",
         "Mercedes E Class or Audi A6"
       ],
       detailTitle: "Service details",
@@ -468,7 +468,7 @@ export const en: Dict = {
         "Vehicle on call: hourly, half-day or full-day",
         "Multiple stops included at no extra charge",
         "Discreet driver, private conversations stay private",
-        "Fixed price agreed upfront"
+        "Estimated price agreed upfront"
       ],
       detailTitle: "When to use it",
       detailBody: [
@@ -498,7 +498,7 @@ export const en: Dict = {
         "Planned pickup and address-to-address drop-off",
         "Stops along the way by agreement",
         "Luggage assistance, bottled water and Wi-Fi included",
-        "Fixed price agreed upfront",
+        "Estimated price agreed upfront",
         "Mercedes E Class or Audi A6"
       ],
       detailTitle: "When to use it",

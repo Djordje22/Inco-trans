@@ -32,7 +32,7 @@ export const sr: Dict = {
   services: {
     title: "Naše usluge",
     subtitle:
-      "Izaberite uslugu koja vam odgovara. Javljamo se sa fiksnom cenom u najkraćem roku.",
+      "Izaberite uslugu koja vam odgovara. Javljamo se sa okvirnom cenom u najkraćem roku.",
     learnMore: "Saznaj više",
     items: {
       airport: {
@@ -76,8 +76,8 @@ export const sr: Dict = {
         desc: "Pošaljite rezervaciju kada vam odgovara. Pozivi su dostupni od 08:00 do 22:00 po vremenu u Beogradu."
       },
       {
-        title: "Fiksne cene unapred",
-        desc: "Cena dogovorena pre vožnje, bez skrivenih troškova ili dodataka."
+        title: "Okvirne cene unapred",
+        desc: "Okvirnu cenu dobijate pre vožnje, bez skrivenih troškova ili dodataka."
       },
       {
         title: "Profesionalni vozači",
@@ -105,8 +105,8 @@ export const sr: Dict = {
         desc: "Forma na sajtu ili WhatsApp poruka. Javljamo se u najkraćem roku."
       },
       {
-        title: "2. Potvrda i fiksna cena",
-        desc: "Šaljemo dostupno vozilo, ime vozača i fiksnu cenu vožnje."
+        title: "2. Potvrda i okvirna cena",
+        desc: "Šaljemo dostupno vozilo, ime vozača i okvirnu cenu vožnje."
       },
       {
         title: "3. Transfer",
@@ -118,13 +118,13 @@ export const sr: Dict = {
     title: "O Inco Trans",
     body: [
       "Inco Trans je specijalizovan za profesionalni šofer servis i luksuzni transfer u Beogradu i Srbiji. Bavimo se aerodromskim transferima, dugim relacijama i VIP transportom.",
-      "Cilj nam je jednostavna i diskretna usluga: fiksne cene unapred, profesionalni vozači, redovno održavana flota i jasna komunikacija."
+      "Cilj nam je jednostavna i diskretna usluga: okvirne cene unapred, profesionalni vozači, redovno održavana flota i jasna komunikacija."
     ],
     valuesTitle: "Naše vrednosti",
     values: [
       "Tačnost i pouzdanost",
       "Profesionalni i diskretni vozači",
-      "Fiksne, transparentne cene",
+      "Okvirne, transparentne cene",
       "Online rezervacije i pozivi od 08:00 do 22:00",
       "Loyalty program: svaka 5. vožnja je besplatna (do 25km)",
       "Referral popust: pozovite prijatelja i oboje dobijate 5%"
@@ -160,11 +160,11 @@ export const sr: Dict = {
   quotePage: {
     title: "Rezerviši transfer",
     subtitle:
-      "Pošaljite kratak zahtev. Javljamo se sa dostupnim vozilom, imenom vozača i fiksnom cenom.",
+      "Pošaljite kratak zahtev. Javljamo se sa dostupnim vozilom, imenom vozača i okvirnom cenom.",
     detailsTitle: "Detalji rezervacije",
     notes: [
       "Plaćanje gotovinom ili karticom.",
-      "Fiksna cena dogovorena pre vožnje.",
+      "Okvirna cena dogovorena pre vožnje.",
       "Online rezervacije su otvorene uvek. Pozivi su dostupni od 08:00 do 22:00 po vremenu u Beogradu."
     ]
   },
@@ -436,7 +436,7 @@ export const sr: Dict = {
         "Doček u dolaznom delu sa imenom putnika",
         "Pomoć oko prtljaga",
         "Voda i Wi-Fi uključeni",
-        "Fiksna cena dogovorena unapred",
+        "Okvirna cena dogovorena unapred",
         "Mercedes E klasa ili Audi A6"
       ],
       detailTitle: "Detalji usluge",
@@ -467,7 +467,7 @@ export const sr: Dict = {
         "Vozilo na raspolaganju po dogovoru: sat, pola dana, ceo dan",
         "Više stajališta uključeno bez doplate",
         "Diskretan vozač, privatne komunikacije bez prisluškivanja",
-        "Fiksna cena dogovorena unapred"
+        "Okvirna cena dogovorena unapred"
       ],
       detailTitle: "Kada koristiti",
       detailBody: [
@@ -497,7 +497,7 @@ export const sr: Dict = {
         "Planirano preuzimanje i dolazak na adresu",
         "Pauze tokom puta po dogovoru",
         "Pomoć oko prtljaga, voda i Wi-Fi uključeni",
-        "Fiksna cena dogovorena unapred",
+        "Okvirna cena dogovorena unapred",
         "Mercedes E klasa ili Audi A6"
       ],
       detailTitle: "Kada koristiti",
