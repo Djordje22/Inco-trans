@@ -1633,7 +1633,7 @@ function ReviewStep({
 
         <PromoCodeCard dict={dict} data={data} set={set} />
 
-        <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
+        <label className="relative flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
           <input
             type="checkbox"
             checked={data.termsAccepted}
