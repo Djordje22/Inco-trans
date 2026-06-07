@@ -1,0 +1,39 @@
+name: Keep Supabase Alive
+
+# Supabase pauses free-tier projects after ~7 days without database/API activity.
+# This workflow makes a real PostgREST query against the project on a schedule so
+# the inactivity timer keeps resetting. Querying a table counts as DB activity;
+# git commits do NOT keep a Supabase project alive.
+
+on:
+  schedule:
+    # Every 3 days at 06:00 UTC. Worst-case spacing at month boundaries is ~4 days,
+    # still comfortably under the ~7-day inactivity threshold.
+    - cron: "0 6 */3 * *"
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query a published vehicle (keeps the database active)
+        env:
+          SUPABASE_URL: https://rxeyfflmusppxhuakwbz.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is not set. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "Pinging $SUPABASE_URL ..."
+          http_code=$(curl -sS -o /tmp/body.txt -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/vehicles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "HTTP status: $http_code"
+          echo "Response body: $(cat /tmp/body.txt)"
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Keep-alive ping failed with HTTP $http_code"
+            exit 1
+          fi
+          echo "Keep-alive ping succeeded — Supabase activity timer reset."
