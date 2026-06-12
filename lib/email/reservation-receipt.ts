@@ -269,7 +269,7 @@ const priceRows = (payload: BookingRequestPayload, locale: Locale) => {
   const longDistanceLabel = `${copy.longDistanceTransfer} (${formatDistance(
     estimate.distanceKm,
     locale
-  )} km ${locale === "sr" ? "povratna ruta" : locale === "ru" ? "туда и обратно" : "round trip"})`;
+  )} km)`;
   const chauffeurBaseLabel = `${copy.chauffeurService} ${locale === "sr" ? "do" : locale === "ru" ? "до" : "up to"} ${formatDistance(
     estimate.chauffeurIncludedHours ?? 10,
     locale
@@ -326,7 +326,7 @@ const priceTextRows = (payload: BookingRequestPayload, locale: Locale) => {
   const longDistanceLabel = `${copy.longDistanceTransfer} (${formatDistance(
     estimate.distanceKm,
     locale
-  )} km ${locale === "sr" ? "povratna ruta" : locale === "ru" ? "туда и обратно" : "round trip"})`;
+  )} km)`;
   const chauffeurBaseLabel = `${copy.chauffeurService} ${locale === "sr" ? "do" : locale === "ru" ? "до" : "up to"} ${formatDistance(
     estimate.chauffeurIncludedHours ?? 10,
     locale

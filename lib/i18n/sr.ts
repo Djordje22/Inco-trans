@@ -325,7 +325,7 @@ export const sr: Dict = {
         waitingPriceLabel: "Vreme čekanja ({hours}h na mestu preuzimanja)",
         distanceOverageLabel:
           "Dodatna kilometraža ({overage} km preko {included} km)",
-        longDistancePriceLabel: "Duge relacije ({distance} km povratna ruta)",
+        longDistancePriceLabel: "Duge relacije ({distance} km)",
         chauffeurBasePriceLabel:
           "Šofer servis do {hours}h ({included} km uključeno)",
         chauffeurExtraHoursLabel: "Dodatni sati ({hours}h preko 10h)",
@@ -338,7 +338,7 @@ export const sr: Dict = {
         estimateDisclaimer: "Okvirna cena. Konačnu cenu će potvrditi naš tim.",
         billableDistanceLabel: "Obračunska kilometraža",
         billableDistanceNote:
-          "Obračunska kilometraža uključuje dolazak vozila iz baze, vožnju putnika i povratak vozila u bazu.",
+          "Obračunska kilometraža je razdaljina od mesta preuzimanja do odredišta.",
         paymentCardTitle: "Način plaćanja",
         paymentCard: "Kartica",
         paymentCardDesc: "Plaćanje vozaču pri preuzimanju",

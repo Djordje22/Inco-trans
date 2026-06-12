@@ -326,7 +326,7 @@ export const en: Dict = {
         waitingPriceLabel: "Waiting time ({hours}h at pickup location)",
         distanceOverageLabel:
           "Distance overage ({overage} km beyond {included} km)",
-        longDistancePriceLabel: "Long-distance transfer ({distance} km round trip)",
+        longDistancePriceLabel: "Long-distance transfer ({distance} km)",
         chauffeurBasePriceLabel:
           "Chauffeur service up to {hours}h ({included} km included)",
         chauffeurExtraHoursLabel: "Additional hours ({hours}h beyond 10h)",
@@ -339,7 +339,7 @@ export const en: Dict = {
         estimateDisclaimer: "Estimated price. The final price will be confirmed by our team.",
         billableDistanceLabel: "Billable distance",
         billableDistanceNote:
-          "Billable distance includes the vehicle's trip from base, the passenger route and the return to base.",
+          "Billable distance is the distance from pickup to destination.",
         paymentCardTitle: "Payment method",
         paymentCard: "Card",
         paymentCardDesc: "Pay the driver at pickup",

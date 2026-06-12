@@ -327,7 +327,7 @@ export const ru: Dict = {
         waitingPriceLabel: "Время ожидания ({hours} ч в месте подачи)",
         distanceOverageLabel:
           "Дополнительный километраж ({overage} км сверх {included} км)",
-        longDistancePriceLabel: "Дальняя поездка ({distance} км туда и обратно)",
+        longDistancePriceLabel: "Дальняя поездка ({distance} км)",
         chauffeurBasePriceLabel:
           "Шофёр-сервис до {hours} ч ({included} км включено)",
         chauffeurExtraHoursLabel: "Дополнительные часы ({hours} ч сверх 10 ч)",
@@ -340,7 +340,7 @@ export const ru: Dict = {
         estimateDisclaimer: "Ориентировочная цена. Финальную цену подтвердит наша команда.",
         billableDistanceLabel: "Расчётный километраж",
         billableDistanceNote:
-          "Расчётный километраж включает выезд автомобиля с базы, маршрут пассажира и возвращение автомобиля на базу.",
+          "Расчётный километраж — это расстояние от места подачи до места назначения.",
         paymentCardTitle: "Способ оплаты",
         paymentCard: "Карта",
         paymentCardDesc: "Оплата водителю при подаче",
