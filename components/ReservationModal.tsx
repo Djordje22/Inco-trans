@@ -465,15 +465,6 @@ const BELGRADE_AIRPORT_COORDS = {
   longitude: 20.3091
 };
 
-const DRIVER_START_PLACE: AddressPlace = {
-  placeId: "slavija-belgrade",
-  label: "Slavija, Beograd, Srbija",
-  formattedAddress: "Slavija, Beograd, Srbija",
-  latitude: 44.802416,
-  longitude: 20.465601,
-  countryCode: "rs"
-};
-
 const airportPlace = (label: string): AddressPlace => ({
   placeId: "belgrade-nikola-tesla-airport",
   label,
@@ -1264,7 +1255,7 @@ function ReviewStep({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        points: [DRIVER_START_PLACE, ...points, DRIVER_START_PLACE],
+        points,
         waitingHours: data.service === "chauffeur" ? 0 : data.waitingHours,
         chauffeurDurationHours: data.chauffeurDurationHours,
         service: data.service
